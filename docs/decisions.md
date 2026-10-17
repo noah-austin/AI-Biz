@@ -40,6 +40,13 @@
 | Niche | Take any good fit; leading guess for marketing is contractors and field services | Decide after 15–20 conversations. |
 | Focus | Stop adding features until a client needs them; ~70% of time goes to selling for 60 days | Must-haves before client #1 are listed in concept.md §7. |
 
+## 2026-10-17: our own server
+| Topic | Decision | Notes |
+|---|---|---|
+| Hosting | Our own VPS (DigitalOcean, 4 GB), not Railway | Full control, same setup as client installs. |
+| How Claude works on it | Claude Code installed on the server, linked with Remote Control | Shows up in the Claude app; uses the subscription, not the API. Cloud sessions can't SSH, so code also flows through GitHub. |
+| What runs there | Company hub, Bluestem demo, later the website | Never client data. Steps in `docs/server-setup.md`. |
+
 ## Open questions
 - Business name (ideas in `concept.md` §8).
 - Year-one income goal (scenarios in `concept.md` §5).
