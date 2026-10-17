@@ -22,6 +22,15 @@
 | Chart library | Chart.js 4.4.1 bundled with the kit | No outside CDN, which locked-down client IT prefers. |
 | Sign-in | Passwords per user for now, with branch-level access | Microsoft/Google sign-in is next; only `kit/hub/auth.py` changes. |
 
+## 2026-10-17: AI layer
+| Topic | Decision | Notes |
+|---|---|---|
+| Model | Claude Opus 5.5 for chat and insights | Set per client in `config.toml`. Chat at effort "medium", insights at "high". |
+| How it reads data | Through the hub's own metric functions; read-only SQL only for all-branch users | Figures match the pages; branch limits can't be bypassed. |
+| Refusals | Server-side fallback ("default") is on | If Claude declines a question, the API retries on the model Anthropic recommends. |
+| Caps (demo) | Chat $50/month, insights $25/month, 40 questions per person per day | Each feature has its own API key. |
+| Costs | Not measured yet | Measure on real questions once the key is in, before quoting clients. |
+
 ## Open questions
 - Business name (ideas in `concept.md` §8).
 - Year-one income goal (scenarios in `concept.md` §5).

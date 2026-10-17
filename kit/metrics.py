@@ -309,3 +309,88 @@ def freshness() -> dict:
                          count(*) FILTER (WHERE last_status = 'failed') AS failed
                   FROM core.sync_state WHERE object <> 'backup'""")
     return r or {}
+
+
+# ---------- breakdowns (used by the AI layer; same rules as the pages) ----------
+
+DIMENSIONS = {"segment", "deal_type", "branch", "region", "lead_source", "owner_name", "stage", "loss_reason"}
+
+
+def closed_breakdown(start, end, dim: str, scope=None) -> list[dict]:
+    """Won/lost results for closed deals, split by one dimension."""
+    if dim not in DIMENSIONS:
+        raise ValueError(f"group_by must be one of {sorted(DIMENSIONS)}")
+    rows = db.query(f"""
+        SELECT coalesce({dim}::text, '(blank)') AS key,
+               coalesce(sum(amount) FILTER (WHERE is_won), 0) AS won_amount, count(*) FILTER (WHERE is_won) AS won_count,
+               coalesce(sum(amount) FILTER (WHERE is_lost), 0) AS lost_amount, count(*) FILTER (WHERE is_lost) AS lost_count,
+               coalesce(sum(margin_amount) FILTER (WHERE is_won), 0) AS margin_dollars,
+               coalesce(sum(amount) FILTER (WHERE is_won AND margin_pct IS NOT NULL), 0) AS margin_base
+        FROM rpt.deals WHERE is_closed AND close_date BETWEEN %(s)s AND %(e)s {_scope(scope)}
+        GROUP BY 1 ORDER BY 2 DESC""", {"s": start, "e": end, "scope": scope})
+    out = []
+    for r in rows:
+        r = {k: (float(v) if k != "key" and v is not None else v) for k, v in r.items()}
+        r["win_rate_dollars"] = _ratio(r["won_amount"], r["won_amount"] + r["lost_amount"])
+        r["win_rate_count"] = _ratio(r["won_count"], r["won_count"] + r["lost_count"])
+        r["margin_pct"] = _ratio(r["margin_dollars"], r["margin_base"])
+        out.append(r)
+    return out
+
+
+def pipeline_breakdown(t: dt.date, dim: str, scope=None) -> list[dict]:
+    """Open pipeline split by one dimension, with past-due deals counted separately."""
+    if dim not in DIMENSIONS:
+        raise ValueError(f"group_by must be one of {sorted(DIMENSIONS)}")
+    rows = db.query(f"""
+        SELECT coalesce({dim}::text, '(blank)') AS key, count(*) FILTER (WHERE close_date >= %(t)s) AS deals,
+               coalesce(sum(amount) FILTER (WHERE close_date >= %(t)s), 0) AS amount,
+               coalesce(sum(weighted_amount) FILTER (WHERE close_date >= %(t)s), 0) AS weighted,
+               count(*) FILTER (WHERE close_date < %(t)s) AS past_due_deals,
+               coalesce(sum(amount) FILTER (WHERE close_date < %(t)s), 0) AS past_due_amount
+        FROM rpt.deals WHERE is_open {_scope(scope)} GROUP BY 1 ORDER BY 3 DESC""", {"t": t, "scope": scope})
+    return [{k: (float(v) if k != "key" else v) for k, v in r.items()} for r in rows]
+
+
+DEAL_FILTERS = {  # filter name -> SQL, each bound to a parameter of the same name
+    "branch": "branch = %(branch)s", "region": "region = %(region)s", "deal_type": "deal_type = %(deal_type)s",
+    "segment": "segment = %(segment)s", "stage": "stage = %(stage)s", "lead_source": "lead_source = %(lead_source)s",
+    "close_from": "close_date >= %(close_from)s", "close_to": "close_date <= %(close_to)s",
+    "created_from": "created_date >= %(created_from)s", "created_to": "created_date <= %(created_to)s",
+    "min_amount": "amount >= %(min_amount)s", "max_amount": "amount <= %(max_amount)s",
+    "account_contains": "account_name ILIKE '%%' || %(account_contains)s || '%%'",
+    "owner_contains": "owner_name ILIKE '%%' || %(owner_contains)s || '%%'",
+}
+DEAL_STATUS = {"open": "is_open", "won": "is_won", "lost": "is_lost", "closed": "is_closed", "all": "true"}
+DEAL_SORT = {"amount": "amount DESC NULLS LAST", "close_date": "close_date ASC NULLS LAST", "newest": "created_at DESC"}
+
+
+def find_deals(filters: dict, scope=None, limit=25, sort="amount") -> dict:
+    status = filters.get("status") or "open"
+    if status not in DEAL_STATUS:
+        raise ValueError(f"status must be one of {sorted(DEAL_STATUS)}")
+    where, p = [DEAL_STATUS[status]], {"scope": scope}
+    for key, sql in DEAL_FILTERS.items():
+        if filters.get(key) not in (None, ""):
+            where.append(sql)
+            p[key] = filters[key]
+    if scope:
+        where.append("branch_code = ANY(%(scope)s)")
+    w = " AND ".join(where)
+    totals = db.one(f"""SELECT count(*) AS n, coalesce(sum(amount), 0) AS amount, coalesce(sum(weighted_amount), 0) AS weighted
+                        FROM rpt.deals WHERE {w}""", p)
+    rows = db.query(f"""SELECT id, name, account_name, branch, deal_type, segment, stage, amount, probability, margin_pct,
+                               close_date, created_date, owner_name, loss_reason
+                        FROM rpt.deals WHERE {w} ORDER BY {DEAL_SORT.get(sort, DEAL_SORT['amount'])}
+                        LIMIT {max(1, min(int(limit), 50))}""", p)
+    return {"total_deals": totals["n"], "total_amount": float(totals["amount"]),
+            "total_weighted": float(totals["weighted"]), "deals": rows}
+
+
+def overdue_customers(scope=None, limit=15) -> list[dict]:
+    return db.query(f"""SELECT customer_id, customer_name, sum(balance) AS unpaid,
+                               coalesce(sum(balance) FILTER (WHERE days_past_due > 60), 0) AS over_60,
+                               max(days_past_due) AS oldest_days, count(*) AS invoices
+                        FROM rpt.invoices WHERE is_open {_scope(scope)}
+                        GROUP BY 1, 2 HAVING sum(balance) FILTER (WHERE days_past_due > 0) > 0
+                        ORDER BY over_60 DESC, unpaid DESC LIMIT {int(limit)}""", {"scope": scope})

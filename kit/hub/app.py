@@ -8,11 +8,12 @@ import logging
 from pathlib import Path
 
 from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
 from .. import db
+from ..ai import chat, usage as ai_usage
 from ..config import get_settings
 from . import auth, pages, ui
 
@@ -43,7 +44,7 @@ async def gatekeeper(request: Request, call_next):
     if settings.secure_cookies:
         response.headers.setdefault("Strict-Transport-Security", "max-age=31536000")
     if request.state.user and request.method == "GET" and response.status_code == 200 \
-            and not path.startswith(("/static/", "/demo-source/")) and not path.endswith(".csv"):
+            and not path.startswith(("/static/", "/demo-source/", "/ai/")) and not path.endswith(".csv"):
         try:
             await run_in_threadpool(db.execute, "INSERT INTO core.page_visits (user_id, path) VALUES (%(u)s, %(p)s)",
                                     {"u": request.state.user["id"], "p": path})
@@ -132,6 +133,49 @@ def health(request: Request):
         return HTMLResponse(ui.page(request, "Not allowed", '<section class="card">Only admins can see this page.</section>'),
                             status_code=403)
     return HTMLResponse(pages.health(request))
+
+
+# ---------------------------------------------------------------- AI "Ask" chat
+
+def _ai_guard(request: Request):
+    # A custom header can't be sent cross-site without the browser asking first, which blocks CSRF.
+    if request.headers.get("x-hub") != "1":
+        return JSONResponse({"error": "Bad request."}, status_code=400)
+    return None
+
+
+@app.get("/ai/status")
+def ai_status(request: Request):
+    user = request.state.user
+    return {"enabled": ai_usage.is_configured("chat"), "admin": user["role"] == "admin",
+            "suggestions": chat.suggestions(user)}
+
+
+@app.post("/ai/ask")
+async def ai_ask(request: Request):
+    if (bad := _ai_guard(request)) is not None:
+        return bad
+    try:
+        body = await request.json()
+    except ValueError:
+        return JSONResponse({"error": "Bad request."}, status_code=400)
+    try:
+        ids = await run_in_threadpool(chat.start, request.state.user, str(body.get("question") or ""),
+                                      body.get("conversation_id") or None, str(body.get("page") or ""))
+    except (ValueError, ai_usage.CapReached) as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+    return ids
+
+
+@app.get("/ai/jobs/{job_id}")
+def ai_job(request: Request, job_id: str):
+    j = chat.job_status(job_id, request.state.user)
+    return j if j else JSONResponse({"error": "Not found."}, status_code=404)
+
+
+@app.get("/ai/conversations/{conversation_id}")
+def ai_conversation(request: Request, conversation_id: str):
+    return {"turns": chat.history(conversation_id, request.state.user)}
 
 
 if settings.is_demo:

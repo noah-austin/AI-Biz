@@ -121,6 +121,20 @@ def chart(canvas_id: str, config: dict, height=260, label="Chart") -> str:
             f'config:{payload}}});</script>')
 
 
+ASK_BUTTON = ('<button type="button" class="ask-open" data-ask-open aria-controls="ask" aria-expanded="false">'
+              '<span aria-hidden="true">✦</span> Ask AI</button>')
+ASK_PANEL = """<aside id="ask" class="ask" hidden aria-label="Ask AI about the numbers">
+  <div class="ask-head"><strong>Ask about the numbers</strong>
+    <span><button type="button" class="linkish" data-ask-new>New chat</button>
+    <button type="button" class="ask-x" data-ask-close aria-label="Close">✕</button></span></div>
+  <div class="ask-thread" id="ask-thread" aria-live="polite"></div>
+  <form class="ask-form" id="ask-form"><label class="sr" for="ask-q">Your question</label>
+    <textarea id="ask-q" rows="2" maxlength="2000" placeholder="Ask about sales, pipeline, billing…"></textarea>
+    <button class="primary" type="submit">Ask</button></form>
+  <p class="ask-foot">Answers come from this hub's data, with links to check them. The AI can read, never change anything.</p>
+</aside>"""
+
+
 def page(request, title: str, body: str, active: str = "", subtitle: str = "", wide=False) -> str:
     settings = get_settings()
     client = settings.client
@@ -142,17 +156,18 @@ def page(request, title: str, body: str, active: str = "", subtitle: str = "", w
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(title)} · {esc(client.get("short_name", "Hub"))}</title>
 <link rel="stylesheet" href="/static/hub.css"><link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<script src="{CHART_JS}" defer></script><script src="/static/hub.js" defer></script>
+<script src="{CHART_JS}" defer></script><script src="/static/hub.js" defer></script><script src="/static/ask.js" defer></script>
 </head><body>
 {demo}
 <header class="top"><div class="bar">
   <a class="brand" href="/"><span class="mark" aria-hidden="true"></span>{esc(client.get("short_name", "Hub"))} <span class="muted">Hub</span></a>
-  <nav>{"".join(nav)}</nav>{who}
+  <nav>{"".join(nav)}</nav>{ASK_BUTTON if user else ""}{who}
 </div></header>
 <main class="{'wide' if wide else ''}">
 <div class="page-head"><h1>{esc(title)}</h1>{f'<p class="subtitle">{subtitle}</p>' if subtitle else ''}</div>
 {body}
 </main>
+{ASK_PANEL if user else ""}
 </body></html>"""
 
 

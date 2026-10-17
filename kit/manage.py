@@ -5,6 +5,7 @@
     python -m kit.manage set-password EMAIL
     python -m kit.manage list-users
     python -m kit.manage check-readonly   prove the AI login can read reports and nothing else
+    python -m kit.manage set-secret ANTHROPIC_API_KEY_CHAT   store an API key in .env (typed hidden, never shown)
 
 Passwords are typed with hidden input (or piped in with --password-stdin),
 never passed on the command line, so they don't land in shell history.
@@ -127,6 +128,30 @@ def check_readonly():
     sys.exit(0 if ok else 1)
 
 
+SECRET_NAMES = {"ANTHROPIC_API_KEY_CHAT", "ANTHROPIC_API_KEY_INSIGHTS", "AI_READER_PASSWORD", "SESSION_SECRET"}
+
+
+def set_secret(name: str, stdin: bool):
+    """Write one secret into .env (mode 600). The value is typed hidden and never printed."""
+    import os
+    from .config import ROOT
+    if name not in SECRET_NAMES:
+        sys.exit(f"Unknown secret. Allowed: {', '.join(sorted(SECRET_NAMES))}")
+    value = sys.stdin.readline().strip() if stdin else getpass.getpass(f"{name}: ").strip()
+    if not value or any(c in value for c in "\r\n\"'"):
+        sys.exit("Empty or invalid value; nothing changed.")
+    path = ROOT / ".env"
+    lines = path.read_text().splitlines() if path.exists() else []
+    lines = [l for l in lines if not l.strip().startswith(name + "=")] + [f"{name}={value}"]
+    tmp = path.with_suffix(".tmp")
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        f.write("\n".join(lines) + "\n")
+    os.replace(tmp, path)
+    os.chmod(path, 0o600)
+    print(f"Saved {name} to .env. Restart the hub so it picks it up.")
+
+
 def main():
     p = argparse.ArgumentParser(description="Admin commands")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -142,6 +167,9 @@ def main():
     s.add_argument("--password-stdin", action="store_true")
     sub.add_parser("list-users")
     sub.add_parser("check-readonly")
+    ss = sub.add_parser("set-secret")
+    ss.add_argument("name")
+    ss.add_argument("--stdin", action="store_true")
     a = p.parse_args()
     if a.cmd == "init-db":
         init_db()
@@ -153,6 +181,8 @@ def main():
         list_users()
     elif a.cmd == "check-readonly":
         check_readonly()
+    elif a.cmd == "set-secret":
+        set_secret(a.name, a.stdin)
 
 
 if __name__ == "__main__":

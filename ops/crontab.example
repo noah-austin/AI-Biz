@@ -3,3 +3,5 @@
 7 * * * *   cd /opt/hub && /opt/hub/venv/bin/python -m kit.sync >> /var/log/hub/sync.log 2>&1
 30 2 * * *  /opt/hub/ops/backup.sh >> /var/log/hub/backup.log 2>&1
 0 4 * * 0   /opt/hub/ops/restore_test.sh >> /var/log/hub/restore_test.log 2>&1
+# AI insights for the home page, three times on weekdays (times in UTC; 12:15 UTC is 7:15am Central).
+15 12,17,21 * * 1-5  cd /opt/hub && /opt/hub/venv/bin/python -m kit.ai.insights >> /var/log/hub/insights.log 2>&1

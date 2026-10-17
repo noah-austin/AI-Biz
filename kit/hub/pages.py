@@ -7,6 +7,7 @@ from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
 from .. import cleanup, db, metrics
+from ..ai import insights as ai_insights, usage as ai_usage
 from ..config import get_settings
 from . import ui
 from .ui import esc, money, pct
@@ -99,8 +100,20 @@ def home(request):
     else:
         fresh_txt = "Not synced yet"
 
+    insights_html = ""
+    found = [] if scope else ai_insights.latest()
+    if found:
+        when = found[0]["created_at"].astimezone(ZoneInfo(get_settings().tz))
+        cards = "".join(
+            f'<article class="insight"><h3>{esc(i["headline"])}</h3><div class="detail">{i["detail_html"]}</div>'
+            + (f'<a class="more" href="{esc(i["link"])}">{esc(i["link_label"] or "See the records")} →</a>' if i["link"] else "")
+            + "</article>" for i in found)
+        insights_html = (f'<div class="insights-head"><h2><span aria-hidden="true" style="color:var(--accent)">✦</span> '
+                         f'AI insights</h2><span>Written {ui.short_date(when.date())} at {when.strftime("%-I:%M %p")} · '
+                         f'check the linked records before acting</span></div><div class="insights">{cards}</div>')
     body = f"""
 <div class="tiles">{tiles}</div>
+{insights_html}
 <div class="cols">
   <div>
     <section class="card"><div class="card-head"><h2>Bookings by month</h2>
@@ -617,10 +630,21 @@ def health(request):
                     f'<td>{esc(", ".join(names.get(b, b) for b in u["branches"]) if u["branches"] else "All branches")}</td>'
                     f'<td class="n">{_local(u["last_login_at"])}</td></tr>' for u in users)
     tz = esc(get_settings().tz)
+    ai_rows = "".join(
+        f'<tr><td>{"Ask AI chat" if a["feature"] == "chat" else "Home page insights"}</td>'
+        f'<td>{ui.status_pill("ok") if a["configured"] else "<span class=muted>No API key yet</span>"}</td>'
+        f'<td class="n">{a["calls"]:,}</td><td class="n">${a["cost"]:,.2f}</td><td class="n">${a["cap"]:,.0f}</td>'
+        f'<td class="n">{"—" if not a["answers_30d"] else "$%.3f" % a["avg_answer_cost"]}</td></tr>'
+        for a in ai_usage.summary())
+    ai_card = f"""<section class="card"><h2>AI usage this month</h2>
+<div class="scroll"><table class="data"><thead><tr><th>Feature</th><th>Status</th><th class="n">Model calls</th>
+<th class="n">Spent</th><th class="n">Monthly cap</th><th class="n">Avg per answer (30 days)</th></tr></thead><tbody>{ai_rows}</tbody></table></div>
+{ui.how("Every AI call is logged with its tokens and cost. When a feature reaches its cap it stops until the 1st. Each feature has its own API key, so one can be switched off without touching the other.")}</section>"""
     body = f"""<section class="card"><h2>Data syncs and backups</h2>
 <div class="scroll"><table class="data"><thead><tr><th>What</th><th>Status</th><th class="n">Last success</th>
 <th class="n">Rows</th><th class="n">Removed</th><th>Note</th></tr></thead><tbody>{"".join(rows) or '<tr><td colspan="6">Nothing has synced yet.</td></tr>'}</tbody></table></div>
 {ui.how(f"Syncs run hourly and are flagged out of date after 3 hours without success; the backup after 26 hours. The removal step refuses to delete more than 10% of a table in one run. Times are {tz}.")}</section>
+{ai_card}
 <div class="cols even"><section class="card"><h2>Most-used pages, last 30 days</h2>
 <div class="scroll"><table class="data"><thead><tr><th>Page</th><th class="n">Visits</th><th class="n">People</th></tr></thead><tbody>{vrows}</tbody></table></div></section>
 <section class="card"><h2>People with access</h2>
