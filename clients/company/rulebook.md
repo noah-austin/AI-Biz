@@ -16,11 +16,29 @@ How each number in the practice tracker is counted. The code is `kit/practice/me
 - **Monthly recurring (MRR)** = monthly fees of retainer engagements that are active today.
 - **Profit** = revenue − expenses, for the same period.
 - **Effective hourly rate** = revenue this year ÷ all hours logged this year, billable or not.
-- **Goal:** $90,000 in year one. "Pace" is the goal × the share of the year gone so far.
+- **Goal:** $100,000 of revenue between Oct 1, 2026 and Sep 30, 2027 (invoices issued in that window). "Pace" is the goal × the share of the window gone so far.
+- **Forecast** = revenue so far + active retainers' monthly fees × the full months left + the weighted pipeline.
+- **Needed per month** = what's left to the goal ÷ the months left, including this one.
+- **Referral fees** = 10% of a referred client's invoices in their first 12 months.
+
+## My weekly scorecard (Monday to Sunday)
+| Measure | Counted as | Weekly target |
+|---|---|---|
+| Outreach | Activities logged as Email or LinkedIn | 25 |
+| New prospects | Prospect companies added | 25 |
+| Conversations | Activities logged as Call or Meeting | 4 |
+| Proposals | Engagements created | 1 |
+| Hours | All time logged | 20 |
 
 ## Time
 - **Weeks** run Monday to Sunday. Target: 20 hours a week.
 - Time not tied to a company counts as "Running the business".
+
+## Agents
+- Three agents work for the business: **Business development**, **Social media manager** and **Chief of staff**. Their jobs and schedules are on the Agents page (`kit/agents/registry.py`).
+- Everything they produce waits in the **Inbox**. Approving a prospect adds it to the pipeline as a Lead, with a drafted first message. "I sent it" on a message logs the email or LinkedIn activity and moves a Lead to Contacted.
+- They never send, post or delete anything; they use public web information only and never open LinkedIn; they never name clients in posts.
+- Cost: every call is logged; each run has its own limit; all agents share the monthly cap ($60 to start).
 
 ## Rules
 - Prospects and companies are archived, never deleted. Time entries and expenses can be deleted (with a confirmation), because mistakes there are common and harmless.

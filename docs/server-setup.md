@@ -72,7 +72,8 @@ Work in plain English with Noah. Ask before anything hard to undo. Follow `CLAUD
    - for the demo, `clients/demo/generate.py` daily before its sync, so the fake company moves forward;
    - nightly `ops/backup.sh` for each database;
    - the weekly restore test;
-   - AI insights once API keys exist.
+   - AI insights once API keys exist (demo only);
+   - for the company hub: `python -m kit.agents tick` every 15 minutes (runs whatever agent jobs are due).
 7. **Off-site backups:** a DigitalOcean Spaces bucket via `OFFSITE_CMD` (ask Noah to create it), on top of the droplet's weekly snapshots.
 8. **Health:** confirm `/healthz` for each install, and set up a free uptime monitor that emails Noah if it fails.
 9. **Users:** create Noah's admin login on each install with `python -m kit.manage create-user`; he types the password himself.

@@ -12,6 +12,7 @@ The reusable system we install for each client: data in one place, tools on top,
 | Business rules | `metrics.py`, `cleanup.py` | Every number, computed once. Pages (and the AI, later) call these, so figures always match. |
 | Hub | `hub/` | Web app: sign-in, home, scorecard, pipeline, win/loss, receivables, clean-up, health. |
 | Practice app | `practice/` | Built-in tracker for running a consulting business: prospects, partners, conversations, engagements, time, invoices, expenses. Turned on with `apps = ["practice"]`. Our own company hub uses it. |
+| Agents | `agents/` | Staff-like AI agents with roles and scheduled jobs (business development, social media, chief of staff). Their work lands in the practice Inbox for approval; they never send anything. `python -m kit.agents tick` from cron. |
 | AI | `ai/` | "Ask AI" chat on every page, and home-page insights. See "The AI layer" below. |
 | Admin | `manage.py` | Set up the database, add users, prove the AI login is read-only. |
 | Ops | `../ops/`, `pgenv.py` | Backups (verified, off-site hook), restore test that fails loudly, cron, nginx, systemd. Scripts read `.env` safely and keep the password off the command line. |
@@ -26,7 +27,7 @@ python -m kit.manage init-db
 python -m kit.sync
 python -m kit.manage create-user you@example.com "Your Name" --admin
 uvicorn kit.hub.app:app --port 8000       # then open http://127.0.0.1:8000
-python -m pytest -q tests                 # 41 tests (the AI tests use a fake Claude, no key needed)
+python -m pytest -q tests                 # 48 tests (the AI and agent tests use a fake Claude, no key needed)
 ```
 Set `SECURE_COOKIES=0` only when testing without HTTPS.
 

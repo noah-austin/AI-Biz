@@ -154,6 +154,63 @@ if "practice" in APPS:
     app.get("/clients", response_class=HTMLResponse)(_html(pp.clients_page))
     app.get("/time", response_class=HTMLResponse)(_html(pp.time_page))
     app.get("/money", response_class=HTMLResponse)(_html(pp.money_page))
+    app.get("/scorecard", response_class=HTMLResponse)(_html(pp.scorecard_page))
+    app.get("/tasks", response_class=HTMLResponse)(_html(pp.tasks_page))
+    from ..practice import inbox as pin
+    from ..agents import engine as agent_engine
+    from ..agents.registry import BY_KEY as AGENT_KEYS
+    from ..ai import usage as _usage
+    app.get("/inbox", response_class=HTMLResponse)(_html(pin.inbox_page))
+    app.get("/agents", response_class=HTMLResponse)(_html(pin.agents_page))
+
+    @app.post("/tasks")
+    async def task_create(request: Request):
+        form = await _form(request)
+        if form is None:
+            return _bad_form(request)
+        try:
+            await run_in_threadpool(pp.save_task, request, form)
+        except forms.FormError as e:
+            return HTMLResponse(await run_in_threadpool(pp.tasks_page, request, dict(form), e.errors), status_code=400)
+        return RedirectResponse("/tasks", status_code=303)
+
+    @app.post("/tasks/seed")
+    async def task_seed(request: Request):
+        if await _form(request) is None:
+            return _bad_form(request)
+        from ..practice import metrics as _pm
+        await run_in_threadpool(_pm.seed_launch_checklist)
+        return RedirectResponse("/tasks", status_code=303)
+
+    @app.post("/tasks/{tid}/done")
+    async def task_mark_done(request: Request, tid: int):
+        if await _form(request) is None:
+            return _bad_form(request)
+        await run_in_threadpool(pp.task_done, tid)
+        back = request.headers.get("referer") or "/tasks"
+        return RedirectResponse(auth.safe_next("/" + back.split("/", 3)[-1]) if "://" in back else "/tasks", status_code=303)
+
+    @app.post("/inbox/{item_id}/{action}")
+    async def inbox_decide(request: Request, item_id: int, action: str):
+        if action not in ("approve", "dismiss", "sent", "done"):
+            return _not_found(request)
+        if await _form(request) is None:
+            return _bad_form(request)
+        nxt = await run_in_threadpool(pin.decide, item_id, action)
+        return RedirectResponse(nxt, status_code=303)
+
+    @app.post("/agents/{agent}/{job}/run")
+    async def agent_run_now(request: Request, agent: str, job: str):
+        if await _form(request) is None:
+            return _bad_form(request)
+        if agent not in AGENT_KEYS or job not in {j.key for j in AGENT_KEYS[agent].jobs}:
+            return _not_found(request)
+        try:
+            await run_in_threadpool(agent_engine.run_in_background, agent, job)
+            msg = f"{AGENT_KEYS[agent].name} started. Its work will show up in your Inbox in a few minutes."
+        except _usage.CapReached as e:
+            msg = str(e)
+        return HTMLResponse(await run_in_threadpool(pin.agents_page, request, msg))
 
     @app.get("/companies/new", response_class=HTMLResponse)
     def company_new(request: Request):

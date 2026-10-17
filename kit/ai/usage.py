@@ -15,7 +15,9 @@ PRICES = {
 }
 DEFAULT_PRICE = (5.00, 25.00, 0.50, 6.25)  # unknown model: assume the dearer end, never under-count
 
-FEATURES = {"chat": "ANTHROPIC_API_KEY_CHAT", "insights": "ANTHROPIC_API_KEY_INSIGHTS"}
+FEATURES = {"chat": "ANTHROPIC_API_KEY_CHAT", "insights": "ANTHROPIC_API_KEY_INSIGHTS",
+            "agents": "ANTHROPIC_API_KEY_AGENTS"}
+WEB_SEARCH_USD = 0.01  # per search (estimate: $10 per 1,000)
 
 
 class CapReached(RuntimeError):
@@ -24,7 +26,7 @@ class CapReached(RuntimeError):
 
 def ai_settings() -> dict:
     defaults = {"model": "claude-opus-5-5", "chat_effort": "medium", "insights_effort": "high",
-                "chat_monthly_cap_usd": 50, "insights_monthly_cap_usd": 25,
+                "chat_monthly_cap_usd": 50, "insights_monthly_cap_usd": 25, "agents_monthly_cap_usd": 60,
                 "questions_per_user_per_day": 40, "insights_per_day": 3}
     return {**defaults, **get_settings().client.get("ai", {})}
 
@@ -44,6 +46,8 @@ def cost_of(model: str, usage) -> Decimal:
     get = lambda name: getattr(usage, name, 0) or 0
     dollars = (get("input_tokens") * p_in + get("output_tokens") * p_out
                + get("cache_read_input_tokens") * p_read + get("cache_creation_input_tokens") * p_write) / 1_000_000
+    searches = getattr(getattr(usage, "server_tool_use", None), "web_search_requests", 0) or 0
+    dollars += searches * WEB_SEARCH_USD
     return Decimal(str(round(dollars, 6)))
 
 

@@ -13,10 +13,13 @@ CHART_JS = "/static/vendor/chart-4.4.1.umd.js"  # pinned copy, MIT licence; no o
 
 PRACTICE_NAV = [
     ("/", "Today", False),
+    ("/inbox", "Inbox", False),
     ("/pipeline", "Pipeline", False),
     ("/clients", "Clients", False),
+    ("/tasks", "Tasks", False),
     ("/time", "Time", False),
     ("/money", "Money", False),
+    ("/agents", "Agents", False),
 ]
 NAV = [  # path, label, admin only
     ("/", "Home", False),

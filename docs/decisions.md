@@ -54,6 +54,15 @@
 | One kit, different apps | `apps` setting per install | Clients and the demo get analytics; our hub gets the practice tracker. Ask AI adapts to each. |
 | Invoices | Sent from an invoicing tool; recorded in the hub | The hub tracks revenue, cash and overdue invoices; it doesn't send invoices (yet). |
 
+## 2026-10-17: goal, Google Workspace, agents
+| Topic | Decision | Notes |
+|---|---|---|
+| Revenue goal | $100K within the first 12 months: Oct 1, 2026 – Sep 30, 2027 | Tracked on Today with pace, forecast and the monthly amount needed. |
+| Email and sign-in | Google Workspace (once the name and domain exist) | Google sign-in for the hub and Gmail drafts for the agents come after Workspace is set up. |
+| Agents | Three roles, each with several jobs: business development, social media manager, chief of staff | Work lands in the Inbox; nothing is sent automatically. Public web only, no LinkedIn scraping. $60/month cap to start. |
+| Prospecting scope | Small and mid-size companies nationwide, any industry | The ideal-client description is in `clients/company/config.toml`. |
+| Contact data | Public web only for now | Add a paid data service later if volume needs it. |
+
 ## Open questions
 - Business name (ideas in `concept.md` §8).
 - Year-one income goal (scenarios in `concept.md` §5).

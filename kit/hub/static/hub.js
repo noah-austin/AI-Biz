@@ -56,6 +56,16 @@
     Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
     (window.hubCharts || []).forEach(build);
   }
+  // "Copy" buttons next to drafted messages and posts.
+  document.addEventListener("click", async e => {
+    const b = e.target.closest("[data-copy-btn]");
+    if (!b) return;
+    const box = b.closest("article, section").querySelector("[data-copy]");
+    if (!box) return;
+    try { await navigator.clipboard.writeText(box.innerText); b.textContent = "Copied"; }
+    catch (err) { const r = document.createRange(); r.selectNodeContents(box); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected: copy it"; }
+    setTimeout(() => { b.textContent = "Copy"; }, 2500);
+  });
   document.addEventListener("DOMContentLoaded", () => {
     // Wide time tables open on the latest weeks.
     document.querySelectorAll("[data-scroll-end]").forEach(el => { el.scrollLeft = el.scrollWidth; });

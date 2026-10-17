@@ -137,8 +137,8 @@ def _card(title, body, action=""):
 
 
 QUICK = ('<div class="quick"><a class="btn" href="/companies/new">+ Prospect</a>'
-         '<a class="btn secondary" href="/time#add">+ Time</a><a class="btn secondary" href="/money#invoice">+ Invoice</a>'
-         '<a class="btn secondary" href="/money#expense">+ Expense</a></div>')
+         '<a class="btn secondary" href="/tasks">+ Task</a><a class="btn secondary" href="/time#add">+ Time</a>'
+         '<a class="btn secondary" href="/money#invoice">+ Invoice</a></div>')
 
 
 # ---------------------------------------------------------------- today
@@ -146,10 +146,16 @@ QUICK = ('<div class="quick"><a class="btn" href="/companies/new">+ Prospect</a>
 def today_page(request):
     o = pm.overview()
     t = o["today"]
-    pace = o["revenue_ytd"] / o["goal_pace"] if o["goal_pace"] else None
+    share = o["goal_share"] or 0
+    goal = f"""<section class="card goal"><div class="card-head"><h2>Goal: {money(o["goal_amount"], True)} by {ui.date(o["goal_end"])}</h2>
+<span class="meta">{o["goal_months_left"]} months left after this one</span></div>
+<div class="goal-bar" role="img" aria-label="{pct(share, 0)} of goal"><i style="width:{min(100, share * 100):.1f}%"></i>
+<b style="left:{min(100, 100 * o["goal_pace_amount"] / o["goal_amount"] if o["goal_amount"] else 0):.1f}%" title="Where you'd be on an even pace"></b></div>
+<div class="goal-nums"><span><strong>{money(o["goal_so_far"], True)}</strong> invoiced</span>
+<span>pace {money(o["goal_pace_amount"], True)}</span><span>forecast <strong>{money(o["goal_forecast"], True)}</strong></span>
+<span>need {money(o["goal_needed_per_month"], True)} / month</span></div>
+{ui.how(pm.HOW["goal"] + " " + pm.HOW["forecast"] + " " + pm.HOW["needed"])}</section>"""
     tiles = "".join([
-        ui.tile("Revenue this year", money(o["revenue_ytd"], True),
-                f'Goal {money(o["goal"], True)} · {pct(pace, 0)} of pace to date', "/money", pm.HOW["revenue"]),
         ui.tile("Monthly recurring", money(o["mrr"], True), "from active retainers", "/clients", pm.HOW["mrr"]),
         ui.tile("Pipeline", money(o["pipeline"], True),
                 f'{money(o["pipeline_weighted"], True)} weighted · {int(o["pipeline_count"])} prospects', "/pipeline", pm.HOW["pipeline"]),
@@ -160,29 +166,131 @@ def today_page(request):
         ui.tile("Unpaid invoices", money(o["unpaid"], True),
                 (f'{money(o["overdue"], True)} overdue' if o["overdue"] else "none overdue"), "/money", pm.HOW["unpaid"]),
     ])
+    counts = pm.inbox_counts()
+    waiting = sum(counts.values())
+    labels = {"prospect": "prospect", "message": "message", "post": "post", "brief": "brief", "task": "task", "note": "note"}
+    summary = " · ".join(f"{n} {labels.get(k, k)}" + ("s" if n != 1 else "") for k, n in counts.items())
+    inbox = (f'<a class="inbox-banner" href="/inbox"><strong>{waiting} waiting in your inbox</strong>'
+             f'<span>{summary}</span><span aria-hidden="true">→</span></a>'
+             if waiting else "")
+    brief = db.one("""SELECT id, title, body, created_at FROM practice.agent_items
+                      WHERE kind = 'brief' AND agent = 'chief' AND status = 'pending' ORDER BY created_at DESC LIMIT 1""")
+    brief_html = ""
+    if brief:
+        from ..ai import render
+        brief_html = _card(brief["title"], f'<div class="brief">{render.to_html(brief["body"])}</div>',
+                           '<a href="/inbox#brief">Inbox</a>')
     fu = pm.follow_ups(t)
     fu_html = "".join(
         f'<li><div>{_link(r["id"], r["name"])}<div class="meta">{esc(r["next_step"] or "Follow up")}'
         f'{" · " + esc(r["contact_name"]) if r["contact_name"] else ""}</div></div><span>{_due(r["next_step_date"], t)}</span></li>'
         for r in fu) or '<li class="meta">Nothing due in the next 7 days. Add next steps to your prospects so they show up here.</li>'
-    recent = db.query("""SELECT a.happened_on, a.kind, a.summary, c.id, c.name FROM practice.activities a
-                         JOIN practice.companies c ON c.id = a.company_id ORDER BY a.happened_on DESC, a.id DESC LIMIT 6""")
-    recent_html = "".join(
-        f'<li><div>{_link(r["id"], r["name"])}<div class="meta">{esc(pm.ACTIVITY_KINDS[r["kind"]])}: '
-        f'{esc((r["summary"] or "")[:110])}</div></div><span class="meta">{ui.short_date(r["happened_on"])}</span></li>'
-        for r in recent) or '<li class="meta">No activity logged yet.</li>'
-    eng = pm.engagements_with_hours(("active",))
-    eng_html = "".join(
-        f'<li><div>{_link(e["company_id"], e["company_name"])}<div class="meta">{esc(e["name"])}</div></div>'
-        f'<span class="amt">{float(e["hours_used"]):g}{" / " + format(float(e["hours_budget"]), "g") if e["hours_budget"] else ""} h</span></li>'
-        for e in eng) or '<li class="meta">No active engagements yet.</li>'
-    body = f"""{QUICK}<div class="tiles">{tiles}</div>
-<div class="cols even">
+    token = forms.auth.csrf_token(request.cookies.get(forms.auth.COOKIE))
+    tasks = pm.open_tasks(8)
+    task_html = "".join(
+        f'<li><form method="post" action="/tasks/{r["id"]}/done" class="inline"><input type="hidden" name="_csrf" value="{token}">'
+        f'<button class="tick" type="submit" aria-label="Mark done">✓</button></form>'
+        f'<div class="grow">{esc(r["title"])}<div class="meta">{esc(r["category"])}{" · " + esc(r["company"]) if r["company"] else ""}</div></div>'
+        f'<span>{_due(r["due_date"], t) if r["due_date"] else ""}</span></li>' for r in tasks) or '<li class="meta">No open tasks.</li>'
+    sc = pm.weekly_scorecard(t, weeks=1)
+    sc_html = "".join(
+        f'<div class="sc-item{" hit" if r["target"] and r["values"][-1] >= r["target"] else ""}"><span>{esc(r["label"])}</span>'
+        f'<strong>{money(r["values"][-1], True) if r["key"] == "revenue" else format(r["values"][-1], "g")}</strong>'
+        f'<span class="meta">{"target " + format(r["target"], "g") if r["target"] else "this week"}</span></div>' for r in sc["rows"])
+    body = f"""{inbox}{QUICK}{goal}
+<div class="tiles">{tiles}</div>
+<div class="cols">
+  <div>{brief_html}
   {_card("Follow-ups (next 7 days)", f'<ul class="list">{fu_html}</ul>', '<a href="/pipeline">Pipeline</a>')}
-  <div>{_card("Active engagements", f'<ul class="list">{eng_html}</ul>', '<a href="/clients">Clients</a>')}
-  {_card("Recent activity", f'<ul class="list">{recent_html}</ul>')}</div>
+  {_card("This week so far", f'<div class="sc-strip">{sc_html}</div>', '<a href="/scorecard">Scorecard</a>')}</div>
+  <div>{_card("Tasks", f'<ul class="list tasks">{task_html}</ul>', '<a href="/tasks">All tasks</a>')}</div>
 </div>"""
     return ui.page(request, "Today", body, "Today", subtitle=f"{ui.date(t)} · week of {ui.short_date(o['week_start'])}")
+
+
+def scorecard_page(request):
+    t = pm.today()
+    sc = pm.weekly_scorecard(t, weeks=8)
+    head = "".join(f'<th class="n">{ui.short_date(w)}{"<br><span class=muted>so far</span>" if i == len(sc["weeks"]) - 1 else ""}</th>'
+                   for i, w in enumerate(sc["weeks"]))
+    rows = []
+    for r in sc["rows"]:
+        cells = []
+        for i, v in enumerate(r["values"]):
+            last = i == len(r["values"]) - 1
+            cls = ("hit" if v >= r["target"] else "miss") if r["target"] and not last else ""
+            shown = money(v, True) if r["key"] == "revenue" else format(v, "g")
+            cells.append(f'<td class="n {cls}{" partial" if last else ""}">{shown}</td>')
+        tgt = f'<span class="goal">Target {format(r["target"], "g")} a week</span>' if r["target"] else ""
+        rows.append(f'<tr><th class="sticky measure" scope="row">{esc(r["label"])}{tgt}</th>{"".join(cells)}</tr>')
+    o = pm.overview(t)
+    body = f"""<section class="card"><p class="muted" style="margin-top:0">The activity that leads to revenue. Green: target hit. Red (✕): missed.
+This week is still in progress. Targets are set in the company settings.</p>
+<div class="scroll" data-scroll-end><table class="data scorecard"><thead><tr><th class="sticky">Measure</th>{head}</tr></thead>
+<tbody>{"".join(rows)}</tbody></table></div></section>
+{_card("Where this is heading", f'<p>{money(o["goal_so_far"])} invoiced toward {money(o["goal_amount"])}. Forecast {money(o["goal_forecast"])}. '
+       f'You need about {money(o["goal_needed_per_month"])} a month from here.</p>' + ui.how(pm.HOW["forecast"]))}"""
+    return ui.page(request, "My scorecard", body, "Today", subtitle="Weeks run Monday to Sunday", wide=True)
+
+
+# ---------------------------------------------------------------- tasks
+
+CATEGORIES = ["General", "Company setup", "Sales", "Marketing", "Client work", "Systems", "Finance"]
+
+
+def task_fields():
+    return [Field("title", "Task", required=True, wide=True),
+            Field("category", "Category", "select", options=[(c, c) for c in CATEGORIES]),
+            Field("due_date", "Due", "date"),
+            Field("company_id", "Company", "select", options=_companies()),
+            Field("notes", "Notes", "textarea")]
+
+
+def _notes(text):
+    return f'<div class="meta pre">{esc(text)}</div>' if text else ""
+
+
+def tasks_page(request, values=None, errors=None):
+    t = pm.today()
+    token = forms.auth.csrf_token(request.cookies.get(forms.auth.COOKIE))
+    open_ = pm.open_tasks()
+    groups = {}
+    for r in open_:
+        groups.setdefault(r["category"], []).append(r)
+    blocks = []
+    for cat in sorted(groups, key=lambda c: (CATEGORIES.index(c) if c in CATEGORIES else 99, c)):
+        items = "".join(
+            f'<li><form method="post" action="/tasks/{r["id"]}/done" class="inline"><input type="hidden" name="_csrf" value="{token}">'
+            f'<button class="tick" type="submit" aria-label="Mark done">✓</button></form>'
+            f'<div class="grow">{esc(r["title"])}<div class="meta">{esc(r["company"] or "")}'
+            f'{" · by " + esc(r["created_by"]) if r["created_by"] != "noah" else ""}</div>'
+            f'{_notes(r["notes"])}</div>'
+            f'<span>{_due(r["due_date"], t) if r["due_date"] else ""}</span></li>' for r in groups[cat])
+        blocks.append(f'<h3 class="task-group">{esc(cat)} <span class="meta">({len(groups[cat])})</span></h3><ul class="list tasks">{items}</ul>')
+    done = db.query("SELECT title, done_at FROM practice.tasks WHERE done_at IS NOT NULL ORDER BY done_at DESC LIMIT 10")
+    done_html = "".join(f'<li><div class="grow"><s>{esc(r["title"])}</s></div><span class="meta">{ui.short_date(r["done_at"].date())}</span></li>'
+                        for r in done)
+    seed = ""
+    if not db.one("SELECT 1 AS x FROM practice.tasks WHERE category = 'Company setup' LIMIT 1"):
+        seed = (f'<form method="post" action="/tasks/seed" class="inline"><input type="hidden" name="_csrf" value="{token}">'
+                f'<button class="btn secondary" type="submit">Add the company launch checklist</button></form>')
+    body = f"""<div class="cols">
+  <section class="card"><div class="card-head"><h2>Open ({len(open_)})</h2>{seed}</div>{"".join(blocks) or "<p class=meta>Nothing open.</p>"}
+  {"<h3 class=task-group>Recently done</h3><ul class=list>" + done_html + "</ul>" if done_html else ""}</section>
+  {_card("Add a task", forms.render(request, task_fields(), values, "/tasks", "Add", errors))}
+</div>"""
+    return ui.page(request, "Tasks", body, "Tasks")
+
+
+def save_task(request, form):
+    data = forms.parse(task_fields(), form)
+    data["company_id"] = _int(data["company_id"])
+    db.execute("""INSERT INTO practice.tasks (title, category, due_date, company_id, notes)
+                  VALUES (%(title)s, %(category)s, %(due_date)s, %(company_id)s, %(notes)s)""", data)
+
+
+def task_done(tid):
+    db.execute("UPDATE practice.tasks SET done_at = now() WHERE id = %(i)s AND done_at IS NULL", {"i": tid})
 
 
 # ---------------------------------------------------------------- pipeline
@@ -402,8 +510,21 @@ def clients_page(request):
         f'<td class="n">{money(e["price"]) if e["price"] else (money(e["monthly_fee"]) + "/mo" if e["monthly_fee"] else "—")}</td>'
         f'<td class="n">{float(e["hours_used"]):g}{" / " + format(float(e["hours_budget"]), "g") if e["hours_budget"] else ""}</td>'
         f'<td class="n">{money(e["invoiced"])}</td></tr>' for e in engs)
+    fees = pm.referral_fees()
+    frows = "".join(f'<tr><td>{_link(r["id"], r["partner"])}</td><td>{_link(r["client_id"], r["client"])}</td>'
+                    f'<td class="n">{money(r["first_year"])}</td><td class="n">{money(r["fee"])}</td></tr>' for r in fees)
+    partners = db.query("""SELECT p.id, p.name, p.contact_name, count(c.id) AS intros
+                           FROM practice.companies p LEFT JOIN practice.companies c ON c.referred_by = p.id
+                           WHERE p.kind = 'partner' AND NOT p.archived GROUP BY 1, 2, 3 ORDER BY 4 DESC, 2""")
+    prows = "".join(f'<li><div>{_link(r["id"], r["name"])}<div class="meta">{esc(r["contact_name"] or "")}</div></div>'
+                    f'<span class="amt">{r["intros"]} intro{"s" if r["intros"] != 1 else ""}</span></li>' for r in partners)
+    partner_html = _card("Referral partners", f'<ul class="list">{prows or "<li class=meta>No partners yet. Add one as a company of type Referral partner.</li>"}</ul>'
+                         + (f'<h3 style="margin-top:14px">Referral fees</h3><div class="scroll"><table class="data"><thead><tr><th>Partner</th><th>Client</th>'
+                            f'<th class="n">First-year invoices</th><th class="n">Fee</th></tr></thead><tbody>{frows}</tbody></table></div>' if frows else "")
+                         + ui.how(pm.HOW["referral_fees"]))
     body = f"""<div class="quick"><a class="btn" href="/engagements/new">+ Engagement</a></div>
 {_card("Clients", f'<div class="scroll"><table class="data"><thead><tr><th>Client</th><th>Contact</th><th class="n">Monthly</th><th class="n">Hours this month</th><th class="n">Billed to date</th><th class="n">Unpaid</th></tr></thead><tbody>{trs or "<tr><td colspan=6>No clients yet. Your first one goes here.</td></tr>"}</tbody></table></div>')}
+{partner_html}
 {_card("Open engagements", f'<div class="scroll"><table class="data"><thead><tr><th>Engagement</th><th>Client</th><th>Offer</th><th>Status</th><th class="n">Price</th><th class="n">Hours (used / budget)</th><th class="n">Invoiced</th></tr></thead><tbody>{etrs or "<tr><td colspan=7>None yet.</td></tr>"}</tbody></table></div>')}"""
     return ui.page(request, "Clients", body, "Clients")
 
