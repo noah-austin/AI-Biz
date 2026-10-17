@@ -1,0 +1,13 @@
+# systemd unit: /etc/systemd/system/hub.service
+[Unit]
+Description=Hub web app
+After=network.target postgresql.service
+
+[Service]
+User=hub
+WorkingDirectory=/opt/hub
+ExecStart=/opt/hub/venv/bin/uvicorn kit.hub.app:app --host 127.0.0.1 --port 8000 --workers 2 --proxy-headers
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

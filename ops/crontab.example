@@ -1,0 +1,5 @@
+# Install with: crontab -u hub ops/crontab.example   (paths assume the kit lives in /opt/hub)
+# Hourly sync at 7 past the hour; nightly backup at 2:30 UTC; weekly restore test on Sundays.
+7 * * * *   cd /opt/hub && /opt/hub/venv/bin/python -m kit.sync >> /var/log/hub/sync.log 2>&1
+30 2 * * *  /opt/hub/ops/backup.sh >> /var/log/hub/backup.log 2>&1
+0 4 * * 0   /opt/hub/ops/restore_test.sh >> /var/log/hub/restore_test.log 2>&1

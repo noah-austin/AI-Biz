@@ -1,0 +1,84 @@
+# Bluestem Facility Services: a FICTIONAL company used to demo the kit.
+# Every client gets a folder like this one. It holds their business settings;
+# secrets never go here (they go in the server's .env).
+
+company = "Bluestem Facility Services"
+short_name = "Bluestem"
+timezone = "America/Chicago"
+demo = true
+fiscal_year_start_month = 1
+
+# Where "open in source system" links go. In the demo they open a stand-in page.
+[links]
+crm_deal = "/demo-source/crm/opportunity/{id}"
+crm_account = "/demo-source/crm/account/{id}"
+accounting_invoice = "/demo-source/accounting/invoice/{id}"
+accounting_customer = "/demo-source/accounting/customer/{id}"
+
+[[sources]]
+type = "demo_crm"
+path = "source"
+
+[[sources]]
+type = "demo_accounting"
+path = "source"
+
+# CRM branch codes -> the names people use, and which region each rolls up to.
+[[branches]]
+code = "DAL-01"
+name = "Dallas"
+region = "North Texas"
+[[branches]]
+code = "FTW-02"
+name = "Fort Worth"
+region = "North Texas"
+[[branches]]
+code = "AUS-03"
+name = "Austin"
+region = "Central Texas"
+[[branches]]
+code = "SAT-04"
+name = "San Antonio"
+region = "Central Texas"
+[[branches]]
+code = "HOU-05"
+name = "Houston"
+region = "Gulf Coast"
+[[branches]]
+code = "HOU-06"
+name = "Houston South"
+region = "Gulf Coast"
+
+# Goals. period is a year ("2026") or "weekly".
+[[goals]]
+metric = "bookings"
+period = "2026"
+value = 26000000
+[[goals]]
+metric = "bookings"
+period = "weekly"
+value = 500000
+[[goals]]
+metric = "new_pipeline"
+period = "weekly"
+value = 1300000
+[[goals]]
+metric = "new_deals"
+period = "weekly"
+value = 25
+[[goals]]
+metric = "billed"
+period = "weekly"
+value = 450000
+[[goals]]
+metric = "collected"
+period = "weekly"
+value = 450000
+[[goals]]
+metric = "ar_over_60"
+period = "weekly"
+value = 400000
+[[goals]]
+metric = "win_rate_dollars"
+period = "weekly"
+value = 36

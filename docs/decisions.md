@@ -14,9 +14,17 @@
 | Location | Texas | Texas LLC. |
 | Time | 20 hours a week | |
 
+## 2026-10-17: demo and kit, first build
+| Topic | Decision | Notes |
+|---|---|---|
+| Demo company | Bluestem Facility Services (fictional): Texas commercial facility services, 6 branches, CRM + accounting | Broadly relatable to mid-size B2B buyers. Made-up data with planted data problems. |
+| Standard tables | Every connector maps into one standard set of CRM and accounting tables | Tools are written once and work for every client. |
+| Chart library | Chart.js 4.4.1 bundled with the kit | No outside CDN, which locked-down client IT prefers. |
+| Sign-in | Passwords per user for now, with branch-level access | Microsoft/Google sign-in is next; only `kit/hub/auth.py` changes. |
+
 ## Open questions
 - Business name (ideas in `concept.md` §8).
 - Year-one income goal (scenarios in `concept.md` §5).
 - Confirm the six-layer model and the three-step offer (`concept.md`).
-- First build: the demo company plus kit, or sales material.
+- Where to host the public demo (a cheap VPS, or Railway).
 - Texas sales tax treatment of the retainer: ask a CPA.
