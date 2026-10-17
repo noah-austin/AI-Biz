@@ -31,6 +31,15 @@
 | Caps (demo) | Chat $50/month, insights $25/month, 40 questions per person per day | Each feature has its own API key. |
 | Costs | Not measured yet | Measure on real questions once the key is in, before quoting clients. |
 
+## 2026-10-17: positioning (concept v2)
+| Topic | Decision | Notes |
+|---|---|---|
+| What we are | Not a general AI consultant: "we help mid-size companies run on their data" | Data consolidation is the engine; the outcome is what we sell. |
+| Delivery model | Platform (the kit) + method + a custom plan per client | Like a Salesforce consultant, but we own the platform. |
+| Entry offer | CRM Health Report, ~1 week, $1,500–2,500 | Built on the kit's clean-up checks. |
+| Niche | Take any good fit; leading guess for marketing is contractors and field services | Decide after 15–20 conversations. |
+| Focus | Stop adding features until a client needs them; ~70% of time goes to selling for 60 days | Must-haves before client #1 are listed in concept.md §7. |
+
 ## Open questions
 - Business name (ideas in `concept.md` §8).
 - Year-one income goal (scenarios in `concept.md` §5).
