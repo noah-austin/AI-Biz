@@ -64,6 +64,8 @@ def clear_failures(ip: str):
 
 
 def authenticate(email: str, password: str) -> dict | None:
+    if email.lower().endswith("@demo.invalid"):  # the demo guest has no password and can't sign in with one
+        return None
     user = db.one("SELECT id, password_hash, active FROM core.app_users WHERE email = lower(%(e)s)", {"e": email})
     ok = check_password(password, user["password_hash"] if user else None)
     if not user or not ok or not user["active"]:

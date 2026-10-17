@@ -3,6 +3,7 @@
 #
 #   sudo ops/install.sh server                              # once per server: packages, firewall, Python, web server
 #   sudo ops/install.sh add NAME CLIENT_DIR PORT [HOST]     # add an install, e.g. add company clients/company 8001 auto
+#   sudo ops/install.sh website DOMAIN [HUB]                # the public website, saving enquiries into HUB (default company)
 #   sudo ops/install.sh update                              # pull the code, upgrade every install, restart, check
 #   ops/install.sh list                                     # what's installed and whether it's running
 #
@@ -188,6 +189,65 @@ EOF
   true
 }
 
+cmd_website() {
+  need_root
+  local domain="${1:-}" hub="${2:-company}"
+  [[ "$domain" =~ ^[a-z0-9.-]+\.[a-z]{2,}$ ]] || { echo "DOMAIN: e.g. yourcompany.com"; exit 2; }
+  local hub_env="$HUB_ETC/$hub.env" envf="$HUB_ETC/website.env" db="hub_$hub" role="website_$hub"
+  [ -f "$hub_env" ] || { echo "No '$hub' install yet. Add it first: ops/install.sh add $hub clients/company 8001 auto"; exit 2; }
+  if [ ! -f "$envf" ]; then
+    say "Website login for the $hub database (it can only add enquiries)"
+    local pw; pw="$(secret)"
+    psql_admin -d "$db" <<SQL
+DO \$\$BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '$role') THEN CREATE ROLE $role LOGIN; END IF;
+END\$\$;
+ALTER ROLE $role PASSWORD '$pw' NOCREATEDB NOCREATEROLE;
+GRANT CONNECT ON DATABASE $db TO $role;
+GRANT USAGE ON SCHEMA practice TO $role;
+GRANT INSERT ON practice.inbound_leads TO $role;
+GRANT SELECT (ip_hash, created_at) ON practice.inbound_leads TO $role;
+GRANT USAGE ON SEQUENCE practice.inbound_leads_id_seq TO $role;
+SQL
+    local hub_host; hub_host="$(grep -h '^[a-z0-9.-]* {' "$CADDY_SITES/$hub.caddy" 2>/dev/null | sed 's/ {//' || true)"
+    umask 077
+    {
+      echo "# Public website. Its database login can only add enquiries. Owner-only."
+      echo "DATABASE_URL=postgresql://$role:$pw@127.0.0.1:5432/$db"
+      echo "SITE_SECRET=$(secret)"
+      [ -n "$hub_host" ] && echo "HUB_URL=https://$hub_host"
+      grep -E '^(ALERT_NTFY_URL|ALERT_EMAIL_TO|SMTP_[A-Z]+)=' "$hub_env" || true
+    } > "$envf"
+    chown "$RUN_USER:$RUN_USER" "$envf"; chmod 600 "$envf"; umask 022
+  fi
+  if [ "$NO_SYSTEMD" != 1 ]; then
+    say "Service hub-website on 127.0.0.1:8000"
+    cat > /etc/systemd/system/hub-website.service <<UNIT
+[Unit]
+Description=Public website
+After=network.target postgresql.service
+
+[Service]
+User=$RUN_USER
+WorkingDirectory=$REPO
+Environment=HUB_ENV_FILE=$envf
+ExecStart=$REPO/venv/bin/uvicorn website.app:app --host 127.0.0.1 --port 8000 --workers 2 --proxy-headers --forwarded-allow-ips 127.0.0.1
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+    systemctl daemon-reload && systemctl enable --now hub-website >/dev/null && systemctl restart hub-website
+  fi
+  say "Web address https://$domain (www.$domain redirects to it)"
+  printf '%s {\n\tencode gzip\n\treverse_proxy 127.0.0.1:8000\n}\nwww.%s {\n\tredir https://%s{uri} permanent\n}\n' \
+    "$domain" "$domain" "$domain" > "$CADDY_SITES/website.caddy"
+  [ "$NO_SYSTEMD" = 1 ] || systemctl reload caddy
+  say "Done. Point the domain's DNS (A records for $domain and www.$domain) at this server's IP first."
+  echo "Edit the words in website/pages.py and the name, email and prices in website/config.toml."
+}
+
 cmd_update() {
   need_root
   say "Code"
@@ -196,6 +256,10 @@ cmd_update() {
   for envf in "$HUB_ETC"/*.env; do
     [ -e "$envf" ] || continue
     local name; name="$(basename "$envf" .env)"
+    if [ "$name" = website ]; then
+      [ "$NO_SYSTEMD" = 1 ] || systemctl restart hub-website
+      continue
+    fi
     say "Upgrading $name"
     as_user env HUB_ENV_FILE="$envf" "$PY" -m kit.manage init-db | tail -1
     if [ "$NO_SYSTEMD" != 1 ]; then
@@ -220,6 +284,7 @@ cmd_list() {
 case "${1:-}" in
   server) cmd_server ;;
   add) shift; cmd_add "$@" ;;
+  website) shift; cmd_website "$@" ;;
   update) cmd_update ;;
   list) cmd_list ;;
   *) sed -n '2,12p' "$0"; exit 1 ;;

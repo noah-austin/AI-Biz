@@ -27,7 +27,7 @@ python -m kit.manage init-db
 python -m kit.sync
 python -m kit.manage create-user you@example.com "Your Name" --admin
 uvicorn kit.hub.app:app --port 8000       # then open http://127.0.0.1:8000
-python -m pytest -q tests                 # 57 tests (the AI and agent tests use a fake Claude, no key needed)
+python -m pytest -q tests                 # 63 tests (the AI and agent tests use a fake Claude, no key needed)
 ```
 Set `SECURE_COOKIES=0` only when testing without HTTPS.
 

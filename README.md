@@ -7,6 +7,7 @@ Noah's consulting practice: helping mid-size companies pull scattered business d
 - `clients/demo/` — Bluestem Facility Services, a fictional company with realistic fake data for demos (`company.md` has the demo script).
 - `templates/` — documents we reuse with every client (rulebook template).
 - `ops/` — backups, restore test and server setup files.
+- `website/` — the public website; its contact form drops enquiries into the company hub's Inbox.
 - `sales/` — the sales kit: pitch, CRM Health Report offer, outreach messages, call script, targets.
 - `docs/concept.md` — the refined business concept, offer, pricing and go-to-market.
 - `docs/decisions.md` — business decisions made so far, and open questions.

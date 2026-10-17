@@ -22,7 +22,7 @@ settings = get_settings()  # fail loudly at start-up if anything is missing
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 
-PUBLIC = ("/login", "/static/", "/healthz", "/auth/google/")
+PUBLIC = ("/login", "/static/", "/healthz", "/auth/google/", "/guest")
 
 
 @app.middleware("http")
@@ -233,6 +233,14 @@ if "practice" in APPS:
         await run_in_threadpool(pp.task_done, tid)
         back = request.headers.get("referer") or "/tasks"
         return RedirectResponse(auth.safe_next("/" + back.split("/", 3)[-1]) if "://" in back else "/tasks", status_code=303)
+
+    @app.post("/inbox/lead/{lead_id}/{action}")
+    async def inbox_lead(request: Request, lead_id: int, action: str):
+        if action not in ("add", "dismiss"):
+            return _not_found(request)
+        if await _form(request) is None:
+            return _bad_form(request)
+        return RedirectResponse(await run_in_threadpool(pin.decide_lead, lead_id, action), status_code=303)
 
     @app.post("/inbox/{item_id}/{action}")
     async def inbox_decide(request: Request, item_id: int, action: str):
@@ -452,6 +460,25 @@ def ai_job(request: Request, job_id: str):
 @app.get("/ai/conversations/{conversation_id}")
 def ai_conversation(request: Request, conversation_id: str):
     return {"turns": chat.history(conversation_id, request.state.user)}
+
+
+if settings.is_demo and settings.client.get("demo_guest"):
+    GUEST_EMAIL = "guest@demo.invalid"
+
+    @app.get("/guest")
+    def guest_login(request: Request):
+        """Public demo only: one click signs a visitor in as a read-only guest (no password, never an admin)."""
+        ip = request.client.host if request.client else "unknown"
+        if auth.too_many_failures(ip):
+            return PlainTextResponse("Too many visits from here. Try again later.", status_code=429)
+        user = db.one("SELECT id FROM core.app_users WHERE email = %(e)s", {"e": GUEST_EMAIL})
+        if not user:
+            with db.connect() as conn:
+                user = db.one("""INSERT INTO core.app_users (email, name, role) VALUES (%(e)s, 'Guest', 'viewer')
+                                 ON CONFLICT (email) DO UPDATE SET role = 'viewer' RETURNING id""", {"e": GUEST_EMAIL}, conn)
+        resp = RedirectResponse("/", status_code=303)
+        resp.set_cookie(auth.COOKIE, auth.start_session(user["id"]), **auth.cookie_kwargs())
+        return resp
 
 
 if settings.is_demo and "analytics" in APPS:

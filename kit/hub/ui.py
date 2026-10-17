@@ -172,8 +172,9 @@ def page(request, title: str, body: str, active: str = "", subtitle: str = "", w
             worst = "critical" if any(a["severity"] == "critical" for a in found) else "warning"
             alert_bar = (f'<a class="alert-banner {worst}" href="/health#alerts"><span aria-hidden="true">!</span> '
                          f'{esc(found[0]["message"])}{f" (+{len(found) - 1} more)" if len(found) > 1 else ""}</a>')
-    demo = ('<div class="demo-banner">Demo company with made-up data. Bluestem Facility Services is fictional.</div>'
-            if settings.is_demo else "")
+    demo = ('<div class="demo-banner">Demo company with made-up data. Bluestem Facility Services is fictional.'
+            + (' You\'re looking around as a guest.' if user and user["email"].endswith("@demo.invalid") else "")
+            + '</div>' if settings.is_demo else "")
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(title)} · {esc(client.get("short_name", "Hub"))}</title>

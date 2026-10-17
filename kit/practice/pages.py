@@ -168,8 +168,10 @@ def today_page(request):
     ])
     counts = pm.inbox_counts()
     waiting = sum(counts.values())
-    labels = {"prospect": "prospect", "message": "message", "post": "post", "brief": "brief", "task": "task", "note": "note"}
-    summary = " · ".join(f"{n} {labels.get(k, k)}" + ("s" if n != 1 else "") for k, n in counts.items())
+    labels = {"prospect": "prospect", "message": "message", "post": "post", "brief": "brief", "task": "task", "note": "note",
+              "website enquiry": "website enquir"}
+    summary = " · ".join(f"{n} {labels.get(k, k)}" + (("ies" if k == "website enquiry" else "s") if n != 1 else ("y" if k == "website enquiry" else ""))
+                         for k, n in counts.items())
     inbox = (f'<a class="inbox-banner" href="/inbox"><strong>{waiting} waiting in your inbox</strong>'
              f'<span>{summary}</span><span aria-hidden="true">→</span></a>'
              if waiting else "")

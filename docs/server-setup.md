@@ -69,6 +69,7 @@ Work in plain English with Noah. Ask before anything hard to undo. Follow `CLAUD
    - `sudo ops/install.sh add demo clients/demo 8002 auto`: the Bluestem demo.
 
    Each gets its own database and logins, settings file (`/etc/hub/NAME.env`), service, scheduled jobs and an HTTPS address on `sslip.io`. Swap to the real domain once it exists: re-run `add` with the hostname.
+   - Once the domain exists: `sudo ops/install.sh website yourcompany.com company`. It sets up the public website, saving enquiries into the company hub. Also re-run `add company … hub.yourcompany.com` and `add demo … demo.yourcompany.com` for the real addresses, and set `demo_url` in `website/config.toml` to `https://demo.yourcompany.com/guest`.
 3. **Logins:** have Noah create his admin login on each install with the command the installer prints. He types the password himself.
 4. **Keys and alerts**, typed hidden by Noah with `kit.manage set-secret` (the installer prints the exact form):
    - `ANTHROPIC_API_KEY_CHAT` and `ANTHROPIC_API_KEY_AGENTS` on the company hub, and `ANTHROPIC_API_KEY_CHAT` on the demo;

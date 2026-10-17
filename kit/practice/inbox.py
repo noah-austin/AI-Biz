@@ -62,23 +62,74 @@ def _item(i, token):
             f'{body}<div class="inbox-actions">{actions}</div></article>')
 
 
+LEAD_INTEREST = {"health_report": "a CRM Health Report", "call": "a call", "demo": "a demo walkthrough",
+                 "partner": "a referral partnership", "other": "something else"}
+
+
+def _lead(lead, token):
+    who = " · ".join(esc(x) for x in (lead["role"], lead["company"], lead["company_size"], lead["crm"]) if x)
+    msg = f'<div class="draft pre">{esc(lead["message"])}</div>' if lead["message"] else ""
+    base = f"/inbox/lead/{lead['id']}"
+    return (f'<article class="inbox-item"><div class="inbox-head"><h3>{esc(lead["name"])} wants '
+            f'{esc(LEAD_INTEREST.get(lead["interest"], "to talk"))}</h3>'
+            f'<span class="meta">Website · {ui.short_date(lead["created_at"].date())}</span></div>'
+            f'<p class="meta">{who}</p><p><a href="mailto:{esc(lead["email"])}">{esc(lead["email"])}</a></p>{msg}'
+            f'<div class="inbox-actions">{_btn(token, base + "/add", "Add to pipeline", "btn")}'
+            f'{_btn(token, base + "/dismiss", "Spam / not a fit", confirm="Dismiss this enquiry?")}</div></article>')
+
+
+def decide_lead(lead_id: int, action: str) -> str:
+    lead = db.one("SELECT * FROM practice.inbound_leads WHERE id = %(i)s AND status = 'new'", {"i": lead_id})
+    if not lead:
+        return "/inbox"
+    if action == "dismiss":
+        db.execute("UPDATE practice.inbound_leads SET status = 'dismissed' WHERE id = %(i)s", {"i": lead_id})
+        return "/inbox"
+    with db.connect() as conn:
+        existing = db.one("""SELECT id FROM practice.companies WHERE lower(name) = lower(%(n)s) OR
+                             (contact_email IS NOT NULL AND lower(contact_email) = lower(%(e)s)) LIMIT 1""",
+                          {"n": lead["company"] or "", "e": lead["email"]}, conn)
+        if existing:
+            cid = existing["id"]
+        else:
+            cid = db.one("""INSERT INTO practice.companies (name, kind, stage, contact_name, contact_title, contact_email,
+                                                           size_note, source, next_step, next_step_date, notes)
+                            VALUES (%(company)s, 'prospect', 'contacted', %(name)s, %(role)s, %(email)s, %(size)s, 'Website',
+                                    'Reply to their enquiry', core.local_today(), %(notes)s) RETURNING id""",
+                         {"company": lead["company"] or f"{lead['name']} (company not given)", "name": lead["name"],
+                          "role": lead["role"], "email": lead["email"], "size": lead["company_size"],
+                          "notes": f"Website enquiry about {LEAD_INTEREST.get(lead['interest'], 'something')}. CRM: {lead['crm'] or 'not given'}."},
+                         conn)["id"]
+        db.execute("""INSERT INTO practice.activities (company_id, happened_on, kind, summary)
+                      VALUES (%(c)s, (%(t)s AT TIME ZONE core.client_tz())::date, 'email', %(s)s)""",
+                   {"c": cid, "t": lead["created_at"],
+                    "s": f"Website enquiry ({LEAD_INTEREST.get(lead['interest'], 'other')}): {lead['message'] or '(no message)'}"}, conn)
+        db.execute("UPDATE practice.inbound_leads SET status = 'added', company_id = %(c)s WHERE id = %(i)s",
+                   {"c": cid, "i": lead_id}, conn)
+    return f"/companies/{cid}"
+
+
 def inbox_page(request):
     token = forms.auth.csrf_token(request.cookies.get(forms.auth.COOKIE))
+    leads = db.query("SELECT * FROM practice.inbound_leads WHERE status = 'new' ORDER BY created_at DESC LIMIT 100")
     items = db.query("SELECT * FROM practice.agent_items WHERE status = 'pending' ORDER BY created_at DESC LIMIT 200")
     groups = {}
     for i in items:
         groups.setdefault(i["kind"], []).append(i)
     blocks = []
+    if leads:
+        blocks.append(f'<section class="card" id="leads"><div class="card-head"><h2>Website enquiries '
+                      f'<span class="meta">({len(leads)})</span></h2></div>' + "".join(_lead(l, token) for l in leads) + "</section>")
     for kind in ORDER:
         if kind in groups:
             blocks.append(f'<section class="card" id="{kind}"><div class="card-head"><h2>{KIND_LABEL[kind]} '
                           f'<span class="meta">({len(groups[kind])})</span></h2></div>'
                           + "".join(_item(i, token) for i in groups[kind]) + "</section>")
-    empty = ("" if items else '<section class="card"><p>Nothing waiting. The agents drop their work here: new prospects, '
+    empty = ("" if items or leads else '<section class="card"><p>Nothing waiting. The agents drop their work here: new prospects, '
              'drafted messages and posts, briefs and suggested tasks. <a href="/agents">See the agents</a>.</p></section>')
     body = (f'<p class="lead">Everything the agents produce waits here. Nothing is sent or posted until you do it yourself.</p>'
             f'{empty}{"".join(blocks)}')
-    return ui.page(request, "Inbox", body, "Inbox", subtitle=f"{len(items)} waiting")
+    return ui.page(request, "Inbox", body, "Inbox", subtitle=f"{len(items) + len(leads)} waiting")
 
 
 def decide(item_id: int, action: str) -> str:

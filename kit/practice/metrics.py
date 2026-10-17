@@ -79,6 +79,7 @@ def overview(t: dt.date | None = None) -> dict:
     out["pipeline"] = sum(p["value"] for p in pipe if p["stage"] in OPEN_STAGES)
     out["pipeline_weighted"] = sum(p["weighted"] for p in pipe if p["stage"] in OPEN_STAGES)
     out["pipeline_count"] = sum(p["count"] for p in pipe if p["stage"] in OPEN_STAGES)
+    out["new_website_enquiries"] = db.one("SELECT count(*) AS n FROM practice.inbound_leads WHERE status = 'new'")["n"]
     out["effective_rate"] = out["revenue_ytd"] / out["hours_ytd"] if out["hours_ytd"] else None
     days_in_year = 366 if calendar.isleap(t.year) else 365
     out["goal"] = float(s["revenue_goal"])
@@ -228,8 +229,12 @@ def open_tasks(limit=None) -> list[dict]:
 
 
 def inbox_counts() -> dict:
-    return {r["kind"]: r["n"] for r in db.query(
+    out = {r["kind"]: r["n"] for r in db.query(
         "SELECT kind, count(*) AS n FROM practice.agent_items WHERE status = 'pending' GROUP BY 1")}
+    leads = db.one("SELECT count(*) AS n FROM practice.inbound_leads WHERE status = 'new'")["n"]
+    if leads:
+        out = {"website enquiry": leads, **out}
+    return out
 
 
 LAUNCH_CHECKLIST = [

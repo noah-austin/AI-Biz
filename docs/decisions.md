@@ -71,6 +71,15 @@
 | Sign-in | Google sign-in built; switches on once Workspace exists | Only existing hub users can sign in; optionally one domain only. |
 | Business name style | Plain and credible | Shortlist with domain checks still to do. |
 
+## 2026-10-17: website
+| Topic | Decision | Notes |
+|---|---|---|
+| Hosting | Same server as the hubs, as its own small app (`website/`) | The website's database login can only add enquiries. `www` redirects to the main address. |
+| Enquiries | The contact form lands in the company hub's Inbox, with an instant phone alert | One tap adds it to the pipeline. The chief of staff puts new enquiries first in the daily brief. |
+| Spam | Hidden honeypot field, minimum time on page, signed form token, 5 per visitor per hour | No captcha, so nothing annoys real visitors. |
+| Demo access | The "See a live demo" button signs visitors into Bluestem as a read-only guest | No password needed. Guest questions to Ask AI share one daily limit. |
+| Name | "Company Name" placeholder | Swap in `website/config.toml` once chosen. |
+
 ## Open questions
 - Business name (ideas in `concept.md` §8).
 - Year-one income goal (scenarios in `concept.md` §5).

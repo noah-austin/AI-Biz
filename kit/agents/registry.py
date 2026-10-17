@@ -86,8 +86,9 @@ AGENTS = [
                 "1. For each follow-up due today or overdue, read `company_history` and call `propose_message` with a "
                 "ready-to-send follow-up (email or LinkedIn) in Noah's voice, under 90 words, that refers to what was "
                 "actually said before. Skip any that already have a pending drafted message (`recent_items`).\n"
-                "2. Call `write_brief` once with: the 3 things that matter most today, follow-ups due, tasks due, "
-                "anything waiting in the inbox, and one line on progress to the goal. Under 200 words.",
+                "2. Call `write_brief` once with: the 3 things that matter most today (a new website enquiry always "
+                "comes first: reply within one business day), follow-ups due, tasks due, anything waiting in the "
+                "inbox, and one line on progress to the goal. Under 200 words.",
                 WEEKDAYS, "06:45", max_steps=14),
             Job("weekly_review", "Weekly review",
                 "Write the Monday review. Read `weekly_scorecard`, `practice_overview`, `pipeline_report` and "
