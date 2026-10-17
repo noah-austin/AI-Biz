@@ -4,6 +4,7 @@ try:
     import tomllib
 except ModuleNotFoundError:  # Python 3.10
     import tomli as tomllib
+from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
@@ -47,11 +48,20 @@ def layout(title: str, body: str, path: str = "/", description: str = "") -> str
 </div></header>
 <main>{body}</main>
 <footer class="site-foot"><div class="wrap">
-  <div><strong>{esc(c["name"])}</strong><br>{esc(c["tagline"])}</div>
-  <div><a href="mailto:{esc(c["email"])}">{esc(c["email"])}</a><br>{esc(c["city"])}</div>
-  <div><a href="/privacy">Privacy</a> · <a href="{esc(c["demo_url"])}">Live demo</a></div>
+  <div class="foot-grid">
+    <div class="foot-brand"><a class="logo" href="/"><span class="mark" aria-hidden="true"></span>{esc(c["name"])}</a>
+      <p>{esc(c["tagline"])}</p></div>
+    <div><h4>Company</h4><a href="/what-we-build">What we build</a><a href="/about">About</a><a href="{esc(c["demo_url"])}">Live demo</a></div>
+    <div><h4>Get in touch</h4><a href="/contact">Book a call</a><a href="mailto:{esc(c["email"])}">{esc(c["email"])}</a><span>{esc(c["city"])}</span></div>
+  </div>
+  <div class="foot-bottom"><span>© {date.today().year} {esc(c["name"])}</span><a href="/privacy">Privacy</a></div>
 </div></footer>
 </body></html>"""
+
+
+def sec_head(eyebrow: str, title: str, lead: str = "", center: bool = True) -> str:
+    return (f'<header class="sec-head{" center" if center else ""}"><p class="eyebrow">{esc(eyebrow)}</p>'
+            f'<h2>{esc(title)}</h2>{f"<p class=lead>{esc(lead)}</p>" if lead else ""}</header>')
 
 
 def cta_row(primary=("Book a call", "/contact?interest=call")) -> str:
@@ -96,63 +106,47 @@ def home() -> str:
 </div></section>
 
 <section class="band"><div class="wrap">
-  <h2 class="center">From scattered to one place</h2>
+  {sec_head("The difference", "From scattered to one place", "Most companies already have the data. It's just spread across systems that don't talk to each other.")}
   {v.before_after()}
 </div></section>
 
 <section><div class="wrap">
-  <h2>What we build</h2>
-  <p class="section-lead">One foundation, then the pieces that fit your company.</p>
+  {sec_head("What we build", "One foundation, everything on top", "Every build is custom. These are the pieces we put together for you.")}
   <div class="show-grid">{cards}</div>
-  <p class="small muted center">Examples use made-up data.</p>
+  <p class="fine center">Examples use made-up data.</p>
 </div></section>
 
 <section class="agents-band"><div class="wrap">
-  <div class="split">
-    <div>
-      <p class="eyebrow">AI agents</p>
-      <h2>A day with your agents</h2>
-      <p class="section-lead">Agents are AI assistants with a job. They work from your data every day and hand the result to the right person.</p>
-      <p class="approve-note">{v.icon("lock")}<span>Agents prepare the work. A person approves anything that goes out.</span></p>
-    </div>
-    {v.mock_brief()}
-  </div>
+  {sec_head("AI agents", "A day with your agents", "AI assistants with a job. They work from your data every day and hand the result to the right person.")}
   {v.agent_day()}
+  <p class="approve-note">{v.icon("lock")}<span>Agents prepare the work. A person approves anything that goes out.</span></p>
 </div></section>
 
 <section><div class="wrap">
-  <h2 class="center">How it works</h2>
+  {sec_head("How it works", "Four steps, no surprises")}
   <ol class="flow-steps">{step_html}</ol>
 </div></section>
 
-<section class="band"><div class="wrap">
-  <div class="split demo-split">
-    <div>
-      <p class="eyebrow">See it working</p>
-      <h2>Explore a live example</h2>
-      <p class="section-lead">A fictional company with realistic data: the scorecard, pipeline, win/loss, receivables and the AI assistant. No sign-up needed.</p>
-      <a class="btn" href="{esc(c["demo_url"])}">Open the live demo →</a>
-    </div>
-    <div class="shot-stack">
-      {v.demo_shot("home", "The demo hub's home page: bookings, win rate, pipeline, billing and cash, with a bookings-by-month chart.", "main")}
-      {v.demo_shot("scorecard", "The weekly scorecard: each measure by week, green when the goal was hit.", "back")}
-    </div>
+<section class="band"><div class="wrap demo-split">
+  <div class="demo-copy">
+    <p class="eyebrow">See it working</p>
+    <h2>Explore a live example</h2>
+    <p class="lead">A fictional company with realistic data: the scorecard, pipeline, win/loss, receivables and the AI assistant. No sign-up needed.</p>
+    <a class="btn" href="{esc(c["demo_url"])}">Open the live demo →</a>
   </div>
+  {v.demo_shot("home", "The demo hub's home page: bookings, win rate, pipeline, billing and cash, with a bookings-by-month chart.")}
 </div></section>
 
 <section><div class="wrap">
-  <h2 class="center">Why work with us</h2>
+  {sec_head("Why us", "Why work with us")}
   <div class="why-grid">{why_html}</div>
 </div></section>
 
-<section class="offer"><div class="wrap">
-  <div>
-    <p class="eyebrow">Getting started</p>
-    <h2>Start with a conversation</h2>
-    <p>Tell us how your company runs and where your data lives. If there's a fit, you'll get a custom proposal.</p>
-  </div>
-  <div class="cta-col"><a class="btn" href="/contact?interest=call">Book a call</a>
-  <a class="btn ghost light" href="/what-we-build">What we build</a></div>
+<section class="offer"><div class="wrap narrow center">
+  <p class="eyebrow">Getting started</p>
+  <h2>Start with a conversation</h2>
+  <p class="lead">Tell us how your company runs and where your data lives. If there's a fit, you'll get a custom proposal.</p>
+  <div class="cta-row center"><a class="btn" href="/contact?interest=call">Book a call</a><a class="btn ghost light" href="/what-we-build">What we build</a></div>
 </div></section>"""
     return layout(c["name"], body, "/")
 
@@ -163,11 +157,11 @@ def what_we_build() -> str:
               ("calendar", "Meeting prep", "History and numbers on one page before a customer or board meeting."),
               ("bell", "Follow-up watch", "Deals gone quiet, invoices going late, work slipping, flagged to the owner."),
               ("search", "Research", "For example, new companies that look like your best customers.")]
-    agent_html = "".join(f'<div class="why">{v.icon(i)}<h3>{t}</h3><p>{d}</p></div>' for i, t, d in agents)
+    agent_html = "".join(f'<div class="agent-row">{v.icon(i)}<div><h3>{t}</h3><p>{d}</p></div></div>' for i, t, d in agents)
     factors = [("blocks", "Systems we connect"), ("db", "How much data"), ("chart", "What we build on top")]
     factor_html = "".join(f'<span class="chip">{v.icon(i)}{t}</span>' for i, t in factors)
     body = f"""
-<section class="hero slim"><div class="wrap">
+<section class="hero slim with-cta"><div class="wrap">
   <p class="eyebrow">What we build</p>
   <h1>All your data in one place, and everything it unlocks</h1>
   <p class="lead">Every build is custom. These are the pieces we put together, on top of the systems you already use.</p>
@@ -177,7 +171,7 @@ def what_we_build() -> str:
 <section><div class="wrap">
   <div class="split">
     <div>
-      <p class="eyebrow">1 · The foundation</p>
+      <p class="eyebrow">The foundation</p>
       <h2>One place for your data</h2>
       <p>We connect every system with data in it into one database that you own. It updates on its own and keeps history.
       Every number is defined once, in plain English, so it means the same thing everywhere.</p>
@@ -185,14 +179,13 @@ def what_we_build() -> str:
     </div>
     {v.mock_foundation()}
   </div>
-  <h3 class="sys-title">Anything with data in it</h3>
+  <h3 class="sys-title">We connect anything with data in it</h3>
   {v.systems_grid()}
 </div></section>
 
 <section class="band"><div class="wrap">
-  <p class="eyebrow">2 · Reports and tools</p>
-  <h2>What your team uses every day</h2>
-  <div class="show-grid three">
+  {sec_head("Reports and tools", "What your team uses every day")}
+  <div class="show-grid">
     <div class="show-card"><div class="show-visual">{v.mock_scorecard()}</div><h3>A scorecard that fills itself in</h3><p>The weekly numbers leadership runs on.</p></div>
     <div class="show-card"><div class="show-visual">{v.mock_dashboard()}</div><h3>Dashboards and drill-downs</h3><p>By location, team or person, down to every record.</p></div>
     <div class="show-card"><div class="show-visual">{v.mock_tool()}</div><h3>Tools that replace spreadsheets</h3><p>Forecasts, trackers and workbooks, on live data.</p></div>
@@ -203,7 +196,7 @@ def what_we_build() -> str:
   <div class="split">
     {v.mock_ask()}
     <div>
-      <p class="eyebrow">3 · AI</p>
+      <p class="eyebrow">AI</p>
       <h2>AI that knows your business</h2>
       <ul class="checks">
         <li><strong>Ask in plain English,</strong> with the numbers shown so you can check them.</li>
@@ -215,22 +208,25 @@ def what_we_build() -> str:
 </div></section>
 
 <section class="agents-band"><div class="wrap">
-  <p class="eyebrow">4 · AI agents</p>
-  <h2>Agents that do the work</h2>
-  <p class="section-lead">AI assistants with a job, working from your data every day.</p>
-  <div class="why-grid five">{agent_html}</div>
+  {sec_head("AI agents", "Agents that do the work", "AI assistants with a job, working from your data every day.")}
+  <div class="split agents-split">
+    {v.mock_brief()}
+    <div class="agent-list">{agent_html}</div>
+  </div>
   <p class="approve-note">{v.icon("lock")}<span>Agents prepare the work. A person approves anything that goes out.</span></p>
 </div></section>
 
 <section><div class="wrap">
   <div class="split even">
     <div>
+      <p class="eyebrow">Pricing</p>
       <h2>How it's priced</h2>
       <p>Each build is quoted to your company. After our first conversations you get a written proposal with a fixed
       quote, then a monthly plan keeps it running and adds what's next.</p>
       <div class="chips left">{factor_html}</div>
     </div>
     <div>
+      <p class="eyebrow">Hosting</p>
       <h2>Where it runs</h2>
       <div class="host-grid">
         <div class="host">{v.icon("server")}<h3>Your server</h3><p>In your company's name. We manage it.</p></div>
@@ -240,7 +236,12 @@ def what_we_build() -> str:
       confidentiality agreement before any work starts.</p>
     </div>
   </div>
-  {cta_row()}
+</div></section>
+
+<section class="offer"><div class="wrap narrow center">
+  <h2>Let's talk about your company</h2>
+  <p class="lead">A short conversation, then a custom proposal with a fixed quote.</p>
+  <div class="cta-row center"><a class="btn" href="/contact?interest=call">Book a call</a><a class="btn ghost light" href="{esc(cfg()["demo_url"])}">See a live demo →</a></div>
 </div></section>"""
     return layout("What we build", body, "/what-we-build",
                   "All your company's data in one place, with reports, tools, AI and AI agents built on top. Custom to your business.")
@@ -253,7 +254,7 @@ def about() -> str:
   <p class="eyebrow">About us</p>
   <h1>Built by operators, for operators</h1>
 </div></section>
-<section><div class="wrap narrow prose">
+<section><div class="wrap"><div class="prose">
   <p>{esc(c["name"])} helps small and mid-size companies bring their data together in one place and put it to work.</p>
   <p>We come from business operations, as COO and chief of staff: the people responsible for the numbers a company
   runs on. We've lived with data spread across a CRM, an accounting system and a pile of spreadsheets, with reports
@@ -271,7 +272,7 @@ def about() -> str:
     <li><strong>Plain English.</strong> You'll always know what changed, how it was checked, and what it costs.</li>
   </ul>
   {cta_row(("Talk to us", "/contact?interest=call"))}
-</div></section>"""
+</div></div></section>"""
     return layout("About", body, "/about")
 
 
@@ -335,7 +336,7 @@ def thanks(name: str) -> str:
 def privacy() -> str:
     c = cfg()
     body = f"""<section class="hero slim"><div class="wrap"><h1>Privacy notice</h1></div></section>
-<section><div class="wrap narrow prose">
+<section><div class="wrap"><div class="prose">
 <p><strong>What we collect.</strong> Only what you type into the contact form (name, email, company, role, company
 size, the systems you use and your message), plus basic server logs. We keep a one-way scrambled version of your IP
 address for a short time, only to block spam.</p>
@@ -347,7 +348,7 @@ tracking cookies on this site.</p>
 what we hold about you.</p>
 <p><strong>Client data</strong> (for companies we work with) is covered by a separate confidentiality agreement signed
 before any work starts.</p>
-</div></section>"""
+</div></div></section>"""
     return layout("Privacy", body, "/privacy")
 
 
