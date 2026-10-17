@@ -7,6 +7,8 @@ except ModuleNotFoundError:  # Python 3.10
 from functools import lru_cache
 from pathlib import Path
 
+from . import visuals as v
+
 HERE = Path(__file__).parent
 
 
@@ -60,132 +62,184 @@ def cta_row(primary=("Book a call", "/contact?interest=call")) -> str:
 
 def home() -> str:
     c = cfg()
+    gallery = [
+        (v.mock_foundation(), "All your data in one place", "Every system connected into one database you own. Each number defined once."),
+        (v.mock_scorecard(), "Reports that build themselves", "The weekly scorecard and monthly review, ready without anyone typing."),
+        (v.mock_dashboard(), "Dashboards you can click into", "From the company total down to every record behind it."),
+        (v.mock_tool(), "Tools that replace spreadsheets", "The forecast or tracker someone rebuilds every week, as a simple tool."),
+        (v.mock_alerts(), "Alerts that come to you", "By email, Teams or phone, the moment something needs attention."),
+        (v.mock_ask(), "AI that knows your business", "Plain-English questions, answered from your own data, with the numbers shown."),
+    ]
+    cards = "".join(f'<div class="show-card"><div class="show-visual">{m}</div><h3>{esc(t)}</h3><p>{esc(d)}</p></div>'
+                    for m, t, d in gallery)
+    steps = [("chat", "A conversation", "How you run, where your data lives, what you want."),
+             ("doc", "A custom proposal", "A written plan and a fixed quote."),
+             ("blocks", "We build it", "Data in one place, reports matched to the cent, then the tools."),
+             ("refresh", "Run & Grow", "We keep it running and add what's next, every month.")]
+    step_html = "".join(f'<li><span class="step-ico">{v.icon(i)}</span><small>Step {n}</small><h3>{t}</h3><p>{d}</p></li>'
+                        for n, (i, t, d) in enumerate(steps, 1))
+    why = [("people", "Operators, not a vendor", "We come from running companies, as COO and chief of staff."),
+           ("blocks", "Built around you", "No off-the-shelf package. Nothing you use gets replaced."),
+           ("server", "Your data, your choice", "Your own server or hosted by us. No per-seat licences."),
+           ("shield", "Safe by design", "Read-only access, nightly backups, and everyone sees only what they should.")]
+    why_html = "".join(f'<div class="why">{v.icon(i)}<h3>{t}</h3><p>{d}</p></div>' for i, t, d in why)
     body = f"""
-<section class="hero"><div class="wrap">
-  <p class="eyebrow">For leaders of small and mid-size companies</p>
-  <h1>{esc(c["tagline"])}</h1>
-  <p class="lead">We connect the systems your company already runs on (CRM, accounting, ERP, project tools, HR,
-  spreadsheets) into one place. Then we build what that makes possible: reports that build themselves, tools that
-  replace spreadsheets, and AI agents that do real work for your team.</p>
-  {cta_row()}
-  <p class="small muted">Custom to your company. Your data stays yours.</p>
+<section class="hero"><div class="wrap hero-grid">
+  <div class="hero-copy">
+    <p class="eyebrow">For leaders of small and mid-size companies</p>
+    <h1>{esc(c["tagline"])}</h1>
+    <p class="lead">We connect the systems your company runs on into one place, then build what that makes possible:
+    reports that build themselves, tools, AI, and AI agents that do real work.</p>
+    {cta_row()}
+  </div>
+  {v.hub_diagram()}
 </div></section>
 
 <section class="band"><div class="wrap">
-  <h2>Sound familiar?</h2>
-  <div class="grid four">
-    <div class="pain"><strong>Your data lives in ten places.</strong> The CRM, the accounting system, project tools and a pile of spreadsheets, and none of them talk to each other.</div>
-    <div class="pain"><strong>Monday is report day.</strong> Someone spends hours copying numbers between systems to build the leadership report.</div>
-    <div class="pain"><strong>Two meetings, two numbers.</strong> Sales and finance bring different figures, and half the meeting goes on whose is right.</div>
-    <div class="pain"><strong>AI that knows nothing about you.</strong> Copilot or ChatGPT can't answer a single question about your own business.</div>
-  </div>
+  <h2 class="center">From scattered to one place</h2>
+  {v.before_after()}
 </div></section>
 
 <section><div class="wrap">
   <h2>What we build</h2>
-  <p class="section-lead">It starts with one foundation: all your data, connected and defined once. Everything else is built on top of it, around how your company actually runs.</p>
-  <div class="grid two">
-    <div class="feature"><h3>All your data in one place</h3><p>Your systems connected into one database you own, kept up to date automatically, with every number defined once so it means the same thing everywhere.</p></div>
-    <div class="feature"><h3>Reports and dashboards that build themselves</h3><p>The weekly scorecard, the monthly review, the views each team needs. Every figure clicks through to the records behind it.</p></div>
-    <div class="feature"><h3>Tools that replace spreadsheets</h3><p>The forecast, the tracker, the workbook someone rebuilds every week, turned into simple tools on top of live data.</p></div>
-    <div class="feature"><h3>Alerts that come to you</h3><p>"A $400K deal slipped a quarter." "A customer just passed 90 days late." Sent by email or Teams, so nobody has to go looking.</p></div>
-    <div class="feature"><h3>AI that knows your business</h3><p>Ask questions in plain English and get answers from your own data, with the numbers shown so you can check them.</p></div>
-    <div class="feature"><h3>AI agents that do the work</h3><p>Daily briefs, drafted reports, meeting prep and follow-ups, done every day from your data. A person approves anything that goes out.</p></div>
-  </div>
+  <p class="section-lead">One foundation, then the pieces that fit your company.</p>
+  <div class="show-grid">{cards}</div>
+  <p class="small muted center">Examples use made-up data.</p>
 </div></section>
 
-<section class="band"><div class="wrap">
-  <h2>How it works</h2>
-  <ol class="steps">
-    <li><span>1</span><div><h3>A conversation</h3><p>We learn how your company runs, which systems hold your data, and what you wish you could see and do.</p></div></li>
-    <li><span>2</span><div><h3>A custom proposal</h3><p>A written plan and fixed quote, built around your systems, your data and what matters most to you.</p></div></li>
-    <li><span>3</span><div><h3>We build it</h3><p>Your data brought together and your existing reports reproduced to the cent. Then the tools, the AI and the agents on top.</p></div></li>
-    <li><span>4</span><div><h3>Run &amp; Grow</h3><p>We keep it running and accurate, add what you need next, and review it with your leadership every month.</p></div></li>
-  </ol>
+<section class="agents-band"><div class="wrap">
+  <div class="split">
+    <div>
+      <p class="eyebrow">AI agents</p>
+      <h2>A day with your agents</h2>
+      <p class="section-lead">Agents are AI assistants with a job. They work from your data every day and hand the result to the right person.</p>
+      <p class="approve-note">{v.icon("lock")}<span>Agents prepare the work. A person approves anything that goes out.</span></p>
+    </div>
+    {v.mock_brief()}
+  </div>
+  {v.agent_day()}
 </div></section>
 
 <section><div class="wrap">
-  <h2>Why work with us</h2>
-  <div class="grid two">
-    <div class="feature"><h3>Operators, not a software vendor</h3><p>We come from running companies, as COO and chief of staff. We build what we wanted when we were the ones in the meeting.</p></div>
-    <div class="feature"><h3>Built around you</h3><p>No off-the-shelf package. We start from how your company runs and build on the systems you already have. Nothing gets replaced.</p></div>
-    <div class="feature"><h3>Your data, your choice</h3><p>On your own server or hosted by us. Either way the data is yours, there are no per-seat licences, and everything is documented so anyone could take it over.</p></div>
-    <div class="feature"><h3>Safe by design</h3><p>Read-only access to your systems, nightly backups, and each person sees only what they should. The AI can't change your records.</p></div>
+  <h2 class="center">How it works</h2>
+  <ol class="flow-steps">{step_html}</ol>
+</div></section>
+
+<section class="band"><div class="wrap">
+  <div class="split demo-split">
+    <div>
+      <p class="eyebrow">See it working</p>
+      <h2>Explore a live example</h2>
+      <p class="section-lead">A fictional company with realistic data: the scorecard, pipeline, win/loss, receivables and the AI assistant. No sign-up needed.</p>
+      <a class="btn" href="{esc(c["demo_url"])}">Open the live demo →</a>
+    </div>
+    <div class="shot-stack">
+      {v.demo_shot("home", "The demo hub's home page: bookings, win rate, pipeline, billing and cash, with a bookings-by-month chart.", "main")}
+      {v.demo_shot("scorecard", "The weekly scorecard: each measure by week, green when the goal was hit.", "back")}
+    </div>
   </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2 class="center">Why work with us</h2>
+  <div class="why-grid">{why_html}</div>
 </div></section>
 
 <section class="offer"><div class="wrap">
   <div>
     <p class="eyebrow">Getting started</p>
     <h2>Start with a conversation</h2>
-    <p>Tell us how your company runs and where your data lives. If there's a fit, you'll get a custom proposal built around
-    your systems and what you want to do with them.</p>
+    <p>Tell us how your company runs and where your data lives. If there's a fit, you'll get a custom proposal.</p>
   </div>
   <div class="cta-col"><a class="btn" href="/contact?interest=call">Book a call</a>
   <a class="btn ghost light" href="/what-we-build">What we build</a></div>
-</div></section>
-
-<section class="demo-band"><div class="wrap">
-  <h2>See it working</h2>
-  <p>Explore a live example for a fictional company with realistic data: the scorecard, the pipeline, receivables and
-  the AI assistant. No sign-up needed.</p>
-  <a class="btn" href="{esc(c["demo_url"])}">Open the live demo →</a>
 </div></section>"""
     return layout(c["name"], body, "/")
 
 
 def what_we_build() -> str:
+    agents = [("agent", "Daily brief", "For each leader: what changed and what needs attention today."),
+              ("doc", "Reports drafted", "The weekly update or monthly review, written from your numbers."),
+              ("calendar", "Meeting prep", "History and numbers on one page before a customer or board meeting."),
+              ("bell", "Follow-up watch", "Deals gone quiet, invoices going late, work slipping, flagged to the owner."),
+              ("search", "Research", "For example, new companies that look like your best customers.")]
+    agent_html = "".join(f'<div class="why">{v.icon(i)}<h3>{t}</h3><p>{d}</p></div>' for i, t, d in agents)
+    factors = [("blocks", "Systems we connect"), ("db", "How much data"), ("chart", "What we build on top")]
+    factor_html = "".join(f'<span class="chip">{v.icon(i)}{t}</span>' for i, t in factors)
     body = f"""
 <section class="hero slim"><div class="wrap">
   <p class="eyebrow">What we build</p>
   <h1>All your data in one place, and everything it unlocks</h1>
-  <p class="lead">Every company is different, so every build is custom. These are the pieces we put together for you,
-  on top of the systems you already use.</p>
+  <p class="lead">Every build is custom. These are the pieces we put together, on top of the systems you already use.</p>
   {cta_row()}
 </div></section>
 
-<section><div class="wrap narrow">
-  <h2>The foundation: one place for your data</h2>
-  <p>We connect the systems your company runs on into one database that you own: CRM, accounting, ERP, project and
-  field-service tools, HR, spreadsheets, or anything else with data in it. It stays up to date on its own and keeps
-  history. Every number is defined once and written down in plain English, so it means the same thing everywhere.
-  Before we show you anything new, we reproduce the reports you already use, to the cent.</p>
+<section><div class="wrap">
+  <div class="split">
+    <div>
+      <p class="eyebrow">1 · The foundation</p>
+      <h2>One place for your data</h2>
+      <p>We connect every system with data in it into one database that you own. It updates on its own and keeps history.
+      Every number is defined once, in plain English, so it means the same thing everywhere.</p>
+      <p>Before showing you anything new, we reproduce the reports you already use, to the cent.</p>
+    </div>
+    {v.mock_foundation()}
+  </div>
+  <h3 class="sys-title">Anything with data in it</h3>
+  {v.systems_grid()}
+</div></section>
 
-  <h2>Reports and tools your team uses every day</h2>
-  <ul class="checks">
-    <li><strong>A scorecard that fills itself in:</strong> the weekly numbers leadership runs on, ready without anyone typing them.</li>
-    <li><strong>Dashboards and drill-downs:</strong> from the company total down to every record behind it, by location, team or person.</li>
-    <li><strong>Tools that replace spreadsheets:</strong> the forecast, the tracker or the workbook someone rebuilds every week.</li>
-    <li><strong>Reports and alerts that come to you:</strong> by email or Teams, on a schedule or the moment something needs attention.</li>
-  </ul>
+<section class="band"><div class="wrap">
+  <p class="eyebrow">2 · Reports and tools</p>
+  <h2>What your team uses every day</h2>
+  <div class="show-grid three">
+    <div class="show-card"><div class="show-visual">{v.mock_scorecard()}</div><h3>A scorecard that fills itself in</h3><p>The weekly numbers leadership runs on.</p></div>
+    <div class="show-card"><div class="show-visual">{v.mock_dashboard()}</div><h3>Dashboards and drill-downs</h3><p>By location, team or person, down to every record.</p></div>
+    <div class="show-card"><div class="show-visual">{v.mock_tool()}</div><h3>Tools that replace spreadsheets</h3><p>Forecasts, trackers and workbooks, on live data.</p></div>
+  </div>
+</div></section>
 
-  <h2>AI that knows your business</h2>
-  <ul class="checks">
-    <li><strong>Ask in plain English:</strong> answers from your own data, with the numbers shown so you can check them.</li>
-    <li><strong>Insights:</strong> what changed this week and why, without anyone digging for it.</li>
-    <li><strong>Your other AI tools, connected:</strong> a secure, read-only link so Copilot, ChatGPT or Claude can use the same data.</li>
-  </ul>
+<section><div class="wrap">
+  <div class="split">
+    {v.mock_ask()}
+    <div>
+      <p class="eyebrow">3 · AI</p>
+      <h2>AI that knows your business</h2>
+      <ul class="checks">
+        <li><strong>Ask in plain English,</strong> with the numbers shown so you can check them.</li>
+        <li><strong>Insights:</strong> what changed this week and why.</li>
+        <li><strong>Your other AI tools, connected:</strong> Copilot, ChatGPT or Claude can use the same data, read-only.</li>
+      </ul>
+    </div>
+  </div>
+</div></section>
 
-  <h2>AI agents that do the work</h2>
-  <p>Agents are AI assistants with a job. Each one works from your data every day and hands the result to the right person.</p>
-  <ul class="checks">
-    <li><strong>A daily brief:</strong> for each leader, what changed and what needs their attention today.</li>
-    <li><strong>Reports drafted for you:</strong> the weekly update or the monthly review, written from your numbers and ready to check.</li>
-    <li><strong>Meeting prep:</strong> before a customer or board meeting, the history and the numbers on one page.</li>
-    <li><strong>Follow-up watch:</strong> deals gone quiet, invoices going late, work slipping, flagged to whoever owns it.</li>
-    <li><strong>Research:</strong> for example, finding new companies that look like your best customers.</li>
-  </ul>
-  <p>Agents prepare the work; a person approves anything that goes out.</p>
+<section class="agents-band"><div class="wrap">
+  <p class="eyebrow">4 · AI agents</p>
+  <h2>Agents that do the work</h2>
+  <p class="section-lead">AI assistants with a job, working from your data every day.</p>
+  <div class="why-grid five">{agent_html}</div>
+  <p class="approve-note">{v.icon("lock")}<span>Agents prepare the work. A person approves anything that goes out.</span></p>
+</div></section>
 
-  <h2>How it's priced</h2>
-  <p>Each build is quoted to your company: how many systems we connect, how much data there is, and what we build on top.
-  After our first conversations you get a written proposal with a fixed quote, so there are no surprises. After that, a
-  monthly plan keeps it running and adds what you need next.</p>
-
-  <h2>Where it runs, and your data</h2>
-  <p>Your choice: on a server in your company's name, or hosted by us. Either way the data is yours, and we connect to
-  your systems read-only, so we never change anything in them. Nightly backups, and each person sees only what they
-  should. We sign a confidentiality agreement before any work starts.</p>
+<section><div class="wrap">
+  <div class="split even">
+    <div>
+      <h2>How it's priced</h2>
+      <p>Each build is quoted to your company. After our first conversations you get a written proposal with a fixed
+      quote, then a monthly plan keeps it running and adds what's next.</p>
+      <div class="chips left">{factor_html}</div>
+    </div>
+    <div>
+      <h2>Where it runs</h2>
+      <div class="host-grid">
+        <div class="host">{v.icon("server")}<h3>Your server</h3><p>In your company's name. We manage it.</p></div>
+        <div class="host">{v.icon("cloud")}<h3>Hosted by us</h3><p>Its own separate server, never shared.</p></div>
+      </div>
+      <p class="small muted">Either way: the data is yours, read-only access to your systems, nightly backups, and a
+      confidentiality agreement before any work starts.</p>
+    </div>
+  </div>
   {cta_row()}
 </div></section>"""
     return layout("What we build", body, "/what-we-build",

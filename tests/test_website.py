@@ -40,6 +40,15 @@ def test_pages_render_with_security_headers(site):
     assert client.get("/nope").status_code == 404
 
 
+def test_home_graphics_and_images_are_served(site):
+    client, _ = site
+    html = client.get("/").text
+    assert 'class="hub-diagram"' in html and "style=" not in html  # the policy blocks inline styles
+    import re
+    for src in set(re.findall(r'(?:src|srcset)="(/static/[^"]+)"', html)):
+        assert client.get(src).status_code == 200, src
+
+
 def test_real_enquiry_is_saved(site, monkeypatch):
     client, site_app = site
     monkeypatch.setattr(site_app, "notify", lambda data: None)
