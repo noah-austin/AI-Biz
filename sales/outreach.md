@@ -1,6 +1,6 @@
 # Outreach messages
 
-Keep them short, personal and specific. Change the first line for every person. Never paste the same message to 50 people.
+Keep them short, personal and specific. Only claim what you can show; swap in real results as clients come in. Change the first line for every person. Never paste the same message to 50 people.
 
 ## LinkedIn connection note (300 characters max)
 > Hi [Name], I'm a COO-turned-consultant in Texas helping companies like [their company] get one trusted set of numbers out of their CRM and accounting. I'd value connecting, no pitch.
@@ -21,7 +21,7 @@ Keep them short, personal and specific. Change the first line for every person. 
 > Noah
 
 **Email 2. Subject: re: your Monday numbers**
-> Hi [Name], one specific thing I usually find in the first week: open deals whose close date passed months ago, still counted in the pipeline. It's typically 15–30% of what's showing.
+> Hi [Name], one specific thing I usually find in the first week: open deals whose close date passed months ago, still counted in the pipeline. It's often a surprisingly big share of what's showing.
 >
 > If you'd like, I can run a one-week CRM Health Report for [Company]. It's read-only and fixed-price, and you don't pay if it doesn't find something worth fixing. Worth a look?
 
