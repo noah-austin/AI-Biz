@@ -1,6 +1,6 @@
 # Business name shortlist
 
-*2026-10-17. Style: plain and credible. Each name works on its own or with "Data Co." / "Data" after it. 90 names screened; 59 survive.*
+*2026-10-17. Style: plain and credible. Each name works on its own or with "Data Co." / "Data" after it. 130 names screened; 86 survive.*
 
 ## How these were checked
 - **Same-name screen (done):** web searches for companies with the same or a confusingly similar name in data, software, consulting or field service. "Clean" means nothing turned up, not that a trademark search is clear.
@@ -140,6 +140,61 @@ datastead.com
 onesteaddata.com
 tallyhouse.com
 sillandbeam.com
+```
+
+## Round 4: different styles
+40 more, deliberately mixed styles; 27 survive. Pattern: **invented and Latin names mostly clash** with existing products. Plain-English phrases and knot/rope images came through best.
+
+**Best of round 4**
+| Name | Style | The idea | Screen |
+|---|---|---|---|
+| **Whole Picture** | Plain English | What the client gets: the whole picture of their business. | Clean |
+| **Bowline** | Knots and rope | The knot sailors trust because it holds and never jams. | Clean |
+| **Hitchline** | Knots and rope | Hitching things together; a light Texas feel. | Clean |
+| **Merit & Mile** | Classic firm | Sounds like an established partnership. | Clean (says nothing about data) |
+| **Granary** | Farm and gathering | One store for the whole harvest. | Minor: a crypto lending protocol |
+| **Truecount** | Plain English | The true count: one trusted set of numbers. | Minor: an RFID product name |
+| **Barnraise** | Farm and gathering | Neighbours building it together, with you. | Minor: a food marketplace |
+| **Caprock** | Texas | The Caprock Escarpment: the hard top layer that holds the plains up. | Minor: a 3-person Dallas consultancy |
+| **Joined Up** | Plain English | "Joined-up" thinking and data. | Clean, but a British idiom |
+| **Llano** | Texas | The Llano Estacado ("staked plains"). | Clean, but hard to spell and say ("YAH-no") |
+
+**Also usable:**
+- Operating Picture.
+- Ledgerline: leans toward accounting.
+- Fundament.
+- Mesquite: reads as the city.
+- Heartwood: crowded.
+- Austin Operations: sounds Austin-only.
+- Lanyard: reads as a product.
+- Mooring, Totum, Wholly, Unova (a Pokémon region), Hearthline, Cedar & Stone, Post Oak (reads as Houston).
+
+**Dropped:**
+- Corral: CorralData, an AI "ask your data" platform. Almost exactly this business.
+- Brazos: an Austin company's data platform.
+- Plain Numbers: a UK numbers-advice firm.
+- One View / Oneplace: crowded software names.
+- Tabula: a data-automation platform.
+- Unitas: cloud and IT companies.
+- Vinculum: commerce SaaS.
+- Plainly: analytics and video SaaS.
+- Veriton: an Acer computer line.
+- Sumwise: an AI summarizer.
+- Allview: an electronics brand and a German IT firm.
+- Ironwood: Google's AI chip.
+- Gristmill: too close to Grist, a spreadsheet-database tool.
+
+Round 4 domains to add to the bulk check:
+```
+wholepicturedata.com
+bowlinedata.com
+hitchline.com
+meritandmile.com
+granarydata.com
+truecountdata.com
+barnraise.com
+caprockdata.com
+joinedupdata.com
 ```
 
 ## Recommendation
