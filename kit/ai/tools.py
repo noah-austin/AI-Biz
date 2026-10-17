@@ -271,7 +271,7 @@ def run_sql(query: str) -> dict:
         raise ToolError("Only a single SELECT (or WITH ... SELECT) statement is allowed.")
     settings = get_settings()
     dsn = psycopg2.extensions.parse_dsn(settings.database_url)
-    dsn.update(user="ai_reader", password=settings.ai_reader_password, options="-c statement_timeout=10000")
+    dsn.update(user=settings.ai_reader_role, password=settings.ai_reader_password, options="-c statement_timeout=10000")
     conn = psycopg2.connect(**dsn)
     try:
         conn.set_session(readonly=True)

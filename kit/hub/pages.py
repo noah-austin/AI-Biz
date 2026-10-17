@@ -640,7 +640,14 @@ def health(request):
 <div class="scroll"><table class="data"><thead><tr><th>Feature</th><th>Status</th><th class="n">Model calls</th>
 <th class="n">Spent</th><th class="n">Monthly cap</th><th class="n">Avg per answer (30 days)</th></tr></thead><tbody>{ai_rows}</tbody></table></div>
 {ui.how("Every AI call is logged with its tokens and cost. When a feature reaches its cap it stops until the 1st. Each feature has its own API key, so one can be switched off without touching the other.")}</section>"""
-    body = f"""<section class="card"><h2>Data syncs and backups</h2>
+    from ..alerts import open_alerts
+    alerts = open_alerts()
+    alert_rows = "".join(f'<li><div>{ui.status_pill("failed" if a["severity"] == "critical" else "warning")} {esc(a["message"])}'
+                         f'<div class="meta">since {_local(a["first_seen"])}</div></div></li>' for a in alerts)
+    alerts_card = (f'<section class="card" id="alerts"><h2>Open alerts</h2><ul class="list">{alert_rows}</ul>'
+                   f'{ui.how("Checked every 15 minutes. You get a message when a problem starts, every 24 hours while it lasts, and when it is fixed.")}</section>'
+                   if alerts else "")
+    body = f"""{alerts_card}<section class="card"><h2>Data syncs and backups</h2>
 <div class="scroll"><table class="data"><thead><tr><th>What</th><th>Status</th><th class="n">Last success</th>
 <th class="n">Rows</th><th class="n">Removed</th><th>Note</th></tr></thead><tbody>{"".join(rows) or '<tr><td colspan="6">Nothing has synced yet.</td></tr>'}</tbody></table></div>
 {ui.how(f"Syncs run hourly and are flagged out of date after 3 hours without success; the backup after 26 hours. The removal step refuses to delete more than 10% of a table in one run. Times are {tz}.")}</section>

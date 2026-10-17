@@ -4,7 +4,7 @@ import os
 from decimal import Decimal
 
 from .. import db
-from ..config import ROOT, _load_env_file, get_settings
+from ..config import _load_env_file, env_file, get_settings
 
 # $ per million tokens: input, output, cache read, cache write (5-minute).
 PRICES = {
@@ -33,7 +33,7 @@ def ai_settings() -> dict:
 
 def api_key(feature: str) -> str | None:
     """Each feature has its own key; ANTHROPIC_API_KEY is only a fallback for local testing."""
-    _load_env_file(ROOT / ".env")
+    _load_env_file(env_file())
     return os.environ.get(FEATURES[feature]) or os.environ.get("ANTHROPIC_API_KEY") or None
 
 

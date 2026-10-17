@@ -12,11 +12,11 @@ import shlex
 import sys
 from urllib.parse import parse_qs, unquote, urlparse
 
-from .config import ROOT, _load_env_file
+from .config import _load_env_file, env_file
 
 
 def main():
-    _load_env_file(ROOT / ".env")
+    _load_env_file(env_file())
     var = sys.argv[1] if len(sys.argv) > 1 else "DATABASE_URL"
     url = os.environ.get(var)
     if not url:

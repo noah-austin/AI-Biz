@@ -27,18 +27,24 @@ gunzip -c "$FILE" | admin psql -q -v ON_ERROR_STOP=1 -d "$SCRATCH" >/dev/null
 Q="SELECT 'crm.opportunities', count(*) FROM crm.opportunities UNION ALL
    SELECT 'crm.opportunity_history', count(*) FROM crm.opportunity_history UNION ALL
    SELECT 'acct.invoices', count(*) FROM acct.invoices UNION ALL
+   SELECT 'practice.companies', count(*) FROM practice.companies UNION ALL
+   SELECT 'practice.activities', count(*) FROM practice.activities UNION ALL
+   SELECT 'practice.invoices', count(*) FROM practice.invoices UNION ALL
    SELECT 'core.app_users', count(*) FROM core.app_users"
 RESTORED="$(admin psql -At -d "$SCRATCH" -c "$Q")"
 LIVE="$(psql -At -d "$LIVE_DB" -c "$Q")"
 echo "table | restored | live"
 paste -d'|' <(echo "$RESTORED") <(echo "$LIVE" | cut -d'|' -f2)
 
-# Pass if every table restored with rows, and within 5% of live (a sync may have run since the backup).
+# Pass if each table that has rows live came back with rows, within 5% of live (a sync may have run since).
 python3 - "$RESTORED" "$LIVE" <<'PY'
 import sys
 restored = dict(l.split("|") for l in sys.argv[1].splitlines())
 live = dict(l.split("|") for l in sys.argv[2].splitlines())
-bad = [t for t, n in restored.items() if int(n) == 0 or abs(int(n) - int(live[t])) > 0.05 * max(int(live[t]), 1)]
+bad = [t for t, n in restored.items()
+       if int(live[t]) > 0 and (int(n) == 0 or abs(int(n) - int(live[t])) > 0.05 * int(live[t]))]
+if not any(int(n) for n in live.values()):
+    print("nothing to compare yet (all tables empty); restore itself worked")
 if bad:
     print("RESTORE TEST FAILED: counts wrong for", ", ".join(bad)); sys.exit(1)
 print("restore test passed")

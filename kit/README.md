@@ -15,7 +15,7 @@ The reusable system we install for each client: data in one place, tools on top,
 | Agents | `agents/` | Staff-like AI agents with roles and scheduled jobs (business development, social media, chief of staff). Their work lands in the practice Inbox for approval; they never send anything. `python -m kit.agents tick` from cron. |
 | AI | `ai/` | "Ask AI" chat on every page, and home-page insights. See "The AI layer" below. |
 | Admin | `manage.py` | Set up the database, add users, prove the AI login is read-only. |
-| Ops | `../ops/`, `pgenv.py` | Backups (verified, off-site hook), restore test that fails loudly, cron, nginx, systemd. Scripts read `.env` safely and keep the password off the command line. |
+| Ops | `../ops/`, `pgenv.py`, `alerts.py` | `ops/install.sh`: one-command server setup, adding installs, and updating them all. Backups (verified, off-site hook), a restore test that fails loudly, and alerts (ntfy push or email) for failed syncs, backups, agent jobs, AI spend near its cap, and a full disk. |
 
 ## Run the demo locally
 Needs Python 3.10+ and PostgreSQL 14+.
@@ -27,9 +27,12 @@ python -m kit.manage init-db
 python -m kit.sync
 python -m kit.manage create-user you@example.com "Your Name" --admin
 uvicorn kit.hub.app:app --port 8000       # then open http://127.0.0.1:8000
-python -m pytest -q tests                 # 48 tests (the AI and agent tests use a fake Claude, no key needed)
+python -m pytest -q tests                 # 57 tests (the AI and agent tests use a fake Claude, no key needed)
 ```
 Set `SECURE_COOKIES=0` only when testing without HTTPS.
+
+## Sign-in
+Passwords per user by default. Google sign-in (Workspace) switches on with `[auth]` in `config.toml` plus `GOOGLE_CLIENT_SECRET`; only existing hub users can sign in, optionally limited to one domain (`kit/hub/google.py`).
 
 ## Apps per install
 `apps` in a client's `config.toml` picks what the hub shows: `["analytics"]` (default: the CRM/accounting pages,
@@ -71,8 +74,8 @@ The client's data, rulebook and config are theirs. The kit is ours and is licens
 ## Next up
 1. **AI, next steps:** measure real costs once the key is in; a read-only connection (MCP) so outside AI tools
    (Copilot, ChatGPT, Claude) can use the same governed data; AI-drafted monthly business review.
-2. **Microsoft / Google sign-in**, replacing passwords (`hub/auth.py` is the only file that changes).
-3. **Scheduled emails and alerts:** the weekly scorecard to inboxes, and alerts for failed syncs or backups.
+2. **Scheduled emails:** the weekly scorecard to clients' inboxes.
+3. **Microsoft sign-in** for clients on Microsoft 365 (Google is done).
 4. **Real connectors:** Salesforce, HubSpot, QuickBooks Online.
 5. **Pipeline movement** between any two dates, from history.
 6. **Host the demo** online for prospects.

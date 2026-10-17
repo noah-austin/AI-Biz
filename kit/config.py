@@ -22,6 +22,11 @@ class ConfigError(RuntimeError):
     pass
 
 
+def env_file() -> Path:
+    """Each install on a server has its own settings file (HUB_ENV_FILE); local work uses .env in the repo."""
+    return Path(os.environ.get("HUB_ENV_FILE") or ROOT / ".env")
+
+
 def _load_env_file(path: Path) -> None:
     if not path.exists():
         return
@@ -39,6 +44,7 @@ class Settings:
     session_secret: str
     client_dir: Path
     ai_reader_password: str | None
+    ai_reader_role: str
     secure_cookies: bool
     client: dict = field(repr=False)
 
@@ -58,7 +64,7 @@ class Settings:
 
 @lru_cache
 def get_settings() -> Settings:
-    _load_env_file(ROOT / ".env")
+    _load_env_file(env_file())
     missing = [k for k in REQUIRED if not os.environ.get(k)]
     if missing:
         raise ConfigError(f"Missing required settings: {', '.join(missing)}. See .env.example.")
@@ -76,6 +82,7 @@ def get_settings() -> Settings:
         session_secret=os.environ["SESSION_SECRET"],
         client_dir=client_dir,
         ai_reader_password=os.environ.get("AI_READER_PASSWORD") or None,
+        ai_reader_role=os.environ.get("AI_READER_ROLE") or "ai_reader",
         secure_cookies=os.environ.get("SECURE_COOKIES", "1") != "0",
         client=client,
     )

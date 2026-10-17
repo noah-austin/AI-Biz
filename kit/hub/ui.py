@@ -164,6 +164,14 @@ def page(request, title: str, body: str, active: str = "", subtitle: str = "", w
         scope = "All branches" if not user["branches"] else ", ".join(user["branches"])
         who = (f'<div class="who"><span title="{esc(scope)}">{esc(user["name"])}</span>'
                f'<form method="post" action="/logout"><button type="submit" class="linkish">Sign out</button></form></div>')
+    alert_bar = ""
+    if user and user["role"] == "admin":
+        from ..alerts import open_alerts
+        found = open_alerts()
+        if found:
+            worst = "critical" if any(a["severity"] == "critical" for a in found) else "warning"
+            alert_bar = (f'<a class="alert-banner {worst}" href="/health#alerts"><span aria-hidden="true">!</span> '
+                         f'{esc(found[0]["message"])}{f" (+{len(found) - 1} more)" if len(found) > 1 else ""}</a>')
     demo = ('<div class="demo-banner">Demo company with made-up data. Bluestem Facility Services is fictional.</div>'
             if settings.is_demo else "")
     return f"""<!doctype html>
@@ -172,7 +180,7 @@ def page(request, title: str, body: str, active: str = "", subtitle: str = "", w
 <link rel="stylesheet" href="/static/hub.css"><link rel="icon" href="/static/icon.svg" type="image/svg+xml">
 <script src="{CHART_JS}" defer></script><script src="/static/hub.js" defer></script><script src="/static/ask.js" defer></script>
 </head><body>
-{demo}
+{demo}{alert_bar}
 <header class="top"><div class="bar">
   <a class="brand" href="/"><span class="mark" aria-hidden="true"></span>{esc(client.get("short_name", "Hub"))} <span class="muted">Hub</span></a>
   <nav>{"".join(nav)}</nav>{ASK_BUTTON if user else ""}{who}

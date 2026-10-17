@@ -5,3 +5,4 @@ __pycache__/
 clients/*/source/
 backups/
 *.sql.gz
+venv/

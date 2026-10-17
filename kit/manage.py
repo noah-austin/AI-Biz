@@ -24,11 +24,11 @@ from .passwords import hash_password
 from .sync import load_reference
 
 SCHEMA_DIR = Path(__file__).parent / "schema"
-AI_ROLE = "ai_reader"
 
 
 def init_db():
     settings = get_settings()
+    AI_ROLE = settings.ai_reader_role
     with db.connect() as conn:
         with conn.cursor() as cur:
             for f in sorted(SCHEMA_DIR.glob("*.sql")):
@@ -102,7 +102,7 @@ def check_readonly():
     if not settings.ai_reader_password:
         sys.exit("AI_READER_PASSWORD not set.")
     dsn = psycopg2.extensions.parse_dsn(settings.database_url)
-    dsn.update(user=AI_ROLE, password=settings.ai_reader_password)
+    dsn.update(user=settings.ai_reader_role, password=settings.ai_reader_password)
     conn = psycopg2.connect(**dsn)
     conn.autocommit = True
     checks = [
@@ -128,19 +128,20 @@ def check_readonly():
     sys.exit(0 if ok else 1)
 
 
-SECRET_NAMES = {"ANTHROPIC_API_KEY_CHAT", "ANTHROPIC_API_KEY_INSIGHTS", "ANTHROPIC_API_KEY_AGENTS", "AI_READER_PASSWORD", "SESSION_SECRET"}
+SECRET_NAMES = {"ANTHROPIC_API_KEY_CHAT", "ANTHROPIC_API_KEY_INSIGHTS", "ANTHROPIC_API_KEY_AGENTS",
+                "GOOGLE_CLIENT_SECRET", "ALERT_NTFY_URL", "SMTP_PASSWORD", "AI_READER_PASSWORD", "SESSION_SECRET"}
 
 
 def set_secret(name: str, stdin: bool):
     """Write one secret into .env (mode 600). The value is typed hidden and never printed."""
     import os
-    from .config import ROOT
+    from .config import env_file
     if name not in SECRET_NAMES:
         sys.exit(f"Unknown secret. Allowed: {', '.join(sorted(SECRET_NAMES))}")
     value = sys.stdin.readline().strip() if stdin else getpass.getpass(f"{name}: ").strip()
     if not value or any(c in value for c in "\r\n\"'"):
         sys.exit("Empty or invalid value; nothing changed.")
-    path = ROOT / ".env"
+    path = env_file()
     lines = path.read_text().splitlines() if path.exists() else []
     lines = [l for l in lines if not l.strip().startswith(name + "=")] + [f"{name}={value}"]
     tmp = path.with_suffix(".tmp")

@@ -300,3 +300,11 @@ body.bare { display: grid; place-items: center; min-height: 100vh; padding: 16px
 .agents-grid .card { margin-bottom: 0; } .agents-grid { margin-bottom: 16px; }
 .agent .list li { align-items: flex-start; } .run-info { margin-top: 6px; font-size: 13px; }
 .warn-card { background: var(--warn-bg); color: var(--warn-ink); }
+
+.alert-banner { display: block; text-align: center; font-size: 14px; padding: 8px 16px; font-weight: 600; }
+.alert-banner:hover { text-decoration: none; filter: brightness(0.97); }
+.alert-banner.warning { background: var(--warn-bg); color: var(--warn-ink); }
+.alert-banner.critical { background: var(--bad-bg); color: var(--bad); }
+.google-btn { width: 100%; justify-content: center; gap: 10px; background: var(--card); color: var(--ink); border: 1px solid var(--axis); }
+.google-btn span { font-weight: 800; color: var(--accent); }
+.signin .or { text-align: center; color: var(--muted); font-size: 13px; margin: 12px 0; }

@@ -63,6 +63,14 @@
 | Prospecting scope | Small and mid-size companies nationwide, any industry | The ideal-client description is in `clients/company/config.toml`. |
 | Contact data | Public web only for now | Add a paid data service later if volume needs it. |
 
+## 2026-10-17: must-haves
+| Topic | Decision | Notes |
+|---|---|---|
+| Alerts | ntfy push notifications to Noah's phone now; email once Workspace exists | Free, no account; the topic name is kept secret like a password. |
+| Installer | `ops/install.sh` sets up servers, adds installs, updates everything | Same tool for our server and client servers. |
+| Sign-in | Google sign-in built; switches on once Workspace exists | Only existing hub users can sign in; optionally one domain only. |
+| Business name style | Plain and credible | Shortlist with domain checks still to do. |
+
 ## Open questions
 - Business name (ideas in `concept.md` §8).
 - Year-one income goal (scenarios in `concept.md` §5).

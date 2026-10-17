@@ -89,9 +89,9 @@ The server and AI usage are billed to the client's own accounts, with no markup.
 **Stop adding features until a client needs them.** The demo is good enough to sell. The first client decides the next connector and the next tool. In the next 60 days, about 70% of the time goes to selling.
 
 **Must-haves before client #1:**
-- [ ] Microsoft sign-in (Google too if the client needs it)
-- [ ] Alerts when a sync or backup fails
-- [ ] A one-command installer, so every client runs the same kit
+- [x] Google sign-in (Microsoft for clients on Microsoft 365: later)
+- [x] Alerts when a sync, backup or agent job fails
+- [x] A one-command installer, so every client runs the same kit
 - [ ] Contracts: master services agreement, statement of work, data terms (including that data goes to Anthropic's API, which doesn't train on it)
 - [ ] One-page security summary, plus standard answers to IT questionnaires
 - [ ] Insurance: professional liability (E&O) plus cyber

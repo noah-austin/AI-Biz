@@ -15,14 +15,14 @@ from starlette.concurrency import run_in_threadpool
 from .. import db
 from ..ai import chat, usage as ai_usage
 from ..config import get_settings
-from . import auth, pages, ui
+from . import auth, google, pages, ui
 
 log = logging.getLogger("hub")
 settings = get_settings()  # fail loudly at start-up if anything is missing
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 
-PUBLIC = ("/login", "/static/", "/healthz")
+PUBLIC = ("/login", "/static/", "/healthz", "/auth/google/")
 
 
 @app.middleware("http")
@@ -55,6 +55,16 @@ async def gatekeeper(request: Request, call_next):
 
 def _login_page(error="", nxt="/"):
     client = settings.client
+    from urllib.parse import quote
+    google_btn = (f'<a class="btn google-btn" href="/login/google?next={quote(auth.safe_next(nxt), safe="")}">'
+                  f'<span aria-hidden="true">G</span> Sign in with Google</a>' if google.enabled() else "")
+    password_form = ""
+    if google.password_login_allowed():
+        password_form = (('<p class="or">or</p>' if google_btn else "")
+                         + f'''<form method="post" action="/login"><input type="hidden" name="next" value="{ui.esc(auth.safe_next(nxt))}">
+<label>Email<input type="email" name="email" autocomplete="username" required autofocus></label>
+<label>Password<input type="password" name="password" autocomplete="current-password" required></label>
+<button class="primary" type="submit">Sign in</button></form>''')
     err = f'<p class="error" role="alert">{ui.esc(error)}</p>' if error else ""
     demo = ('<p class="muted" style="font-size:13px">This is a demo with a fictional company and made-up data.</p>'
             if settings.is_demo else "")
@@ -62,10 +72,7 @@ def _login_page(error="", nxt="/"):
 <div class="brand" style="margin-bottom:14px"><span class="mark" aria-hidden="true"></span></div>
 <h1 style="margin-bottom:4px">{ui.esc(client.get("short_name", "Hub"))} Hub</h1>
 <p class="muted" style="margin-top:0">{ui.esc(client.get("company", ""))}</p>{demo}{err}
-<form method="post" action="/login"><input type="hidden" name="next" value="{ui.esc(auth.safe_next(nxt))}">
-<label>Email<input type="email" name="email" autocomplete="username" required autofocus></label>
-<label>Password<input type="password" name="password" autocomplete="current-password" required></label>
-<button class="primary" type="submit">Sign in</button></form></div>""")
+{google_btn}{password_form}</div>""")
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -75,6 +82,8 @@ def login_form(next: str = "/"):
 
 @app.post("/login")
 def login(request: Request, email: str = Form(...), password: str = Form(...), next: str = Form("/")):
+    if not google.password_login_allowed():
+        return HTMLResponse(_login_page("Password sign-in is turned off. Use Google.", next), status_code=403)
     ip = request.client.host if request.client else "unknown"
     if auth.too_many_failures(ip):
         return HTMLResponse(_login_page("Too many attempts. Wait 15 minutes and try again.", next), status_code=429)
@@ -85,6 +94,40 @@ def login(request: Request, email: str = Form(...), password: str = Form(...), n
     auth.clear_failures(ip)
     resp = RedirectResponse(auth.safe_next(next), status_code=303)
     resp.set_cookie(auth.COOKIE, auth.start_session(user["id"]), **auth.cookie_kwargs())
+    return resp
+
+
+@app.get("/login/google")
+def login_google(request: Request, next: str = "/"):
+    if not google.enabled():
+        return RedirectResponse("/login", status_code=303)
+    url, cookie = google.start(str(request.base_url), auth.safe_next(next))
+    resp = RedirectResponse(url, status_code=303)
+    resp.set_cookie(google.STATE_COOKIE, cookie, max_age=600, httponly=True, samesite="lax",
+                    secure=settings.secure_cookies, path="/auth/google/")
+    return resp
+
+
+@app.get("/auth/google/callback")
+def google_callback(request: Request, state: str | None = None, code: str | None = None, error: str | None = None):
+    ip = request.client.host if request.client else "unknown"
+    if auth.too_many_failures(ip):
+        return HTMLResponse(_login_page("Too many attempts. Wait 15 minutes and try again."), status_code=429)
+    if error:
+        return HTMLResponse(_login_page("Google sign-in was cancelled."), status_code=400)
+    try:
+        email, nxt = google.finish(str(request.base_url), request.cookies.get(google.STATE_COOKIE), state, code)
+    except google.GoogleError as e:
+        auth.record_failure(ip)
+        return HTMLResponse(_login_page(str(e)), status_code=400)
+    user = db.one("SELECT id FROM core.app_users WHERE email = %(e)s AND active", {"e": email})
+    if not user:
+        auth.record_failure(ip)
+        return HTMLResponse(_login_page(f"There's no hub account for {email}. Ask the admin to add you."), status_code=403)
+    auth.clear_failures(ip)
+    resp = RedirectResponse(auth.safe_next(nxt), status_code=303)
+    resp.set_cookie(auth.COOKIE, auth.start_session(user["id"]), **auth.cookie_kwargs())
+    resp.delete_cookie(google.STATE_COOKIE, path="/auth/google/")
     return resp
 
 
@@ -102,7 +145,8 @@ def healthz():
     r = db.one("""SELECT count(*) FILTER (WHERE last_status = 'failed' OR last_success_at < now() - interval '3 hours') AS bad
                   FROM core.sync_state WHERE object <> 'backup'""")
     synced = db.one("SELECT count(*) AS n FROM core.sync_state WHERE object <> 'backup'")["n"]
-    ok = bool(synced) and not r["bad"]
+    needs_sync = bool(settings.client.get("sources"))  # installs with no outside systems (e.g. our own hub) never sync
+    ok = (bool(synced) or not needs_sync) and not r["bad"]
     return PlainTextResponse("ok" if ok else "stale", status_code=200 if ok else 503)
 
 

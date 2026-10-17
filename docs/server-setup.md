@@ -58,26 +58,29 @@ Answer `y` to enable it. Then press **Ctrl+b**, then **d**, to leave it running 
 
 ## Part 2: for the Claude session on the server
 
-Work in plain English with Noah. Ask before anything hard to undo. Follow `CLAUDE.md`.
+Work in plain English with Noah. Ask before anything hard to undo. Follow `CLAUDE.md`. `ops/install.sh` does the heavy lifting; read it first.
 
-1. **Check the basics:** Ubuntu updates on; `unattended-upgrades` enabled for security patches; firewall allows only 22, 80 and 443. Disable SSH password login once Noah has an SSH key; until then the provider console is the way in.
-2. **Install:** PostgreSQL 16 (listening on localhost only), Python 3 with a virtualenv at `~/AI-Biz/venv` (`pip install -r requirements.txt`), Caddy as the web front end (automatic HTTPS).
-3. **Databases:** one per install (`hub_company`, `hub_demo`), each with its own app role and its own `ai_reader` role. Secrets go in a root-only `.env` per install, never in git.
-4. **Installs:** run each kit install as its own systemd service on its own localhost port:
-   - **company hub** (`clients/company/`, the practice tracker) on 8001. Its data is entered by Noah in the hub; it starts empty;
-   - **Bluestem demo** (`clients/demo/`) on 8002.
-5. **Web addresses:** until there's a domain, use `<ip-with-dashes>.sslip.io` hostnames (for example `company.1-2-3-4.sslip.io`) so Caddy can get real HTTPS certificates. Switch to the business domain when it exists.
-6. **Scheduled jobs (cron):**
-   - hourly sync for each install;
-   - for the demo, `clients/demo/generate.py` daily before its sync, so the fake company moves forward;
-   - nightly `ops/backup.sh` for each database;
-   - the weekly restore test;
-   - AI insights once API keys exist (demo only);
-   - for the company hub: `python -m kit.agents tick` every 15 minutes (runs whatever agent jobs are due).
-7. **Off-site backups:** a DigitalOcean Spaces bucket via `OFFSITE_CMD` (ask Noah to create it), on top of the droplet's weekly snapshots.
-8. **Health:** confirm `/healthz` for each install, and set up a free uptime monitor that emails Noah if it fails.
-9. **Users:** create Noah's admin login on each install with `python -m kit.manage create-user`; he types the password himself.
-10. **Keep Remote Control always on:** make `claude remote-control --name "Biz server"` (run in `~/AI-Biz` as `noah`) start at boot and restart if it exits: a systemd user service with lingering enabled, or tmux started by `@reboot` cron plus a watchdog. This isn't an official Anthropic feature, so test it with a real reboot before calling it done, and tell Noah how it went.
-11. **Finish:** write `docs/server-notes.md` (what's installed, ports, service names, how to deploy and roll back; no secrets), commit and push it, and give Noah the links.
+1. **Base setup:** `sudo ops/install.sh server`. It installs:
+   - PostgreSQL (localhost only), Python in `venv/` and Caddy (automatic HTTPS);
+   - the firewall (22, 80, 443) and automatic security updates;
+   - log rotation.
+2. **Installs:**
+   - `sudo ops/install.sh add company clients/company 8001 auto`: Noah's company hub (practice tracker and agents).
+   - `sudo ops/install.sh add demo clients/demo 8002 auto`: the Bluestem demo.
 
-**Deploy routine afterwards:** `git pull` → run tests → `python -m kit.manage init-db` for each install → restart its service → check `/healthz` and the logs → roll back with `git revert` if anything is wrong.
+   Each gets its own database and logins, settings file (`/etc/hub/NAME.env`), service, scheduled jobs and an HTTPS address on `sslip.io`. Swap to the real domain once it exists: re-run `add` with the hostname.
+3. **Logins:** have Noah create his admin login on each install with the command the installer prints. He types the password himself.
+4. **Keys and alerts**, typed hidden by Noah with `kit.manage set-secret` (the installer prints the exact form):
+   - `ANTHROPIC_API_KEY_CHAT` and `ANTHROPIC_API_KEY_AGENTS` on the company hub, and `ANTHROPIC_API_KEY_CHAT` on the demo;
+   - `ALERT_NTFY_URL` on both: a private ntfy topic Noah subscribes to in the ntfy phone app. Then run `kit.alerts test` to confirm a message arrives.
+5. **Off-site backups:** ask Noah to create a DigitalOcean Spaces bucket, then set `OFFSITE_CMD` in each env file. Nightly backups and the weekly restore test are already scheduled.
+6. **Keep Remote Control always on:** make `claude remote-control --name "Biz server"` (run in `~/AI-Biz` as `noah`) start at boot and restart if it exits: a systemd user service with lingering enabled, or tmux started by `@reboot` cron plus a watchdog. This isn't an official Anthropic feature, so test it with a real reboot before calling it done.
+7. **Uptime:** set up a free external uptime monitor on each install's `/healthz` that emails Noah.
+8. **Finish:** write `docs/server-notes.md` (what's installed, ports, addresses, how to deploy and roll back; no secrets), commit and push it, and give Noah the links.
+
+**Google sign-in** (once Workspace exists):
+- Create an OAuth client in Google Cloud (Web application) with the redirect URI `https://<host>/auth/google/callback`.
+- Put `google_client_id`, `google_allowed_domain` and `public_url` under `[auth]` in the client's `config.toml`, and set `GOOGLE_CLIENT_SECRET` with `set-secret`.
+- Restart the service. Once Google sign-in works, set `password_login = false`.
+
+**Deploy routine afterwards:** run the tests, then `sudo ops/install.sh update`. It pulls the code, upgrades every install's database, restarts each service and checks `/healthz`. If anything is wrong, `git revert` the bad commit and run `update` again.
