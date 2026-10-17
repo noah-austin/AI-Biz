@@ -19,7 +19,7 @@
 | **Holdfast** | Something that holds firm. Short and dependable. | Clean |
 | **Mortise** | Half of the strongest wood joint (mortise and tenon): things fit tight. | Clean |
 | **Datastead** | "Data" + "stead" (place): your data's home. Says what we do. | Clean |
-| **Onestead** | "One" + "stead": literally "one place". | Clean |
+| **Onestead** | "One" + "stead": literally "one place". | Clean · **onestead.com taken** (checked by Noah) |
 
 ## Tier 2: good (10)
 | Name | The idea | Screen |
