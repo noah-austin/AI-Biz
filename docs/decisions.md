@@ -36,7 +36,7 @@
 |---|---|---|
 | What we are | Not a general AI consultant: "we help mid-size companies run on their data" | Data consolidation is the engine; the outcome is what we sell. |
 | Delivery model | Platform (the kit) + method + a custom plan per client | Like a Salesforce consultant, but we own the platform. |
-| Entry offer | CRM Health Report, ~1 week, $1,500–2,500 | Built on the kit's clean-up checks. |
+| Entry offer | ~~CRM Health Report~~ dropped (see "how clients start" below) | Was Claude's suggestion; it framed the business as fixing data, which it isn't. |
 | Niche | Take any good fit; leading guess for marketing is contractors and field services | Decide after 15–20 conversations. |
 | Focus | Stop adding features until a client needs them; ~70% of time goes to selling for 60 days | Must-haves before client #1 are listed in concept.md §7. |
 
@@ -80,6 +80,13 @@
 | Demo access | The "See a live demo" button signs visitors into Bluestem as a read-only guest | No password needed. Guest questions to Ask AI share one daily limit. |
 | Name | "Company Name" placeholder | Swap in `website/config.toml` once chosen. |
 | Prices | No prices published on the website or sales material | Every quote depends on the company: how many systems, records and fields. Prospects get a fixed quote after the first call. The ranges in `concept.md` are an internal guide only. |
+
+## 2026-10-17: how clients start
+| Topic | Decision | Notes |
+|---|---|---|
+| What we sell | The end product: their data in one place, with tools and AI built on top. We add to what they have; we don't sell "fixing" their data. | The kit's checks for records that look wrong are a minor side benefit. Mention in passing at most. |
+| How clients start | A conversation, then a written custom proposal with a fixed quote | No packaged entry offer and no paid assessment. |
+| Timelines | Never advertised | Builds depend on scope; the proposal covers timing. |
 
 ## Open questions
 - Business name (ideas in `concept.md` §8).

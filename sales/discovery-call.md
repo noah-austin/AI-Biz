@@ -23,7 +23,7 @@ Open the Bluestem demo on whichever page matches their pain:
 | Their pain | Show them |
 |---|---|
 | Report building | **Scorecard** |
-| Trust in the numbers | **Clean-up list** |
+| Trust in the numbers | **Scorecard**: click any number through to the records behind it |
 | Pipeline | **Pipeline**, including the past-due bar |
 | Cash | **Receivables** |
 | AI | **Ask AI** |
@@ -31,7 +31,7 @@ Open the Bluestem demo on whichever page matches their pain:
 > "This is a fictional company, but it's the same system I'd set up for you, on your data."
 
 ## 5. Next step (3 min)
-- **Good fit:** "The easiest way to see what's really in your data is the CRM Health Report: about a week, read-only, a fixed quote before we start, and you don't pay if it doesn't find something worth fixing. Want me to send it over?"
+- **Good fit:** "Based on what you've told me, I'd like to put together a proposal for you: which systems we'd connect, what we'd build first, and a fixed quote. Could we do a second call to go through your systems and reports in a bit more detail?"
 - **Not yet:** "Sounds like the timing isn't right. Could I check back in [month]?" Set a next-step date in the hub.
 - **Not a fit:** say so, and ask, "Who do you know who has this problem?"
 
@@ -43,6 +43,6 @@ Open the Bluestem demo on whichever page matches their pain:
 
 ## Right after the call (5 min, in the company hub)
 1. Log the conversation: their words for the pain, their systems, who decides, any budget or timing.
-2. Set the stage (Conversation, or Proposal if they asked for the Health Report) and the estimated value.
+2. Set the stage (Conversation, or Proposal once you've agreed to send one) and the estimated value.
 3. Set the next step and its date.
 4. Send the follow-up email the same day.

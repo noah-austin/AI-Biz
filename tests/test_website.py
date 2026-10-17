@@ -33,7 +33,7 @@ def count(email="robin@site-test.example"):
 
 def test_pages_render_with_security_headers(site):
     client, _ = site
-    for path in ["/", "/crm-health-report", "/about", "/contact", "/privacy"]:
+    for path in ["/", "/what-we-build", "/about", "/contact", "/privacy"]:
         r = client.get(path)
         assert r.status_code == 200, path
     assert "script-src 'none'" in r.headers["content-security-policy"]
@@ -75,7 +75,7 @@ def test_validation_and_rate_limit(site, monkeypatch):
 def test_hub_turns_an_enquiry_into_a_prospect():
     from kit.practice import inbox
     db.execute("""INSERT INTO practice.inbound_leads (name, email, company, role, interest, message)
-                  VALUES ('Sam Lead', 'sam@site-test.example', 'Lead Test Co', 'CFO', 'health_report', 'Help')""")
+                  VALUES ('Sam Lead', 'sam@site-test.example', 'Lead Test Co', 'CFO', 'call', 'Help')""")
     lid = db.one("SELECT id FROM practice.inbound_leads WHERE email = 'sam@site-test.example'")["id"]
     nxt = inbox.decide_lead(lid, "add")
     c = db.one("SELECT id, kind, stage, source, contact_email FROM practice.companies WHERE name = 'Lead Test Co'")

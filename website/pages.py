@@ -23,7 +23,7 @@ def esc(v) -> str:
     return html.escape("" if v is None else str(v), quote=True)
 
 
-NAV = [("/", "Home"), ("/crm-health-report", "CRM Health Report"), ("/about", "About"), ("/contact", "Contact")]
+NAV = [("/", "Home"), ("/what-we-build", "What we build"), ("/about", "About"), ("/contact", "Contact")]
 
 
 def layout(title: str, body: str, path: str = "/", description: str = "") -> str:
@@ -41,7 +41,7 @@ def layout(title: str, body: str, path: str = "/", description: str = "") -> str
 <header class="site-head"><div class="wrap">
   <a class="logo" href="/"><span class="mark" aria-hidden="true"></span>{esc(c["name"])}</a>
   <nav aria-label="Main">{nav}</nav>
-  <a class="btn small" href="/contact?interest=health_report">Get a Health Report</a>
+  <a class="btn small" href="/contact?interest=call">Book a call</a>
 </div></header>
 <main>{body}</main>
 <footer class="site-foot"><div class="wrap">
@@ -52,7 +52,7 @@ def layout(title: str, body: str, path: str = "/", description: str = "") -> str
 </body></html>"""
 
 
-def cta_row(primary=("Get a CRM Health Report", "/contact?interest=health_report")) -> str:
+def cta_row(primary=("Book a call", "/contact?interest=call")) -> str:
     c = cfg()
     return (f'<div class="cta-row"><a class="btn" href="{primary[1]}">{esc(primary[0])}</a>'
             f'<a class="btn ghost" href="{esc(c["demo_url"])}">See a live demo →</a></div>')
@@ -67,7 +67,7 @@ def home() -> str:
   <p class="lead">We connect the systems you already have (your CRM, accounting, projects and spreadsheets) into one
   trusted set of numbers. Then we build the scorecard, dashboards, alerts and AI your team actually uses.</p>
   {cta_row()}
-  <p class="small muted">Built by an operator, not a software vendor. Live in weeks, on a server you own.</p>
+  <p class="small muted">Built by an operator, not a software vendor. Custom to your company, on a server you own.</p>
 </div></section>
 
 <section class="band"><div class="wrap">
@@ -82,7 +82,7 @@ def home() -> str:
 
 <section><div class="wrap">
   <h2>What we build</h2>
-  <p class="section-lead">Everything sits on one foundation: your data, connected, cleaned and defined once, so every number means the same thing everywhere.</p>
+  <p class="section-lead">Everything sits on one foundation: your data, connected and defined once, so every number means the same thing everywhere.</p>
   <div class="grid two">
     <div class="feature"><h3>One trusted set of numbers</h3><p>Your systems copied hourly into one database you own, with every metric written down and agreed. We reproduce your existing reports to the cent before showing anything new.</p></div>
     <div class="feature"><h3>A scorecard that fills itself in</h3><p>Your weekly numbers, ready on Monday morning without anyone typing them. Every figure clicks through to the records behind it.</p></div>
@@ -94,10 +94,10 @@ def home() -> str:
 <section class="band"><div class="wrap">
   <h2>How it works</h2>
   <ol class="steps">
-    <li><span>1</span><div><h3>CRM Health Report</h3><p>About a week, read-only. We show you what your data is hiding and exactly how to fix it.</p></div></li>
-    <li><span>2</span><div><h3>Assessment</h3><p>Two weeks to map your systems and reports and agree a plan built around what matters most to you.</p></div></li>
-    <li><span>3</span><div><h3>Build</h3><p>Four to six weeks. Your data connected, your reports reproduced, then the first tools and the AI switched on.</p></div></li>
-    <li><span>4</span><div><h3>Run &amp; Grow</h3><p>Monthly. We keep it accurate, add what you need next, and review it with your leadership every month.</p></div></li>
+    <li><span>1</span><div><h3>A conversation</h3><p>We talk about how your company runs, which systems hold your data, and what you wish you could see and do.</p></div></li>
+    <li><span>2</span><div><h3>A custom proposal</h3><p>A written plan and quote built around your systems, your data and the tools that matter most to you.</p></div></li>
+    <li><span>3</span><div><h3>We build it</h3><p>Your data brought together in one place, your existing reports reproduced, then the tools and the AI built on top.</p></div></li>
+    <li><span>4</span><div><h3>Run &amp; Grow</h3><p>We keep it running and accurate, add what you need next, and review it with your leadership every month.</p></div></li>
   </ol>
 </div></section>
 
@@ -105,7 +105,7 @@ def home() -> str:
   <h2>Why work with us</h2>
   <div class="grid two">
     <div class="feature"><h3>An operator, not a vendor</h3><p>I've been the COO and chief of staff sitting in the meeting with the wrong numbers. I build what I wanted then.</p></div>
-    <div class="feature"><h3>Weeks, not months</h3><p>The first version for a multi-branch commercial contractor was running in nine days.</p></div>
+    <div class="feature"><h3>Built around you</h3><p>No off-the-shelf package. We start from how your company actually runs and build the tools you need on top of the systems you already have.</p></div>
     <div class="feature"><h3>You own it</h3><p>It runs on a server in your name, for a few dollars a month. No per-seat licences, no lock-in, and everything is documented so anyone can take it over.</p></div>
     <div class="feature"><h3>Safe by design</h3><p>Read-only access to your systems, nightly backups, each person sees only what they should, and the AI can never change a record.</p></div>
   </div>
@@ -113,73 +113,65 @@ def home() -> str:
 
 <section class="offer"><div class="wrap">
   <div>
-    <p class="eyebrow">The first step</p>
-    <h2>CRM Health Report</h2>
-    <p>About a week. Read-only access. Priced to your setup, quoted up front. You'll see the wins your reports can't see, the
-    pipeline that isn't real, and the exact records to fix.</p>
-    <p><strong>If it doesn't show you something worth fixing, you don't pay.</strong></p>
+    <p class="eyebrow">Getting started</p>
+    <h2>Start with a conversation</h2>
+    <p>Tell us how your company runs and where your data lives. If there's a fit, you'll get a custom proposal built around
+    your systems and what you want to do with them.</p>
   </div>
-  <div class="cta-col"><a class="btn" href="/crm-health-report">See what's included</a>
-  <a class="btn ghost light" href="/contact?interest=health_report">Book one</a></div>
+  <div class="cta-col"><a class="btn" href="/contact?interest=call">Book a call</a>
+  <a class="btn ghost light" href="/what-we-build">What we build</a></div>
 </div></section>
 
 <section class="demo-band"><div class="wrap">
   <h2>See it working</h2>
-  <p>Explore a live hub for a fictional company with realistic data: the scorecard, the pipeline, win/loss, receivables,
-  the clean-up list and the AI assistant. No sign-up needed.</p>
+  <p>Explore a live hub for a fictional company with realistic data: the scorecard, the pipeline, win/loss, receivables
+  and the AI assistant. No sign-up needed.</p>
   <a class="btn" href="{esc(c["demo_url"])}">Open the live demo →</a>
 </div></section>"""
     return layout(c["name"], body, "/")
 
 
-def health_report() -> str:
-    c = cfg()
+def what_we_build() -> str:
     body = f"""
 <section class="hero slim"><div class="wrap">
-  <p class="eyebrow">About a week · quoted up front · read-only</p>
-  <h1>CRM Health Report</h1>
-  <p class="lead">Find out exactly what your CRM is hiding, what it's costing you, and how to fix it, in about a week, without
-  changing anything in your systems.</p>
-  {cta_row(("Book a Health Report", "/contact?interest=health_report"))}
+  <p class="eyebrow">What we build</p>
+  <h1>Your data in one place, and the tools to use it</h1>
+  <p class="lead">Every company is different, so every build is custom. These are the pieces we put together for you,
+  on top of the systems you already use.</p>
+  {cta_row()}
 </div></section>
 
 <section><div class="wrap narrow">
-  <h2>Who it's for</h2>
-  <p>Companies whose leadership numbers come from a CRM (Salesforce, HubSpot, Dynamics, Zoho or Pipedrive) and who
-  suspect the numbers aren't quite right.</p>
+  <h2>One place for your data</h2>
+  <p>We connect your CRM, accounting, project tools and spreadsheets into one database that you own. It updates on its
+  own, keeps history, and every number is defined once and written down, so it means the same thing everywhere.</p>
 
-  <h2>What you get</h2>
+  <h2>Tools your team uses every day</h2>
   <ul class="checks">
-    <li><strong>Wins your reports can't see:</strong> won deals with placeholder dates, missing amounts or the wrong stage.</li>
-    <li><strong>A pipeline that isn't real:</strong> open deals whose close date passed months ago, and duplicates counted twice.</li>
-    <li><strong>Gaps that break your metrics:</strong> missing margins, missing loss reasons, deals with no owner or branch.</li>
-    <li><strong>What it means in dollars:</strong> how much pipeline is inflated and how many wins are under-counted.</li>
-    <li><strong>The fix list:</strong> every record to fix, with a direct link, grouped by owner, so your team can clean it up in an afternoon.</li>
-    <li><strong>Three opportunities:</strong> the reports and tools that would make the biggest difference for you, with a rough plan.</li>
+    <li><strong>A scorecard that fills itself in:</strong> the weekly numbers leadership runs on, ready without anyone typing them.</li>
+    <li><strong>Dashboards and drill-downs:</strong> from the company total down to every record behind it, by branch, team or person.</li>
+    <li><strong>Tools that replace spreadsheets:</strong> the forecast, the tracker or the workbook someone rebuilds every week.</li>
+    <li><strong>Reports and alerts that come to you:</strong> by email or Teams, when something needs attention.</li>
   </ul>
 
-  <h2>How it works</h2>
-  <table class="plain">
-    <tr><th>Day 1</th><td>A 30-minute kickoff. You create a read-only CRM login for us; we send the steps.</td></tr>
-    <tr><th>Days 2–4</th><td>We connect, run our checks, and rebuild one report you already use to compare it with yours.</td></tr>
-    <tr><th>Day 5</th><td>A 45-minute walkthrough and the written report.</td></tr>
-  </table>
-
-  <h2>Price</h2>
-  <p>Every company is different, so we price each report to your setup: how many systems we connect, and how many records
-  and fields we check. After a short call you get a fixed quote, so there are no surprises.</p>
+  <h2>AI that knows your business</h2>
   <ul class="checks">
-    <li><strong>Guarantee:</strong> if the report doesn't show you something worth fixing, you don't pay.</li>
-    <li><strong>Credit:</strong> if you go on to an Assessment, the full fee counts toward it.</li>
+    <li><strong>Ask in plain English:</strong> answers from your own data, with the numbers shown so you can check them.</li>
+    <li><strong>Insights and drafts:</strong> what changed this week and why, monthly review write-ups, summaries.</li>
+    <li><strong>Your other AI tools, connected:</strong> a secure, read-only link so Copilot, ChatGPT or Claude can use the same trusted data.</li>
   </ul>
+
+  <h2>How it's priced</h2>
+  <p>Each build is quoted to your company: how many systems we connect, how much data there is, and what we build on top.
+  After our first conversations you get a written proposal with a fixed quote, so there are no surprises.</p>
 
   <h2>Your data</h2>
-  <p>Read-only access only. We sign a confidentiality agreement before kickoff, keep your data on our secure server, and
-  delete it at the end unless you continue with us. It is never shared or reused.</p>
-  {cta_row(("Book a Health Report", "/contact?interest=health_report"))}
+  <p>Read-only access to your systems, so we never change anything in them. It all runs on a server in your name, with
+  nightly backups, and each person sees only what they should. We sign a confidentiality agreement before any work starts.</p>
+  {cta_row()}
 </div></section>"""
-    return layout("CRM Health Report", body, "/crm-health-report",
-                  "A read-only review, quoted up front, of your CRM: what it's hiding, what it costs you, and how to fix it.")
+    return layout("What we build", body, "/what-we-build",
+                  "One place for your company's data, with dashboards, tools and AI built on top. Custom to your business.")
 
 
 def about() -> str:
@@ -196,9 +188,9 @@ def about() -> str:
   rebuilt the leadership report by hand, and every meeting started with an argument about whose figure was right. So I
   connected the systems into one place, wrote down what every number meant, and built the tools on top: a weekly
   scorecard, a forecast that replaced a workbook, pipeline and win/loss views, and an AI assistant that answers
-  questions from the real data. The first version was running in nine days, on a server that costs a few dollars a month.</p>
-  <p>The first check turned up won deals that every report had been missing, and that's typical. Most companies don't
-  have a reporting problem; they have a data problem that nobody has had the time to fix.</p>
+  questions from the real data, all on a server that costs a few dollars a month.</p>
+  <p>Once the data was in one place, we could build on it: tools, alerts and AI that weren't possible while everything
+  was scattered. That's what most companies are missing. Not more software, but a foundation to build on.</p>
   <p>Now I do this for other companies: small and mid-size businesses that run on a CRM and an accounting system, don't
   have a data team, and want numbers they can trust and AI that actually helps.</p>
   <h2>How I work</h2>
@@ -214,7 +206,7 @@ def about() -> str:
 
 SIZES = ["1–19 people", "20–49", "50–199", "200–499", "500–1,000", "Over 1,000"]
 CRMS = ["Salesforce", "HubSpot", "Microsoft Dynamics", "Zoho", "Pipedrive", "Other", "No CRM yet"]
-INTERESTS = [("health_report", "A CRM Health Report"), ("call", "A 20-minute call"), ("demo", "A walkthrough of the demo"),
+INTERESTS = [("call", "A call about my company"), ("demo", "A walkthrough of the demo"),
              ("partner", "Referral partnership"), ("other", "Something else")]
 
 
@@ -245,7 +237,7 @@ def contact(token: str, values: dict | None = None, errors: dict | None = None) 
     <label>Your role<input name="role" maxlength="120" value="{esc(v.get("role"))}" placeholder="e.g. COO"></label>
     <label>Company size<select name="company_size"><option value="">Choose…</option>{sel("company_size", [(s, s) for s in SIZES], v.get("company_size"))}</select></label>
     <label>CRM<select name="crm"><option value="">Choose…</option>{sel("crm", [(s, s) for s in CRMS], v.get("crm"))}</select></label>
-    <label class="wide">I'm interested in<select name="interest">{sel("interest", INTERESTS, v.get("interest") or "health_report")}</select></label>
+    <label class="wide">I'm interested in<select name="interest">{sel("interest", INTERESTS, v.get("interest") or "call")}</select></label>
     <label class="wide">Anything you'd like me to know<textarea name="message" rows="5" maxlength="3000">{esc(v.get("message"))}</textarea>{err("message")}</label>
     <p class="small muted wide">By sending this you agree to be contacted about your enquiry. See the <a href="/privacy">privacy notice</a>.</p>
     <div class="wide"><button class="btn" type="submit">Send</button></div>
@@ -254,7 +246,7 @@ def contact(token: str, values: dict | None = None, errors: dict | None = None) 
     <h3>Prefer email?</h3><p><a href="mailto:{esc(c["email"])}">{esc(c["email"])}</a></p>
     <h3>What happens next</h3>
     <ol><li>I read your note and reply within one business day.</li><li>We have a 20-minute call about your systems and numbers.</li>
-    <li>If there's a fit, I suggest a first step, usually the CRM Health Report.</li></ol>
+    <li>If there's a fit, I send you a custom proposal.</li></ol>
     <h3>Want to look first?</h3><p><a href="{esc(c["demo_url"])}">Explore the live demo →</a></p>
   </aside>
 </div></section>"""
@@ -265,8 +257,8 @@ def thanks(name: str) -> str:
     body = f"""<section class="hero slim"><div class="wrap narrow">
 <h1>Thanks, {esc(name.split()[0] if name else "")}.</h1>
 <p class="lead">Your note is in. I'll reply within one business day.</p>
-<p>In the meantime, you can <a href="{esc(cfg()["demo_url"])}">explore the live demo</a> or read about the
-<a href="/crm-health-report">CRM Health Report</a>.</p></div></section>"""
+<p>In the meantime, you can <a href="{esc(cfg()["demo_url"])}">explore the live demo</a> or read about
+<a href="/what-we-build">what we build</a>.</p></div></section>"""
     return layout("Thanks", body, "/contact")
 
 

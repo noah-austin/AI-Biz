@@ -18,14 +18,14 @@ Like a good Salesforce consultant, we bring three things:
 
 | | What it is | Why it matters |
 |---|---|---|
-| **A platform** | The kit (`kit/`): sync from their systems, one database they own, business rules, a web hub, an AI layer. | We don't start from zero, so builds take weeks, not months. It runs for about $6 a month on a server the client owns. |
+| **A platform** | The kit (`kit/`): sync from their systems, one database they own, business rules, a web hub, an AI layer. | We don't start from zero, so builds are faster and cost less. It runs for about $6 a month on a server the client owns. |
 | **A method** | Understand the business → write the rulebook → connect the data → reproduce their existing reports to the cent → build what they need most → keep it trusted. | Reliable results, and numbers people trust because they've seen them match. |
 | **A custom plan** | Which systems, which numbers, which tools and which AI uses matter most to *this* client. | Every company's pain is different. The plan is tailored; the platform and method stay the same. |
 
 ## 3. What we offer
 
 ### The menu (tailored per client, all built on the same data foundation)
-- **Trusted numbers:** a single source of truth, the business rulebook, and a clean-up list that gets source data fixed.
+- **Trusted numbers:** a single source of truth and the business rulebook. (A side benefit: the kit also flags records that look wrong in their systems. Mention it in passing; never lead with it.)
 - **Run the business on it:**
   - a self-filling weekly scorecard;
   - a monthly business review the AI drafts;
@@ -46,24 +46,23 @@ These limits keep the business focused:
 - writing back into their systems without explicit sign-off.
 
 ### How they buy (internal guide; never published)
-Every client is quoted to their setup: how many systems, records and fields. They get a fixed quote after the first call, before work starts. The ranges below are for our own planning.
+There is no packaged entry offer. Every client starts with a free conversation (or two), then gets a written custom proposal with a fixed quote, priced to their setup: how many systems, records and fields, and what we build on top. Build length depends on scope and is never advertised. The ranges below are for our own planning.
 
 | Step | What it is | Length | Typical range |
 |---|---|---|---|
-| **CRM Health Report** (entry offer) | Read-only connection to their CRM; the kit's checks show the wins their reports can't see and the exact records to fix. | ~1 week | $1,500–2,500 |
-| **Assessment** | Systems, key reports, users, biggest pain, and a written custom plan. Credited toward the build. | ~2 weeks | $3,500–5,000 |
-| **Foundation + first tools** | Connect 2–3 systems, the rulebook, reproduce their reports, then the 2–3 things from the plan that matter most. | 4–6 weeks | $15,000–30,000 |
+| **Conversation** | How they run, which systems hold their data, what they want to see and do. | 1–2 calls | Free |
+| **Custom proposal** | The plan: which systems, what we build first, and a fixed quote. | A few days | Free |
+| **Build** | Bring their data together, the rulebook, reproduce their reports, then the tools and AI from the plan. | Depends on scope | $15,000–30,000 |
 | **Run & Grow** (monthly) | Monitoring, backups, fixes, new tools and new AI uses each month, and a monthly review with leadership. | Ongoing | $1,500–4,000 / month |
 
 The server and AI usage are billed to the client's own accounts, with no markup.
 
 **Founding-client deal (first 1–2 clients):**
-- a discount, in exchange for a case study and a reference;
-- a guarantee: if we can't reproduce their key report to the cent, the Assessment is free.
+- a discount, in exchange for a case study and a reference.
 
 ## 4. Why this beats being a general AI consultant
 - **General AI consulting is crowded and vague.** In 2026 everyone is an "AI consultant". The work tends to be workshops, strategy decks and one-off automations, which are hard to differentiate and hard to price.
-- **Most AI projects fail because the data is a mess.** We fix that first, so our AI works.
+- **Most AI projects fail because the data is scattered.** We build that foundation first, so our AI works.
 - **A data foundation brings recurring revenue.** Once leadership runs its meeting on it, the monthly fee lasts for years. One-off AI projects end.
 - **The market is big enough.** There are roughly 200,000 mid-size US companies ($10M–$1B in revenue), and most have scattered data and no data team. We need 5–10 clients.
 - **Noah's edge:** he's an operator (COO / chief of staff) selling to operators. A tech shop can't sell "your meeting runs on one set of numbers" with the same credibility.
@@ -81,7 +80,7 @@ The server and AI usage are billed to the client's own accounts, with no markup.
 ## 6. Getting the first clients (no warm network)
 1. **15–20 conversations in the next month** with COOs, CFOs and owners. Ask what's painful, what they've tried, and what they'd pay to fix. These calls are market research and pipeline at the same time.
 2. **Referral partners:** fractional CFOs and COOs, CPA firms, IT providers, and CRM consultants. Offer a referral fee of about 10% of first-year fees.
-3. **The live demo** (Bluestem) plus the case story: built in 9 days, runs for $6 a month. The company can be named; its figures stay out.
+3. **The live demo** (Bluestem) plus the case story: runs for about $6 a month. The company can be named; its figures stay out.
 4. **LinkedIn as an operator, not a vendor:** short posts like the 2111 close dates, "never average percentages", and "your CRM's AI only sees your CRM".
 5. **Local groups:** Vistage and EO chapters, chambers of commerce, trade associations. A 20-minute talk: "What AI can actually do with your company's data."
 6. **Pitch the AI-readiness angle:** "Before you roll out Copilot, make your data right for it."
@@ -106,13 +105,13 @@ The server and AI usage are billed to the client's own accounts, with no markup.
 - **Measuring value:** usage and time saved, shown in each client's monthly review.
 
 ## 8. Year-one income scenarios
-Assumes the first client lands around months 2–4.
+Assumes the first client lands around months 2–4, an average build of about $20k and an average retainer of about $2,500 a month (our planning guesses, to replace with real quotes).
 
-| | Health reports / assessments | Builds | Retainer months | Rough total |
-|---|---|---|---|---|
-| Slow | 3 | 1 | 6 | about $45k |
-| Steady | 6 | 2 | 15 | about $90k |
-| Strong | 9 | 3 | 25 | about $150k |
+| | Builds | Retainer months | Rough total |
+|---|---|---|---|
+| Slow | 1 | 6 | about $35k |
+| Steady | 3 | 15 | about $100k |
+| Strong | 5 | 25 | about $160k |
 
 At 20 hours a week, Steady is realistic. Reaching Strong is the signal to go full-time.
 

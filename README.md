@@ -8,7 +8,7 @@ Noah's consulting practice: helping mid-size companies pull scattered business d
 - `templates/` — documents we reuse with every client (rulebook template).
 - `ops/` — backups, restore test and server setup files.
 - `website/` — the public website; its contact form drops enquiries into the company hub's Inbox.
-- `sales/` — the sales kit: pitch, CRM Health Report offer, outreach messages, call script, targets.
+- `sales/` — the sales kit: pitch, outreach messages, call script, targets.
 - `docs/concept.md` — the refined business concept, offer, pricing and go-to-market.
 - `docs/decisions.md` — business decisions made so far, and open questions.
 - `docs/playbook-v0.md` — the original handoff from the first build. A starting point, not a rulebook.

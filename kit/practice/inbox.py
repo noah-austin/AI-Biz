@@ -62,7 +62,7 @@ def _item(i, token):
             f'{body}<div class="inbox-actions">{actions}</div></article>')
 
 
-LEAD_INTEREST = {"health_report": "a CRM Health Report", "call": "a call", "demo": "a demo walkthrough",
+LEAD_INTEREST = {"call": "a call", "demo": "a demo walkthrough",
                  "partner": "a referral partnership", "other": "something else"}
 
 

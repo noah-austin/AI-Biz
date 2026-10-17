@@ -60,7 +60,7 @@ def engagement_fields(company_id=None):
     return [
         Field("company_id", "Company", "select", required=True, options=_companies(), default=company_id),
         Field("offer", "Offer", "select", options=list(pm.OFFERS.items())),
-        Field("name", "Name", required=True, hint="e.g. CRM Health Report, Q4 Build"),
+        Field("name", "Name", required=True, hint="e.g. Data hub build, Run & Grow"),
         Field("status", "Status", "select", options=[(s, s.capitalize()) for s in ("proposed", "active", "done", "cancelled")]),
         Field("price", "Fixed price ($)", "money"), Field("monthly_fee", "Monthly fee ($)", "money", hint="Retainers"),
         Field("hours_budget", "Hours budget", "number"),
@@ -410,7 +410,7 @@ def company_page(request, cid, activity_values=None, errors=None):
     engs = db.query("""SELECT e.*, coalesce((SELECT sum(hours) FROM practice.time_entries te WHERE te.engagement_id = e.id), 0) AS hours_used
                        FROM practice.engagements e WHERE company_id = %(i)s ORDER BY created_at DESC""", {"i": cid})
     eng_html = "".join(
-        f'<li><div><a href="/engagements/{e["id"]}/edit">{esc(e["name"])}</a><div class="meta">{esc(pm.OFFERS[e["offer"]])} · '
+        f'<li><div><a href="/engagements/{e["id"]}/edit">{esc(e["name"])}</a><div class="meta">{esc(pm.OFFERS.get(e["offer"], e["offer"]))} · '
         f'{esc(e["status"])}{" · " + money(e["price"]) if e["price"] else ""}{" · " + money(e["monthly_fee"]) + "/mo" if e["monthly_fee"] else ""}</div></div>'
         f'<span class="amt">{float(e["hours_used"]):g} h</span></li>' for e in engs) or '<li class="meta">None yet.</li>'
     invs = db.query("SELECT * FROM practice.invoices WHERE company_id = %(i)s ORDER BY issued_date DESC", {"i": cid})
@@ -508,7 +508,7 @@ def clients_page(request):
     engs = pm.engagements_with_hours(("proposed", "active"))
     etrs = "".join(
         f'<tr><td><a href="/engagements/{e["id"]}/edit">{esc(e["name"])}</a></td><td>{_link(e["company_id"], e["company_name"])}</td>'
-        f'<td>{esc(pm.OFFERS[e["offer"]])}</td><td>{esc(e["status"])}</td>'
+        f'<td>{esc(pm.OFFERS.get(e["offer"], e["offer"]))}</td><td>{esc(e["status"])}</td>'
         f'<td class="n">{money(e["price"]) if e["price"] else (money(e["monthly_fee"]) + "/mo" if e["monthly_fee"] else "—")}</td>'
         f'<td class="n">{float(e["hours_used"]):g}{" / " + format(float(e["hours_budget"]), "g") if e["hours_budget"] else ""}</td>'
         f'<td class="n">{money(e["invoiced"])}</td></tr>' for e in engs)

@@ -14,8 +14,7 @@ OPEN_STAGES = ["lead", "contacted", "conversation", "proposal"]
 STAGE_LABEL = {k: label for k, label, _ in STAGES}
 STAGE_PROB = {k: p for k, _, p in STAGES}
 KINDS = {"prospect": "Prospect", "client": "Client", "partner": "Referral partner", "past_client": "Past client"}
-OFFERS = {"health_report": "CRM Health Report", "assessment": "Assessment", "build": "Build",
-          "retainer": "Run & Grow retainer", "other": "Other"}
+OFFERS = {"build": "Build", "retainer": "Run & Grow retainer", "other": "Other"}
 ACTIVITY_KINDS = {"call": "Call", "meeting": "Meeting", "email": "Email", "linkedin": "LinkedIn", "event": "Event",
                   "note": "Note"}
 CONVERSATION_KINDS = ("call", "meeting")

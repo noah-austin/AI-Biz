@@ -139,9 +139,9 @@ def home():
     return pages.home()
 
 
-@app.get("/crm-health-report", response_class=HTMLResponse)
-def health_report():
-    return pages.health_report()
+@app.get("/what-we-build", response_class=HTMLResponse)
+def what_we_build():
+    return pages.what_we_build()
 
 
 @app.get("/about", response_class=HTMLResponse)

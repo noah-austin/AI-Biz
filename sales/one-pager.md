@@ -16,18 +16,18 @@ We connect the systems you already have (CRM, accounting, projects, spreadsheets
 - an AI assistant that answers questions about *your* business, correctly, because the data underneath is right.
 
 ## How it works
-1. **CRM Health Report (1 week).** We connect read-only and show you exactly what's wrong with your data, what it's hiding, and how to fix it.
-2. **Assessment (2 weeks).** We map your systems and reports and agree a plan for what matters most to you.
-3. **Build (4–6 weeks).** We connect your data and reproduce your existing reports *to the cent*, so you can trust them. Then we build the first tools and turn on the AI.
+1. **A conversation.** How your company runs, which systems hold your data, and what you wish you could see and do.
+2. **A custom proposal.** A written plan and fixed quote built around your systems, your data and the tools that matter most to you.
+3. **We build it.** We bring your data together and reproduce your existing reports *to the cent*, so you can trust them. Then we build the tools and turn on the AI.
 4. **Run & Grow (monthly).** We keep it accurate, add what you need next, and review it with your leadership every month.
 
 ## Why us
 - **Built by an operator, for operators.** I'm a COO and chief of staff, not a software vendor. I built this to run a real company.
-- **Weeks, not months.** The first version for a multi-branch commercial contractor took 9 days.
+- **Built around you.** No off-the-shelf package: we start from how your company runs and build on the systems you already have.
 - **You own it.** It runs on a server in your name, for a few dollars a month. No per-seat licences, and no lock-in.
 - **Safe by design.** The AI can read, never change anything. Everyone sees only what they should. Data is backed up every night.
 
 ## The first step
-A **CRM Health Report**: about a week, read-only access, a fixed quote up front. If it doesn't show you something worth fixing, you don't pay.
+A conversation about your company. If there's a fit, you get a custom proposal with a fixed quote.
 
 **Noah Austin** · [email] · [phone] · [booking link]
