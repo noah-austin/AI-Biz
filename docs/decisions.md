@@ -8,9 +8,15 @@
 | Ownership | Client owns the infrastructure, Noah manages it | Server and accounts sit in the client's name; Noah manages them on retainer. |
 | Commitment | Side project to start | Keeping the current job while landing the first 1–2 clients. |
 
+| Reference company | Can be named; no referral | Noah is cleared to do this work and reuse what's needed. Settled; don't re-raise. Keep their figures out of everything. |
+| Noah's background | Business operations (COO / chief of staff) | Sell as an operator to COOs and CFOs. |
+| Network | No warm leads | Go-to-market leans on referral partners, the demo and content. |
+| Location | Texas | Texas LLC. |
+| Time | 20 hours a week | |
+
 ## Open questions
-- Relationship with the first company: can it be named or used as a reference? Any non-compete, IP or moonlighting limits?
-- Business name, legal entity, state.
-- First prospects: warm network vs. cold outreach.
-- Price points for the setup fee and the retainer.
-- Which CRMs and systems to support first (Salesforce only, or HubSpot and others too).
+- Business name (ideas in `concept.md` §8).
+- Year-one income goal (scenarios in `concept.md` §5).
+- Confirm the six-layer model and the three-step offer (`concept.md`).
+- First build: the demo company plus kit, or sales material.
+- Texas sales tax treatment of the retainer: ask a CPA.
