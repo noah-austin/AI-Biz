@@ -76,6 +76,7 @@ Work in plain English with Noah. Ask before anything hard to undo. Follow `CLAUD
 7. **Off-site backups:** a DigitalOcean Spaces bucket via `OFFSITE_CMD` (ask Noah to create it), on top of the droplet's weekly snapshots.
 8. **Health:** confirm `/healthz` for each install, and set up a free uptime monitor that emails Noah if it fails.
 9. **Users:** create Noah's admin login on each install with `python -m kit.manage create-user`; he types the password himself.
-10. **Finish:** write `docs/server-notes.md` (what's installed, ports, service names, how to deploy and roll back; no secrets), commit and push it, and give Noah the links.
+10. **Keep Remote Control always on:** make `claude remote-control --name "Biz server"` (run in `~/AI-Biz` as `noah`) start at boot and restart if it exits: a systemd user service with lingering enabled, or tmux started by `@reboot` cron plus a watchdog. This isn't an official Anthropic feature, so test it with a real reboot before calling it done, and tell Noah how it went.
+11. **Finish:** write `docs/server-notes.md` (what's installed, ports, service names, how to deploy and roll back; no secrets), commit and push it, and give Noah the links.
 
 **Deploy routine afterwards:** `git pull` → run tests → `python -m kit.manage init-db` for each install → restart its service → check `/healthz` and the logs → roll back with `git revert` if anything is wrong.
