@@ -1,6 +1,6 @@
 # Business name shortlist
 
-*2026-10-17. Style: plain and credible. Each name works on its own or with "Data Co." / "Data" after it. 130 names screened; 86 survive.*
+*2026-10-17. Style: plain and credible. Each name works on its own or with "Data Co." / "Data" after it. 170 names screened; 115 survive. Noah's preferred styles: **plain English** and **classic firm-sounding**.*
 
 ## How these were checked
 - **Same-name screen (done):** web searches for companies with the same or a confusingly similar name in data, software, consulting or field service. "Clean" means nothing turned up, not that a trademark search is clear.
@@ -197,8 +197,93 @@ caprockdata.com
 joinedupdata.com
 ```
 
+## Round 5: plain English and classic firm (Noah's styles)
+40 more, only in the two preferred styles; 29 survive.
+
+**Watch-out:** "Numbers", "Books" and "Ledger" names get read as bookkeeping. Bookkeeping firms already use several of them: Steady Numbers, Working Numbers (a trademark), Open Books and True Books. The business is wider than accounting, so names about the *picture* or the *source* travel better.
+
+**Plain English, clean**
+- Whole Picture
+- Known Numbers
+- Sound Numbers
+- Single Picture
+- Same Numbers
+- Common Numbers
+
+**Plain English, minor issues**
+- Clear Numbers: "Clear" names are crowded.
+- Honest Numbers: near Honestly Bookkeeping.
+- Straight Numbers: near Straight Talk CPAs.
+- Plain Facts: an old UK magazine.
+- Good Numbers: UK and Australian bookkeepers.
+- One Ledger: a crypto project.
+- Whole Company: a Danish food maker.
+
+**Classic firm, clean**
+- Main & Ledger
+- Hollis & Pike
+- Ashby & Lane
+- Whitfield & Grey
+- Calloway & Reed
+- Kent & Carver
+- Harlow & Finch
+- Bancroft & Lowe
+- Ledgerton
+- Whole Picture Partners
+
+**Classic firm, minor issues**
+- Ledger & Main: crowded with "Ledger" names.
+- Barrow & Field: near law firms.
+- Hale & Hart: sounds like Holland & Hart.
+- Thornbury Partners: sounds like Thornburg.
+- Fairway & Main: Fairway Mortgage.
+- Sterling & Main: "Sterling" is crowded.
+- Ledgerhouse Partners: reads as bookkeeping.
+- Common Source Partners: *The Common Source*, a Houston legal information-management firm founded 1997 and since acquired. A small risk; it also applies to Common Source.
+
+**Dropped**
+- Austin & Co: an Austin TX CPA firm, and it reads as the city.
+- Ledger & Co: an accounting firm.
+- Full Count: a data-dashboard consultancy.
+- One Source Partners: IT advisory firms.
+- Steady Numbers, Working Numbers, Open Books, True Books, Clear Books: all used by bookkeeping firms or apps.
+
+## Final shortlist in Noah's styles
+| | Name | Why |
+|---|---|---|
+| 1 | **Whole Picture** (or Whole Picture Partners) | Plain English for exactly what the client gets. Not bookkeeping-sounding. Clean. |
+| 2 | **Common Source** | One source everyone works from. Minor Houston echo (above). |
+| 3 | **Single Picture** | Same idea as Whole Picture, a little more precise. Clean. |
+| 4 | **Same Numbers** | "Everyone sees the same numbers." Says the Monday-meeting promise. Clean. |
+| 5 | **Known Numbers** | Numbers you know are right. Clean. |
+| 6 | **Sound Numbers** | Sounds like a long-standing firm. Clean. |
+| 7 | **Main & Ledger** | Classic partnership feel, hints at business data. Clean. |
+| 8 | **Merit & Mile** | Classic, distinctive. Clean, but says nothing about data. |
+| 9 | **Hollis & Pike / Ashby & Lane** | Pure classic firm names. Clean, but empty of meaning, so the tagline does all the work. |
+| 10 | **Ledgerhouse** | Established-sounding. Reads a little like bookkeeping. |
+
+Bulk check for these:
+```
+wholepicture.co
+wholepicturedata.com
+wholepicturepartners.com
+commonsourcedata.com
+singlepicture.com
+singlepicturedata.com
+samenumbers.com
+knownnumbers.com
+soundnumbers.com
+mainandledger.com
+meritandmile.com
+hollisandpike.com
+ashbyandlane.com
+ledgerhouse.com
+```
+
 ## Recommendation
-**Joinery** is still my first pick: one word that tells the story (we join what you have and build on it), and it stands out. Strong alternatives with different feels:
+**Now: Whole Picture.** It's in both of Noah's styles (add "Partners" for the classic feel), it says what the client gets, it doesn't sound like bookkeeping, and it screened clean.
+
+*(Earlier pick, before Noah chose styles:)* **Joinery** was my first pick: one word that tells the story (we join what you have and build on it), and it stands out. Strong alternatives with different feels:
 - **Common Source:** corporate and safe.
 - **Overlook:** about seeing the whole business.
 - **Square & Level:** a builder's trustworthiness.
