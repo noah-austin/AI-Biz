@@ -98,7 +98,7 @@ def decide_lead(lead_id: int, action: str) -> str:
                                     'Reply to their enquiry', core.local_today(), %(notes)s) RETURNING id""",
                          {"company": lead["company"] or f"{lead['name']} (company not given)", "name": lead["name"],
                           "role": lead["role"], "email": lead["email"], "size": lead["company_size"],
-                          "notes": f"Website enquiry about {LEAD_INTEREST.get(lead['interest'], 'something')}. CRM: {lead['crm'] or 'not given'}."},
+                          "notes": f"Website enquiry about {LEAD_INTEREST.get(lead['interest'], 'something')}. Systems: {lead['crm'] or 'not given'}."},
                          conn)["id"]
         db.execute("""INSERT INTO practice.activities (company_id, happened_on, kind, summary)
                       VALUES (%(c)s, (%(t)s AT TIME ZONE core.client_tz())::date, 'email', %(s)s)""",

@@ -3,7 +3,7 @@
 **The goal:** understand their pain well enough to know whether you can help, and agree one next step. Listen for 70% of the call. Don't demo until you know what to show.
 
 ## 1. Open (2 min)
-> "Thanks for the time. I'd like to understand how you run the business on numbers today and where it hurts. If there's a fit, I'll tell you what I'd suggest; if not, I'll say so. Sound OK?"
+> "Thanks for the time. I'd like to understand how you run the business today, where your data lives and where it hurts. If there's a fit, I'll put together a proposal; if not, I'll say so. Sound OK?"
 
 ## 2. How it works today (8 min)
 - "Walk me through how leadership gets its numbers each week or month. Who builds them, and how long does it take?"
@@ -12,10 +12,11 @@
 - "When was the last time a number turned out to be wrong? What happened?"
 
 ## 3. The pain and its cost (8 min)
-- "If you could fix one thing about your reporting tomorrow, what would it be?"
+- "If you could have one thing tomorrow (a report, a tool, an answer), what would it be?"
+- "What does your team spend hours on every week that a computer should be doing?"
 - "What does that cost you today: hours, bad decisions, missed deals, late cash?"
 - "What have you tried? (A BI tool, an analyst, the CRM's own reports, a consultant.) Why didn't it stick?"
-- "Is anyone looking at AI tools? What do you want them to do?"
+- "Is anyone looking at AI tools or agents? What would you want them to do?"
 
 ## 4. Show, only what's relevant (5 min, optional)
 Open the Bluestem demo on whichever page matches their pain:

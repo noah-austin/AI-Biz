@@ -1,4 +1,4 @@
--- Enquiries from the public website. The website's own database login can only INSERT here; the hub reviews them.
+-- Enquiries from the public website. `crm` holds the "main systems you use" answer. The website's own database login can only INSERT here; the hub reviews them.
 CREATE TABLE IF NOT EXISTS practice.inbound_leads (
     id serial PRIMARY KEY,
     name text NOT NULL,

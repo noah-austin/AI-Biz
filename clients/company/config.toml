@@ -25,7 +25,7 @@ proposals = 1
 # Who the business development agent looks for.
 [agents]   # spending cap is agents_monthly_cap_usd under [ai]
 prospects_per_run = 10
-ideal_client = """Small and mid-size US companies (roughly 20-1,000 employees, $5M-$500M revenue) in any industry, that run on a CRM (Salesforce, HubSpot, Dynamics, Zoho, Pipedrive) plus an accounting system, and have no data team. Best signals: multiple locations or divisions, recent growth or acquisitions, a COO/CFO/VP Operations, job posts for reporting or BI analysts, a recent CRM rollout, field-service or project-based work. Best contact: the COO, CFO, VP Operations, president or owner."""
+ideal_client = """Small and mid-size US companies (roughly 20-1,000 employees, $5M-$500M revenue) in any industry, that run on several systems (a CRM, accounting, ERP, project or field-service tools, HR, spreadsheets) and have no data team. Best signals: multiple locations or divisions, recent growth or acquisitions, a COO/CFO/VP Operations, job posts for reporting or BI analysts, a recent CRM or ERP rollout, lots of spreadsheets. Best contact: the COO, CFO, VP Operations, president or owner."""
 
 [ai]
 model = "claude-opus-5-5"

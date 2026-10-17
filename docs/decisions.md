@@ -38,7 +38,7 @@
 | Delivery model | Platform (the kit) + method + a custom plan per client | Like a Salesforce consultant, but we own the platform. |
 | Entry offer | ~~CRM Health Report~~ dropped (see "how clients start" below) | Was Claude's suggestion; it framed the business as fixing data, which it isn't. |
 | Niche | Take any good fit; leading guess for marketing is contractors and field services | Decide after 15–20 conversations. |
-| Focus | Stop adding features until a client needs them; ~70% of time goes to selling for 60 days | Must-haves before client #1 are listed in concept.md §7. |
+| Focus | Stop adding features until a client needs them; ~70% of time goes to selling for 60 days | Must-haves before client #1 are listed in concept.md §9. |
 
 ## 2026-10-17: our own server
 | Topic | Decision | Notes |
@@ -88,9 +88,18 @@
 | How clients start | A conversation, then a written custom proposal with a fixed quote | No packaged entry offer and no paid assessment. |
 | Timelines | Never advertised | Builds depend on scope; the proposal covers timing. |
 
+## 2026-10-17: concept v3 and website second pass
+| Topic | Decision | Notes |
+|---|---|---|
+| Headline | "All your data in one place, and everything it unlocks." | Data in one place leads; tools, AI and agents are what it unlocks. |
+| Voice | "We" (a firm) | Noah is named once, as founder, on the About page. Personal emails still come from Noah as "I". |
+| Origin story | Not on the website or in posts | The first company is never named or described publicly. |
+| AI agents | A core part of what clients get | Daily briefs, drafted reports, meeting prep, follow-up watch, research. A person approves anything that goes out. |
+| Systems | Anything with data in it | The contact form asks "main systems you use" (free text) instead of a CRM list. |
+| Hosting | Client's choice: their own server (we manage) or hosted by us | Each hosted client gets its own separate server in our account; never shared. |
+| Audience | Leaders of small and mid-size companies, any industry, US-wide | Lean toward an industry only if one clearly stands out in the first 15–20 conversations. |
+
 ## Open questions
-- Business name (ideas in `concept.md` §8).
-- Year-one income goal (scenarios in `concept.md` §5).
-- Confirm the six-layer model and the three-step offer (`concept.md`).
-- Where to host the public demo (a cheap VPS, or Railway).
-- Texas sales tax treatment of the retainer: ask a CPA.
+- Business name (ideas in `concept.md` §12).
+- Texas sales tax treatment of the retainer and hosting: ask a CPA.
+- Hosting price for hosted clients (at cost, or a set monthly fee).

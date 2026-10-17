@@ -44,9 +44,10 @@ def test_real_enquiry_is_saved(site, monkeypatch):
     client, site_app = site
     monkeypatch.setattr(site_app, "notify", lambda data: None)
     before = count()
-    r = post(client, site_app, company="Test Co", message="Hello")
+    r = post(client, site_app, company="Test Co", systems="HubSpot, QuickBooks", message="Hello")
     assert r.status_code == 303 and r.headers["location"].startswith("/thanks")
     assert count() == before + 1
+    assert db.one("SELECT crm FROM practice.inbound_leads ORDER BY id DESC LIMIT 1")["crm"] == "HubSpot, QuickBooks"
 
 
 def test_bots_are_dropped_quietly(site, monkeypatch):

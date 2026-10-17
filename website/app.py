@@ -114,8 +114,9 @@ def notify(data: dict) -> None:
 def validate(form) -> tuple[dict, dict]:
     g = lambda k, n: (str(form.get(k) or "").strip())[:n]
     data = {"name": g("name", 120), "email": g("email", 200).lower(), "company": g("company", 160), "role": g("role", 120),
-            "company_size": g("company_size", 40), "crm": g("crm", 40), "interest": g("interest", 40),
+            "company_size": g("company_size", 40), "crm": g("systems", 200), "interest": g("interest", 40),
             "message": g("message", 3000)}
+    data["systems"] = data["crm"]  # stored in the crm column; the form calls it "systems"
     errors = {}
     if len(data["name"]) < 2:
         errors["name"] = "Please add your name."
@@ -123,8 +124,6 @@ def validate(form) -> tuple[dict, dict]:
         errors["email"] = "Please add a valid email address."
     if data["company_size"] not in pages.SIZES:
         data["company_size"] = ""
-    if data["crm"] not in pages.CRMS:
-        data["crm"] = ""
     interests = dict(pages.INTERESTS)
     if data["interest"] not in interests:
         data["interest"] = "other"

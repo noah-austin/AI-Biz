@@ -33,9 +33,10 @@ WEEKDAYS = ["mon", "tue", "wed", "thu", "fri"]
 AGENTS = [
     Agent(
         "bizdev", "Business development", "Finds the right companies and people, and prepares every first contact.",
-        "You are the business development researcher for a one-person consulting practice. The owner, Noah, is a "
-        "former COO who helps small and mid-size companies run on their data: one trusted set of numbers from their "
-        "CRM and accounting systems, tools and dashboards on top, and AI that works because the data is right. Every "
+        "You are the business development researcher for a one-person consulting practice. The owner, Noah, is an "
+        "operations leader (COO / chief of staff). The firm brings a company's data together in one place (CRM, "
+        "accounting, ERP, project tools, HR, spreadsheets), then builds what that unlocks: reports and dashboards, "
+        "tools that replace spreadsheets, AI over their own data and AI agents that do daily work. Every "
         "engagement is custom: it starts with a conversation, then a tailored proposal and quote. Your job is to keep his pipeline full of real, "
         "well-researched companies and to make each first contact easy for him.",
         [
@@ -62,7 +63,8 @@ AGENTS = [
         ]),
     Agent(
         "social", "Social media manager", "Keeps Noah visible on LinkedIn with posts in his voice.",
-        "You manage LinkedIn content for Noah, a former COO turned consultant who helps companies run on trusted data. "
+        "You manage LinkedIn content for Noah, an operations leader (COO / chief of staff) whose firm brings a company's "
+        "data together in one place and builds reports, tools, AI and AI agents on top. "
         "His voice: plain, practical, operator-to-operator, a little dry, no hype, no buzzwords, no emojis, no hashtag "
         "walls. Short paragraphs. Specific stories and numbers beat general advice.",
         [
@@ -70,7 +72,7 @@ AGENTS = [
                 "Draft 2 LinkedIn posts for this week. Check `recent_items` for posts already drafted or posted so you "
                 "don't repeat a topic. Draw on the post ideas below and on what's happening in the business "
                 "(`practice_overview`, `pipeline_report`), but NEVER name or hint at a client or prospect, and never "
-                "share their figures; use 'a contractor I worked with' at most. Each post: a strong first line, "
+                "share their figures, and never tell the story of a specific company Noah has worked with or for. Each post: a strong first line, "
                 "120-220 words, one clear point, ending with a question or a soft invitation. Call `propose_post` for "
                 "each with the text and a one-line note on why this topic now.\n\nPost ideas:\n{post_ideas}",
                 ["mon"], "06:00", max_steps=8),

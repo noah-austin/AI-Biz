@@ -1,16 +1,16 @@
-# The concept, v2
+# The concept, v3
 
-*2026-10-17. Replaces v1 (still in git history). A working document: change it as real conversations teach us.*
+*2026-10-17. Replaces v2 (still in git history). A working document: change it as real conversations teach us.*
 
 ## 1. What the business is
 
-**We help mid-size companies run on their data: one trusted set of numbers, the tools to act on it, and AI that actually works because the data underneath is right.**
+**We bring a company's data together in one place, then build what that unlocks: reports that build themselves, tools that replace spreadsheets, and AI and AI agents that do real work.**
 
-Data consolidation is the engine and the reason everything works. It isn't the headline. Buyers don't wake up wanting "data consolidation"; they want:
+We add to what a company already has. We don't replace their systems, and we don't sell "fixing" their data. Buyers don't wake up wanting "data consolidation"; they want:
 - a Monday meeting where nobody argues about whose number is right;
-- reports that build themselves instead of eating an analyst's week;
+- reports that build themselves instead of eating someone's week;
 - to know early when a big deal slips or a customer stops paying;
-- AI that gives real answers about *their* business, not generic ones.
+- AI that gives real answers about *their* business, and agents that take work off their team.
 
 ## 2. How it works: platform, method, custom plan
 
@@ -18,74 +18,72 @@ Like a good Salesforce consultant, we bring three things:
 
 | | What it is | Why it matters |
 |---|---|---|
-| **A platform** | The kit (`kit/`): sync from their systems, one database they own, business rules, a web hub, an AI layer. | We don't start from zero, so builds are faster and cost less. It runs for about $6 a month on a server the client owns. |
+| **A platform** | The kit (`kit/`): sync from their systems, one database they own, business rules, a web hub, an AI layer, agents. | We don't start from zero, so builds are faster and cost less. |
 | **A method** | Understand the business → write the rulebook → connect the data → reproduce their existing reports to the cent → build what they need most → keep it trusted. | Reliable results, and numbers people trust because they've seen them match. |
-| **A custom plan** | Which systems, which numbers, which tools and which AI uses matter most to *this* client. | Every company's pain is different. The plan is tailored; the platform and method stay the same. |
+| **A custom plan** | Which systems, which numbers, which tools, AI and agents matter most to *this* client. | Every company is different. The plan is tailored; the platform and method stay the same. |
 
-## 3. What we offer
+## 3. What we build
 
-### The menu (tailored per client, all built on the same data foundation)
-- **Trusted numbers:** a single source of truth and the business rulebook. (A side benefit: the kit also flags records that look wrong in their systems. Mention it in passing; never lead with it.)
-- **Run the business on it:**
-  - a self-filling weekly scorecard;
-  - a monthly business review the AI drafts;
-  - help setting up the meeting rhythm itself: who owns each number and how the meetings run.
-- **Tools:** dashboards, a tool that replaces their key spreadsheet, drill-downs to every record, branch- and role-level access.
-- **Push, not pull:** scheduled emails and Teams messages, plus alerts like "a $400K deal slipped" or "a customer passed 90 days late".
-- **AI:**
-  - an "Ask AI" assistant over their own data;
-  - daily insights;
-  - document drafting such as proposals and summaries;
-  - a secure read-only connection so Copilot, ChatGPT or Claude can use the same trusted data.
+All of it sits on the same foundation, and each client gets the mix that fits them:
+- **The foundation:** every system with data in it (CRM, accounting, ERP, project and field-service tools, HR, spreadsheets, databases) connected into one database, with every number defined once in a plain-English rulebook.
+- **Reports and dashboards:** a self-filling weekly scorecard, the monthly review, drill-downs to every record, location- and role-level access.
+- **Tools:** simple apps that replace the spreadsheets a company runs on (forecasts, trackers, workbooks).
+- **Push, not pull:** scheduled reports and alerts by email or Teams.
+- **AI:** an "Ask AI" assistant over their own data, insights, and a secure read-only link so Copilot, ChatGPT or Claude can use the same data.
+- **AI agents (a core part):** assistants with a job, working from the data every day: daily briefs, drafted reports, meeting prep, follow-up watch, research. Agents prepare the work; a person approves anything that goes out. Our own hub is the working example.
+- **Side benefit, never the headline:** the kit flags records that look wrong in their systems. Mention it in passing at most.
 
 ### What we don't do
-These limits keep the business focused:
 - implementing or replacing ERPs and CRMs (we work alongside their consultant);
 - AI that isn't connected to their data;
 - training custom AI models;
 - writing back into their systems without explicit sign-off.
 
-### How they buy (internal guide; never published)
-There is no packaged entry offer. Every client starts with a free conversation (or two), then gets a written custom proposal with a fixed quote, priced to their setup: how many systems, records and fields, and what we build on top. Build length depends on scope and is never advertised. The ranges below are for our own planning.
+### Where it runs (client's choice)
+- **On their own server**, in their name; we manage it. They own everything and can take it over.
+- **Hosted by us.** Each hosted client gets its own separate server in our account; client data never shares a server with ours or another client's. Hosting is billed through to them.
 
-| Step | What it is | Length | Typical range |
-|---|---|---|---|
-| **Conversation** | How they run, which systems hold their data, what they want to see and do. | 1–2 calls | Free |
-| **Custom proposal** | The plan: which systems, what we build first, and a fixed quote. | A few days | Free |
-| **Build** | Bring their data together, the rulebook, reproduce their reports, then the tools and AI from the plan. | Depends on scope | $15,000–30,000 |
-| **Run & Grow** (monthly) | Monitoring, backups, fixes, new tools and new AI uses each month, and a monthly review with leadership. | Ongoing | $1,500–4,000 / month |
+Either way the data is theirs, it's fully documented, and there are no per-seat licences.
 
-The server and AI usage are billed to the client's own accounts, with no markup.
+## 4. How clients buy
 
-**Founding-client deal (first 1–2 clients):**
-- a discount, in exchange for a case study and a reference.
+1. **A conversation** (one or two calls, free): how they run, which systems hold their data, what they want to see and do.
+2. **A custom proposal** (free): the plan, what we build first, and a fixed quote. Priced to their setup: how many systems, how much data (records and fields), and what we build on top.
+3. **The build:** length depends on scope and is never advertised.
+4. **Run & Grow** (monthly): monitoring, backups, fixes, new tools, new agents and AI uses, and a monthly review with leadership.
 
-## 4. Why this beats being a general AI consultant
-- **General AI consulting is crowded and vague.** In 2026 everyone is an "AI consultant". The work tends to be workshops, strategy decks and one-off automations, which are hard to differentiate and hard to price.
-- **Most AI projects fail because the data is scattered.** We build that foundation first, so our AI works.
-- **A data foundation brings recurring revenue.** Once leadership runs its meeting on it, the monthly fee lasts for years. One-off AI projects end.
-- **The market is big enough.** There are roughly 200,000 mid-size US companies ($10M–$1B in revenue), and most have scattered data and no data team. We need 5–10 clients.
-- **Noah's edge:** he's an operator (COO / chief of staff) selling to operators. A tech shop can't sell "your meeting runs on one set of numbers" with the same credibility.
+No prices or timelines are published. Internal planning guesses only: a build around $15,000–30,000 and Run & Grow around $1,500–4,000 a month. Replace these with real quotes as they happen. Server and AI usage are billed to the client at cost.
 
-## 5. Who we sell to
-- **Buyer:** COO, CFO, owner or president of a company with 50–1,000 people, with a CRM and an accounting system, and no data team.
-- **Pain signals:** leadership numbers built by hand in Excel; reports that don't match; a new CRM nobody trusts; "we bought Copilot and it can't answer anything".
-- **Niche (open question):** we take any good-fit client. The leading guess for where to aim marketing is **contractors and field-service companies** (construction, mechanical, HVAC, facilities):
-  - the case study and the demo are already there;
-  - they run on the same few systems (Salesforce or HubSpot, Procore, Sage or QuickBooks);
-  - they gather in trade associations (AGC, ABC, MCAA).
+**Founding-client deal (first 1–2 clients):** a discount, in exchange for a case study and a reference.
 
-  We decide after 15–20 conversations show who responds best.
+## 5. Why this beats being a general AI consultant
+- **General AI consulting is crowded and vague.** In 2026 everyone is an "AI consultant", and the work tends to be workshops, decks and one-off automations.
+- **AI only works when it can see the company's data.** We build that foundation first, so our AI and agents actually work. A general consultant's agents can't see across systems; ours can.
+- **The foundation brings recurring revenue.** Once leadership runs on it and agents do daily work on it, the monthly fee lasts for years. One-off AI projects end.
+- **The market is big enough.** Hundreds of thousands of small and mid-size US companies run on several systems with no data team. We need 5–10 clients.
+- **Our edge:** operators (COO / chief of staff) selling to operators. A tech shop can't sell "your company runs on one set of numbers" with the same credibility.
 
-## 6. Getting the first clients (no warm network)
-1. **15–20 conversations in the next month** with COOs, CFOs and owners. Ask what's painful, what they've tried, and what they'd pay to fix. These calls are market research and pipeline at the same time.
-2. **Referral partners:** fractional CFOs and COOs, CPA firms, IT providers, and CRM consultants. Offer a referral fee of about 10% of first-year fees.
-3. **The live demo** (Bluestem) plus the case story: runs for about $6 a month. The company can be named; its figures stay out.
-4. **LinkedIn as an operator, not a vendor:** short posts like the 2111 close dates, "never average percentages", and "your CRM's AI only sees your CRM".
+## 6. Who we sell to
+- **Buyer:** COO, CFO, owner or president of a small or mid-size company, **any industry, anywhere in the US**, that runs on several systems and has no data team.
+- **Pain signals:** leadership numbers built by hand in Excel; reports that don't match; data in many systems; a new system nobody trusts; "we bought Copilot and it can't answer anything".
+- **Marketing focus:** any industry on the website. Watch which industries respond best in the first 15–20 conversations; if one stands out, lean examples and outreach toward it.
+
+## 7. Getting the first clients (no warm network)
+1. **15–20 conversations in the next month** with COOs, CFOs and owners. Ask what's painful, what they've tried, and what it's worth to them. These calls are market research and pipeline at the same time.
+2. **Referral partners:** fractional CFOs and COOs, CPA firms, IT providers, and CRM/ERP consultants. Referral fee of about 10% of first-year fees.
+3. **The live demo** (the fictional Bluestem company). The first reference company is never named or described on the website; stories in conversation stay anonymous and figure-free.
+4. **LinkedIn as an operator, not a vendor:** short posts about running a company on its data, what agents can actually do, and "your CRM's AI only sees your CRM".
 5. **Local groups:** Vistage and EO chapters, chambers of commerce, trade associations. A 20-minute talk: "What AI can actually do with your company's data."
-6. **Pitch the AI-readiness angle:** "Before you roll out Copilot, make your data right for it."
+6. **The AI-readiness angle:** "Before you roll out Copilot or agents, put your data in one place."
+7. **Our own agents do the legwork:** the business development agent finds and researches prospects every Mon/Wed/Fri; Noah makes the contact.
 
-## 7. Building the business, not just the software
+## 8. Risks to watch
+- **"Any industry" is hard to market with no network.** Referral partners and the demo carry most of the load early; revisit after 20 conversations.
+- **Hosting client data raises the stakes:** insurance (E&O plus cyber), the security one-pager and the contracts must be in place before the first hosted client.
+- **Custom quotes take time to write.** Build a proposal template from the first one so the next takes an hour, not a day.
+- **20 hours a week:** one build at a time until there's help or more hours.
+
+## 9. Building the business, not just the software
 
 **Stop adding features until a client needs them.** The demo is good enough to sell. The first client decides the next connector and the next tool. In the next 60 days, about 70% of the time goes to selling.
 
@@ -97,14 +95,16 @@ The server and AI usage are billed to the client's own accounts, with no markup.
 - [ ] One-page security summary, plus standard answers to IT questionnaires
 - [ ] Insurance: professional liability (E&O) plus cyber
 - [ ] The connector client #1 actually needs
+- [ ] A hosted-client setup: one separate server per hosted client, in our account (client data never shares a server with ours or another client's)
 
 **To scale on 20 hours a week (soon after):**
 - **One product, many installs.** Clients only differ by settings and their own small client folder; updates go to everyone.
+- **Agents as a product:** turn the agent engine from our own hub into a standard part of every client install (daily briefs, drafted reports, meeting prep, follow-up watch).
 - **A dashboard for Noah** showing the health of every client install on one screen.
 - **Open-source connectors (dlt)** for the long tail of systems, plus a spreadsheet upload for quick wins.
 - **Measuring value:** usage and time saved, shown in each client's monthly review.
 
-## 8. Year-one income scenarios
+## 10. Year-one income scenarios
 Assumes the first client lands around months 2–4, an average build of about $20k and an average retainer of about $2,500 a month (our planning guesses, to replace with real quotes).
 
 | | Builds | Retainer months | Rough total |
@@ -115,7 +115,7 @@ Assumes the first client lands around months 2–4, an average build of about $2
 
 At 20 hours a week, Steady is realistic. Reaching Strong is the signal to go full-time.
 
-## 9. Company setup (Texas)
+## 11. Company setup (Texas)
 Confirm the details with a CPA.
 1. **Pick a name**, check it on SOSDirect, and check the domain.
 2. **Form an LLC** (Form 205, which has cost $300) with a registered agent.
@@ -123,13 +123,13 @@ Confirm the details with a CPA.
 4. **Franchise tax:** the yearly report is required even when no tax is due.
 5. **⚠ Sales tax:** Texas may tax data processing and hosting services. Ask a CPA how to word the monthly retainer.
 6. **Insurance:** E&O plus cyber.
-7. **Basics:** bookkeeping, an email address on your own domain, and a simple website with the demo and a booking link.
+7. **Basics:** bookkeeping, an email address on your own domain (Google Workspace), and the website (built; see `website/`).
 
-## 10. Name ideas
+## 12. Name ideas
 Check availability before getting attached to one: **Plainview Data**, **Groundwork Data Co.**, **Bedrock Operations**, **Single Source Partners**, **Keel Analytics**, **Clearline**.
 
-## 11. Open questions
+## 13. Open questions
 1. Business name.
-2. The niche to aim marketing at; decide after the first 15–20 conversations.
-3. Year-one target (pick a scenario).
-4. Final prices; test them in the first conversations.
+2. Whether to lean toward an industry, after the first 15–20 conversations.
+3. Real prices, from the first proposals.
+4. Who is "we" as it grows: subcontractors, a partner, or staying solo for year one.

@@ -1,19 +1,19 @@
 # Who to contact
 
 ## The ideal first client
-- **Size:** 50–500 people (roughly $10M–$150M in revenue), in Texas to start.
-- **Systems:** a CRM with real use (Salesforce or HubSpot ideal) plus an accounting system (QuickBooks, Sage, NetSuite).
-- **Pain signals:** a COO, CFO or VP Ops; several branches or divisions; a recent CRM rollout; job posts for a "reporting analyst" or "business intelligence".
-- **Marketing focus (to test):** contractors and field services, such as commercial construction, mechanical, HVAC, electrical, plumbing and facilities. Same systems, messy data, tight-knit associations.
+- **Size:** roughly 20–1,000 people, any industry, anywhere in the US.
+- **Systems:** several systems with real data in them: a CRM, accounting (QuickBooks, Sage, NetSuite), and often an ERP, project or field-service tool, HR system and spreadsheets.
+- **Pain signals:** a COO, CFO or VP Ops; several locations or divisions; recent growth or acquisitions; a recent CRM or ERP rollout; job posts for a "reporting analyst" or "business intelligence".
+- **Marketing focus:** any industry. Note which industries respond best in the first 15–20 conversations, and lean toward one only if it clearly stands out.
 
 ## Where to find them
-- **LinkedIn search:** "COO" OR "CFO" OR "VP Operations" + Texas + Construction / Facilities Services / Mechanical, company size 51–500.
-- **Associations (Texas chapters):** AGC, ABC, MCAA, ACCA, PHCC, IEC and NECA. Member directories, events, and speaking slots at chapter meetings.
-- **Peer groups:** Vistage and EO chapters in Dallas, Houston, Austin and San Antonio. Ask to speak: "What AI can actually do with your company's data".
+- **LinkedIn search:** "COO" OR "CFO" OR "VP Operations", company size 11–1,000, any industry. (Search by hand; the agents never open LinkedIn.)
+- **Associations:** industry and trade associations' member directories, events and speaking slots. The business development agent uses these too.
+- **Peer groups:** Vistage and EO chapters (Texas ones in person; others online). Ask to speak: "What AI can actually do with your company's data".
 - **Signals:** press releases about acquisitions and new branches (data gets messier), and job posts for reporting or BI roles.
 
 ## Referral partners (the fastest path with no network)
-- Fractional CFOs and COOs, small CPA firms that do advisory work, IT providers (MSPs), and Salesforce or HubSpot implementation consultants.
+- Fractional CFOs and COOs, small CPA firms that do advisory work, IT providers (MSPs), and CRM and ERP implementation consultants.
 - **Goal:** 10 partner conversations in the first month. One good partner beats 100 cold emails.
 
 ## Weekly routine (20 hours)

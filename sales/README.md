@@ -9,4 +9,4 @@ Everything for finding and winning the first clients. Fill in `[Company]` once t
 | `discovery-call.md` | The script for the first 15–20 conversations, and what to log afterwards. |
 | `targets.md` | Who to contact, where to find them, and the weekly routine for 20 hours a week. |
 
-**The rule for confidentiality:** the first company can be named in conversation, but never use its figures, customers or details beyond "a multi-branch commercial contractor".
+**The rule for confidentiality:** the first company is never named or described on the website or in posts. In conversation, never use its figures, customers or details beyond "a multi-branch commercial contractor".
