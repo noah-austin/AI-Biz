@@ -125,7 +125,7 @@ Confirm the details with a CPA.
 6. **Insurance:** E&O plus cyber.
 7. **Basics:** bookkeeping, an email address on your own domain (Google Workspace), and the website (built; see `website/`).
 
-## 12. Name ideas
+## 12. Name ideas (shortlist with screening in `docs/names.md`)
 Check availability before getting attached to one: **Plainview Data**, **Groundwork Data Co.**, **Bedrock Operations**, **Single Source Partners**, **Keel Analytics**, **Clearline**.
 
 ## 13. Open questions

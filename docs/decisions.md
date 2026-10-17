@@ -100,6 +100,6 @@
 | Audience | Leaders of small and mid-size companies, any industry, US-wide | Lean toward an industry only if one clearly stands out in the first 15–20 conversations. |
 
 ## Open questions
-- Business name (ideas in `concept.md` §12).
+- Business name: shortlist in `docs/names.md` (recommended: Joinery). Check .com before choosing.
 - Texas sales tax treatment of the retainer and hosting: ask a CPA.
 - Hosting price for hosted clients (at cost, or a set monthly fee).
