@@ -28,6 +28,6 @@ We connect the systems you already have (CRM, accounting, projects, spreadsheets
 - **Safe by design.** The AI can read, never change anything. Everyone sees only what they should. Data is backed up every night.
 
 ## The first step
-A **CRM Health Report**: one week, a fixed price, read-only access. If it doesn't show you something worth fixing, you don't pay.
+A **CRM Health Report**: about a week, read-only access, a fixed quote up front. If it doesn't show you something worth fixing, you don't pay.
 
 **Noah Austin** · [email] · [phone] · [booking link]

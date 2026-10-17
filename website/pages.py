@@ -1,4 +1,4 @@
-"""The website's pages. Words live here; the name, email and prices come from website/config.toml."""
+"""The website's pages. Words live here; the name and email come from website/config.toml."""
 import html
 try:
     import tomllib
@@ -94,7 +94,7 @@ def home() -> str:
 <section class="band"><div class="wrap">
   <h2>How it works</h2>
   <ol class="steps">
-    <li><span>1</span><div><h3>CRM Health Report</h3><p>One week, fixed price, read-only. We show you what your data is hiding and exactly how to fix it.</p></div></li>
+    <li><span>1</span><div><h3>CRM Health Report</h3><p>About a week, read-only. We show you what your data is hiding and exactly how to fix it.</p></div></li>
     <li><span>2</span><div><h3>Assessment</h3><p>Two weeks to map your systems and reports and agree a plan built around what matters most to you.</p></div></li>
     <li><span>3</span><div><h3>Build</h3><p>Four to six weeks. Your data connected, your reports reproduced, then the first tools and the AI switched on.</p></div></li>
     <li><span>4</span><div><h3>Run &amp; Grow</h3><p>Monthly. We keep it accurate, add what you need next, and review it with your leadership every month.</p></div></li>
@@ -115,7 +115,7 @@ def home() -> str:
   <div>
     <p class="eyebrow">The first step</p>
     <h2>CRM Health Report</h2>
-    <p>One week. {esc(c["health_report_price"])}, fixed. Read-only access. You'll see the wins your reports can't see, the
+    <p>About a week. Read-only access. Priced to your setup, quoted up front. You'll see the wins your reports can't see, the
     pipeline that isn't real, and the exact records to fix.</p>
     <p><strong>If it doesn't show you something worth fixing, you don't pay.</strong></p>
   </div>
@@ -136,9 +136,9 @@ def health_report() -> str:
     c = cfg()
     body = f"""
 <section class="hero slim"><div class="wrap">
-  <p class="eyebrow">One week · fixed price · read-only</p>
+  <p class="eyebrow">About a week · quoted up front · read-only</p>
   <h1>CRM Health Report</h1>
-  <p class="lead">Find out exactly what your CRM is hiding, what it's costing you, and how to fix it, in one week, without
+  <p class="lead">Find out exactly what your CRM is hiding, what it's costing you, and how to fix it, in about a week, without
   changing anything in your systems.</p>
   {cta_row(("Book a Health Report", "/contact?interest=health_report"))}
 </div></section>
@@ -155,7 +155,7 @@ def health_report() -> str:
     <li><strong>Gaps that break your metrics:</strong> missing margins, missing loss reasons, deals with no owner or branch.</li>
     <li><strong>What it means in dollars:</strong> how much pipeline is inflated and how many wins are under-counted.</li>
     <li><strong>The fix list:</strong> every record to fix, with a direct link, grouped by owner, so your team can clean it up in an afternoon.</li>
-    <li><strong>Three opportunities:</strong> the reports and tools that would make the biggest difference for you, with a rough plan and price.</li>
+    <li><strong>Three opportunities:</strong> the reports and tools that would make the biggest difference for you, with a rough plan.</li>
   </ul>
 
   <h2>How it works</h2>
@@ -166,7 +166,8 @@ def health_report() -> str:
   </table>
 
   <h2>Price</h2>
-  <p><strong>{esc(c["health_report_price"])}</strong>, fixed. Founding clients: <strong>{esc(c["health_report_founding_price"])}</strong>.</p>
+  <p>Every company is different, so we price each report to your setup: how many systems we connect, and how many records
+  and fields we check. After a short call you get a fixed quote, so there are no surprises.</p>
   <ul class="checks">
     <li><strong>Guarantee:</strong> if the report doesn't show you something worth fixing, you don't pay.</li>
     <li><strong>Credit:</strong> if you go on to an Assessment, the full fee counts toward it.</li>
@@ -178,7 +179,7 @@ def health_report() -> str:
   {cta_row(("Book a Health Report", "/contact?interest=health_report"))}
 </div></section>"""
     return layout("CRM Health Report", body, "/crm-health-report",
-                  "A one-week, fixed-price, read-only review of your CRM: what it's hiding, what it costs you, and how to fix it.")
+                  "A read-only review, quoted up front, of your CRM: what it's hiding, what it costs you, and how to fix it.")
 
 
 def about() -> str:

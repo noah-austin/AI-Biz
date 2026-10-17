@@ -27,7 +27,7 @@ Companies whose leadership numbers come from a CRM (Salesforce, HubSpot, Dynamic
 - 30 minutes at kickoff and 45 at the walkthrough.
 
 ## Price
-**$2,000**, fixed. Founding clients: **$1,500**.
+Priced to their setup: how many systems we connect and how many records and fields we check. They get a fixed quote after the first call, before any work starts. Don't publish a price. (Internal guide only: most land around $1,500–2,500; founding clients get a discount.)
 - **Guarantee:** if the report doesn't show you something worth fixing, you don't pay.
 - **Credit:** if you go on to an Assessment, the full fee counts toward it.
 

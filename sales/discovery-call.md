@@ -31,7 +31,7 @@ Open the Bluestem demo on whichever page matches their pain:
 > "This is a fictional company, but it's the same system I'd set up for you, on your data."
 
 ## 5. Next step (3 min)
-- **Good fit:** "The easiest way to see what's really in your data is the CRM Health Report: one week, read-only, fixed price, and you don't pay if it doesn't find something worth fixing. Want me to send it over?"
+- **Good fit:** "The easiest way to see what's really in your data is the CRM Health Report: about a week, read-only, a fixed quote before we start, and you don't pay if it doesn't find something worth fixing. Want me to send it over?"
 - **Not yet:** "Sounds like the timing isn't right. Could I check back in [month]?" Set a next-step date in the hub.
 - **Not a fit:** say so, and ask, "Who do you know who has this problem?"
 

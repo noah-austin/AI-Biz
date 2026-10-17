@@ -79,6 +79,7 @@
 | Spam | Hidden honeypot field, minimum time on page, signed form token, 5 per visitor per hour | No captcha, so nothing annoys real visitors. |
 | Demo access | The "See a live demo" button signs visitors into Bluestem as a read-only guest | No password needed. Guest questions to Ask AI share one daily limit. |
 | Name | "Company Name" placeholder | Swap in `website/config.toml` once chosen. |
+| Prices | No prices published on the website or sales material | Every quote depends on the company: how many systems, records and fields. Prospects get a fixed quote after the first call. The ranges in `concept.md` are an internal guide only. |
 
 ## Open questions
 - Business name (ideas in `concept.md` §8).

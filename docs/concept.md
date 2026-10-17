@@ -45,8 +45,10 @@ These limits keep the business focused:
 - training custom AI models;
 - writing back into their systems without explicit sign-off.
 
-### How they buy (prices are starting points to test)
-| Step | What it is | Length | Price |
+### How they buy (internal guide; never published)
+Every client is quoted to their setup: how many systems, records and fields. They get a fixed quote after the first call, before work starts. The ranges below are for our own planning.
+
+| Step | What it is | Length | Typical range |
 |---|---|---|---|
 | **CRM Health Report** (entry offer) | Read-only connection to their CRM; the kit's checks show the wins their reports can't see and the exact records to fix. | ~1 week | $1,500–2,500 |
 | **Assessment** | Systems, key reports, users, biggest pain, and a written custom plan. Credited toward the build. | ~2 weeks | $3,500–5,000 |

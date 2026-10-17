@@ -6,5 +6,3 @@ owner_title = "Founder"
 email = "hello@example.com"      # becomes the Workspace address
 city = "Texas"
 demo_url = "https://demo.example.com/guest"   # the Bluestem demo's guest sign-in
-health_report_price = "$2,000"
-health_report_founding_price = "$1,500"
