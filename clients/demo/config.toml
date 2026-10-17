@@ -67,9 +67,9 @@ metric = "new_deals"
 period = "weekly"
 value = 25
 [[goals]]
-metric = "billed"
+metric = "billed_4wk"
 period = "weekly"
-value = 450000
+value = 1900000
 [[goals]]
 metric = "collected"
 period = "weekly"

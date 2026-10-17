@@ -6,7 +6,10 @@ config.toml. Anything required that's missing stops start-up with a clear
 message, instead of failing later in a confusing way.
 """
 import os
-import tomllib
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10
+    import tomli as tomllib
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path

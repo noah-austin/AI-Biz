@@ -36,11 +36,11 @@ An invoice's branch comes from its deal; if it has no deal reference, from the c
 - **Margin %:** total margin dollars ÷ total amount, for won deals that have a margin entered.
 - **Open pipeline:** open deals, by expected close date. **Weighted** = amount × stage probability (Prospecting 10%, Qualification 20%, Proposal 50%, Negotiation 75%). Deals whose close date has passed are reported separately as "past due".
 - **New pipeline:** deals created in the period, whatever happened to them since.
-- **Billed:** invoices dated in the period. **Collected:** payments by paid date.
+- **Billed:** invoices dated in the period. **Collected:** payments by paid date. On the scorecard, billing covers the past 31 days, because service contracts bill on the 1st and single weeks swing a lot.
 - **Receivables aging:** unpaid balance by days past due: Current, 1–30, 31–60, 61–90, 90+.
 - **AR over 60 days (scorecard):** unpaid balance more than 60 days past due at the end of each week, rebuilt from invoice and paid dates. Accounting gives one paid date per invoice, so payments are treated as paid in full.
 - **Where we sell best:** among slices with 5+ closed deals and a close rate above the overall rate, the ones with the most dollars won. Ranking by rate alone puts tiny 100%-win slices on top.
-- **Last 7 days:** from CRM field history: deals created, won and lost, and close dates pushed out by 30+ days.
+- **Last 7 days:** from CRM field history: deals created, won and lost, and open deals whose close date was pushed into a later month.
 
 ## 5. Goals (2026)
 | Metric | Goal |
@@ -49,7 +49,8 @@ An invoice's branch comes from its deal; if it has no deal reference, from the c
 | Weekly bookings | $500K |
 | Weekly new pipeline | $1.3M |
 | Weekly new deals | 25 |
-| Weekly billed / collected | $450K each |
+| Billed, past 31 days | $1.9M |
+| Weekly collected | $450K |
 | Win rate by $, trailing 90 days | 36% |
 | AR over 60 days | $400K or less |
 

@@ -7,15 +7,15 @@
 #   ops/backup.sh before-x   tagged manual backup before a big change (kept forever)
 set -euo pipefail
 cd "$(dirname "$0")/.."
-set -a; [ -f .env ] && . ./.env; set +a
-: "${DATABASE_URL:?DATABASE_URL not set}"
+eval "$(python3 -m kit.pgenv)"     # reads .env safely; password goes in the environment, not on the command line
 DIR="${BACKUP_DIR:-backups}"; KEEP_DAYS="${KEEP_DAYS:-14}"
 mkdir -p "$DIR"; chmod 700 "$DIR"
 TAG="${1:-nightly}"
+if [[ ! "$TAG" =~ ^[A-Za-z0-9_-]{1,40}$ ]]; then echo "tag must be letters, numbers, - or _"; exit 2; fi
 FILE="$DIR/hub-$(date -u +%Y%m%dT%H%M%SZ)-$TAG.sql.gz"
 
 record() {  # status, message
-  psql "$DATABASE_URL" -q -v ON_ERROR_STOP=1 -v st="$1" -v msg="$2" <<'SQL' || true
+  psql -q -v ON_ERROR_STOP=1 -v st="$1" -v msg="$2" <<'SQL' || true
 INSERT INTO core.sync_state (object, source, last_attempt_at, last_success_at, last_status, last_message)
 VALUES ('backup', 'pg_dump', now(), CASE WHEN :'st' = 'ok' THEN now() END, :'st', :'msg')
 ON CONFLICT (object) DO UPDATE SET last_attempt_at = now(),
@@ -25,12 +25,13 @@ SQL
 }
 trap 'record failed "backup failed at line $LINENO"' ERR
 
-pg_dump "$DATABASE_URL" --no-owner | gzip -9 > "$FILE"
+pg_dump --no-owner | gzip -9 > "$FILE"
 gzip -t "$FILE"                                   # verify before trusting it
 chmod 600 "$FILE"
 SIZE=$(du -h "$FILE" | cut -f1)
 
 if [ -n "${OFFSITE_CMD:-}" ]; then                # e.g. "aws s3 cp {} s3://client-backups/hub/"
+  # OFFSITE_CMD comes from the root-only .env; {} is replaced by the (validated) backup file name.
   eval "${OFFSITE_CMD//\{\}/\"$FILE\"}"
   OFF=", copied off-site"
 else

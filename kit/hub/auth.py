@@ -25,6 +25,8 @@ SESSION_HOURS = 12
 MAX_FAILS = 8
 FAIL_WINDOW = 15 * 60
 
+# Kept in memory per worker process, so with N workers someone gets up to N × MAX_FAILS tries.
+# Fine for a handful of users; move it to the database if a client needs it stricter.
 _fails: dict[str, deque] = defaultdict(deque)
 _lock = threading.Lock()
 

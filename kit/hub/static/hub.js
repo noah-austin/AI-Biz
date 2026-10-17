@@ -55,5 +55,9 @@
     Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
     (window.hubCharts || []).forEach(build);
   }
-  document.addEventListener("DOMContentLoaded", start);
+  document.addEventListener("DOMContentLoaded", () => {
+    // Wide time tables open on the latest weeks.
+    document.querySelectorAll("[data-scroll-end]").forEach(el => { el.scrollLeft = el.scrollWidth; });
+    start();
+  });
 })();

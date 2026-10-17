@@ -114,10 +114,11 @@ def status_pill(status: str) -> str:
 
 def chart(canvas_id: str, config: dict, height=260, label="Chart") -> str:
     """A Chart.js chart. Colors are filled in by hub.js from the theme tokens."""
+    payload = json.dumps(config, default=str).replace("</", "<\\/")  # never let data close the <script>
     return (f'<div class="chart" style="height:{height}px"><canvas id="{esc(canvas_id)}" role="img" '
             f'aria-label="{esc(label)}"></canvas></div>'
             f'<script>window.hubCharts=window.hubCharts||[];window.hubCharts.push({{id:{json.dumps(canvas_id)},'
-            f'config:{json.dumps(config, default=str)}}});</script>')
+            f'config:{payload}}});</script>')
 
 
 def page(request, title: str, body: str, active: str = "", subtitle: str = "", wide=False) -> str:
@@ -140,7 +141,7 @@ def page(request, title: str, body: str, active: str = "", subtitle: str = "", w
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(title)} · {esc(client.get("short_name", "Hub"))}</title>
-<link rel="stylesheet" href="/static/hub.css">
+<link rel="stylesheet" href="/static/hub.css"><link rel="icon" href="/static/icon.svg" type="image/svg+xml">
 <script src="{CHART_JS}" defer></script><script src="/static/hub.js" defer></script>
 </head><body>
 {demo}
@@ -158,4 +159,4 @@ def page(request, title: str, body: str, active: str = "", subtitle: str = "", w
 def bare_page(title: str, body: str) -> str:
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1"><title>{esc(title)}</title>
-<link rel="stylesheet" href="/static/hub.css"></head><body class="bare">{body}</body></html>"""
+<link rel="stylesheet" href="/static/hub.css"><link rel="icon" href="/static/icon.svg" type="image/svg+xml"></head><body class="bare">{body}</body></html>"""

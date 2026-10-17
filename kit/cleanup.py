@@ -18,7 +18,7 @@ class Check:
     fix: str
     system: str          # "crm" or "accounting"
     link: str            # key into config [links]
-    sql: str             # returns id, label, detail, amount, branch_code
+    sql: str             # returns id, label, detail, amount, branch_code, branch, owner_name
 
 
 def _s(col="branch_code"):
@@ -29,39 +29,40 @@ CHECKS = [
     Check("placeholder_close", "Close date is a placeholder",
           "A won deal dated far in the future (like 2111) drops out of every bookings report, so real wins go uncounted.",
           "Set the close date to the day the deal was actually won.", "crm", "crm_deal",
-          f"""SELECT id, name AS label, 'Close date ' || close_date AS detail, amount, branch_code FROM rpt.deals
+          f"""SELECT id, name AS label, 'Close date ' || to_char(close_date, 'Mon FMDD, YYYY') AS detail, amount, branch_code, branch, owner_name FROM rpt.deals
               WHERE close_date > core.local_today() + interval '5 years' {_s()} ORDER BY amount DESC NULLS LAST"""),
     Check("duplicates", "Possible duplicate deals",
           "Two records for the same deal double-count the pipeline.",
           "Check with the owner; delete or merge the duplicate.", "crm", "crm_deal",
           f"""SELECT b.id, b.name AS label, 'Looks like ' || a.id || ' (same account, name and amount)' AS detail,
-                     b.amount, b.branch_code
+                     b.amount, b.branch_code, b.branch, b.owner_name
               FROM rpt.deals a JOIN rpt.deals b ON a.account_id = b.account_id AND lower(a.name) = lower(b.name)
                    AND a.amount = b.amount AND a.id < b.id AND abs(b.created_date - a.created_date) <= 7
               WHERE true {_s('b.branch_code')} ORDER BY b.amount DESC NULLS LAST"""),
     Check("stale_open", "Open deal with a close date more than 30 days ago",
           "These inflate the pipeline with deals that are probably already won or lost.",
           "Mark it won or lost, or move the close date to a realistic one.", "crm", "crm_deal",
-          f"""SELECT id, name AS label, stage || ', close date ' || close_date || ' (' ||
-                     (core.local_today() - close_date) || ' days ago)' AS detail, amount, branch_code
+          f"""SELECT id, name AS label, stage || ', close date ' || to_char(close_date, 'Mon FMDD, YYYY') || ' (' ||
+                     (core.local_today() - close_date) || ' days ago)' AS detail, amount, branch_code, branch, owner_name
               FROM rpt.deals WHERE is_open AND close_date < core.local_today() - 30 {_s()}
               ORDER BY amount DESC NULLS LAST"""),
     Check("missing_margin", "Won deal with no margin entered (last 18 months)",
           "Margin reports can only use deals that have a margin, so gaps make margin % less reliable.",
           "Enter the estimated margin on the deal.", "crm", "crm_deal",
-          f"""SELECT id, name AS label, 'Won ' || close_date AS detail, amount, branch_code FROM rpt.deals
+          f"""SELECT id, name AS label, 'Won ' || to_char(close_date, 'Mon FMDD, YYYY') AS detail, amount, branch_code, branch, owner_name FROM rpt.deals
               WHERE is_won AND margin_pct IS NULL AND close_date >= core.local_today() - interval '18 months'
                 AND close_date <= core.local_today() {_s()} ORDER BY amount DESC NULLS LAST"""),
     Check("lost_no_reason", "Lost deal with no loss reason (last 12 months)",
           "Without reasons, we can't see why we lose or what to change.",
           "Pick the loss reason on the deal.", "crm", "crm_deal",
-          f"""SELECT id, name AS label, 'Lost ' || close_date AS detail, amount, branch_code FROM rpt.deals
+          f"""SELECT id, name AS label, 'Lost ' || to_char(close_date, 'Mon FMDD, YYYY') AS detail, amount, branch_code, branch, owner_name FROM rpt.deals
               WHERE is_lost AND loss_reason IS NULL AND close_date >= core.local_today() - interval '12 months'
                 {_s()} ORDER BY amount DESC NULLS LAST"""),
     Check("won_not_billed", "Won more than 45 days ago, but no invoice found",
           "Either the work hasn't been billed (lost revenue) or the invoice doesn't reference the deal.",
           "Check with billing. If invoiced, add the deal number to the invoice's reference.", "crm", "crm_deal",
-          f"""SELECT d.id, d.name AS label, d.deal_type || ', won ' || d.close_date AS detail, d.amount, d.branch_code
+          f"""SELECT d.id, d.name AS label, d.deal_type || ', won ' || to_char(d.close_date, 'Mon FMDD, YYYY') AS detail, d.amount, d.branch_code,
+                     d.branch, d.owner_name
               FROM rpt.deals d
               WHERE d.is_won AND d.close_date BETWEEN core.local_today() - 365 AND core.local_today() - 45
                 AND NOT EXISTS (SELECT 1 FROM rpt.invoices i WHERE i.deal_id = d.id) {_s('d.branch_code')}
@@ -71,7 +72,8 @@ CHECKS = [
           "Add the CRM account ID to the customer record in accounting.", "accounting", "accounting_customer",
           """SELECT c.id, c.name AS label,
                     coalesce((SELECT count(*) FROM acct.invoices i WHERE i.customer_id = c.id), 0) || ' invoices' AS detail,
-                    (SELECT sum(amount) FROM acct.invoices i WHERE i.customer_id = c.id) AS amount, NULL AS branch_code
+                    (SELECT sum(amount) FROM acct.invoices i WHERE i.customer_id = c.id) AS amount, NULL AS branch_code,
+                    NULL AS branch, 'Accounting team' AS owner_name
              FROM acct.customers c
              WHERE (c.crm_account_id IS NULL OR NOT EXISTS (SELECT 1 FROM crm.accounts a WHERE a.id = c.crm_account_id))
                AND %(scope)s IS NULL
@@ -79,7 +81,8 @@ CHECKS = [
     Check("unmapped_branch", "Deal with a branch code we don't recognise",
           "It won't roll up to a branch or region in any report.",
           "Fix the branch on the deal, or tell us the new branch so we can map it.", "crm", "crm_deal",
-          """SELECT id, name AS label, 'Branch code ' || coalesce(branch_code, '(blank)') AS detail, amount, branch_code
+          """SELECT id, name AS label, 'Branch code ' || coalesce(branch_code, '(blank)') AS detail, amount, branch_code,
+                    branch, owner_name
              FROM rpt.deals WHERE region = 'Unmapped' AND %(scope)s IS NULL ORDER BY amount DESC NULLS LAST"""),
 ]
 
@@ -89,9 +92,21 @@ def run_checks(scope=None, limit=200) -> list[dict]:
     for c in CHECKS:
         rows = db.query(c.sql, {"scope": scope})
         out.append({"check": c, "count": len(rows), "amount": sum(float(r["amount"] or 0) for r in rows),
-                    "rows": rows[:limit]})
+                    "rows": rows[:limit], "all_rows": rows})
     return out
 
 
 def counts(scope=None) -> dict:
     return {r["check"].key: r["count"] for r in run_checks(scope, limit=0)}
+
+
+def by_branch(results) -> list[dict]:
+    """How many records each branch has to fix, across all checks (accounting items have no branch)."""
+    tally = {}
+    for r in results:
+        for row in r["all_rows"]:
+            name = row.get("branch") or "Accounting"
+            t = tally.setdefault(name, {"branch": name, "count": 0, "checks": {}})
+            t["count"] += 1
+            t["checks"][r["check"].key] = t["checks"].get(r["check"].key, 0) + 1
+    return sorted(tally.values(), key=lambda t: -t["count"])

@@ -115,8 +115,9 @@ def run(dry_run: bool = False) -> int:
                 return 0
         conn.commit()
         try:
-            load_reference(conn, settings.client)
-            conn.commit()
+            if not dry_run:
+                load_reference(conn, settings.client)
+                conn.commit()
             for src in settings.client.get("sources", []):
                 connector = REGISTRY[src["type"]](src)
                 for spec in connector.objects():

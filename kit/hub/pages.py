@@ -3,6 +3,7 @@ import calendar
 import csv
 import datetime as dt
 import io
+from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
 from .. import cleanup, db, metrics
@@ -45,7 +46,7 @@ def home(request):
                 ui.delta(cur["won_amount"], prev["won_amount"], label="vs last year", title=ly_title),
                 metrics.deals_link(status="won", close_from=ys, close_to=ye), metrics.HOW["bookings"]),
         ui.tile("Win rate this year (by $)", pct(cur["win_rate_dollars"]),
-                f'{pct(cur["win_rate_count"])} by count · ' + ui.points_delta(cur["win_rate_dollars"], prev["win_rate_dollars"], "vs last year"),
+                f'{pct(cur["win_rate_count"])} by count<br>' + ui.points_delta(cur["win_rate_dollars"], prev["win_rate_dollars"], "vs last year"),
                 metrics.deals_link(status="closed", close_from=ys, close_to=ye), metrics.HOW["win_rate"]),
         ui.tile("Open pipeline closing this year", money(pipe["this_year"], True),
                 f'{money(pipe["this_year_weighted"], True)} weighted · {int(pipe["this_year_count"])} deals',
@@ -86,7 +87,7 @@ def home(request):
                      f'{money(cur["won_amount"], True)} booked vs {money(pace, True)} on pace to date '
                      f'({pct(cur["won_amount"] / pace if pace else None, 0)} of pace).</p>')
 
-    changes = _changes_card(metrics.recent_changes(t, 7, scope))
+    changes = _changes_card(metrics.recent_changes(t, 7, scope), t)
     issues = cleanup.run_checks(scope, limit=0)
     issue_items = "".join(
         f'<li><a href="/cleanup#{c["check"].key}">{esc(c["check"].title)}</a><span class="amt">{c["count"]}</span></li>'
@@ -105,7 +106,7 @@ def home(request):
     <section class="card"><div class="card-head"><h2>Bookings by month</h2>
       <div class="legend"><span><i style="background:var(--series-1)"></i>{t.year}</span><span><i style="background:var(--series-ly)"></i>{t.year - 1}</span></div></div>
       {monthly}{ui.how(metrics.HOW["bookings"] + " Click a month to see its deals.")}</section>
-    <section class="card"><div class="card-head"><h2>Progress to goal</h2>
+    <section class="card"><div class="card-head"><h2>{"Progress to goal" if goal else "Bookings so far this year"}</h2>
       <div class="legend"><span><i style="background:var(--series-1)"></i>Cumulative bookings</span>{'<span><i style="background:var(--axis)"></i>Goal pace</span>' if goal else ''}</div></div>
       {cumulative}{goal_line}</section>
   </div>
@@ -120,23 +121,26 @@ def home(request):
                    subtitle=f"Year to date, {ui.date(dt.date(t.year, 1, 1))} to {ui.date(t)}, compared with the same dates last year")
 
 
-def _changes_card(ch):
-    def group(title, rows, total, extra=lambda r: ""):
+def _changes_card(ch, t):
+    def group(title, rows, total, extra=lambda r: "", see_all=None):
         if not rows:
             return f'<div class="change-group"><h3><span>{esc(title)}</span><span class="muted">none</span></h3></div>'
         items = "".join(
             f'<li><div>{ui.source_link("crm_deal", r["id"], r["name"])}<div class="meta">{esc(r.get("branch") or "")}{extra(r)}</div></div>'
             f'<span class="amt">{money(r["amount"], True)}</span></li>' for r in rows[:3])
-        more = f'<li class="meta">and {len(rows) - 3} more</li>' if len(rows) > 3 else ""
+        more = ""
+        if len(rows) > 3:
+            more = (f'<li class="meta"><a href="{esc(see_all)}">and {len(rows) - 3} more</a></li>' if see_all
+                    else f'<li class="meta">and {len(rows) - 3} more</li>')
         return (f'<div class="change-group"><h3><span>{esc(title)} ({len(rows)})</span><span class="amt">{money(total, True)}</span></h3>'
                 f'<ul class="list">{items}{more}</ul></div>')
     slip = lambda r: f' · close {ui.short_date(r["old_close"])} → {ui.short_date(r["new_close"])}'
     return f"""<section class="card"><div class="card-head"><h2>Last 7 days</h2><span class="muted">since {ui.short_date(ch["since"])}</span></div>
-      {group("Won", ch["won"], ch["totals"]["won"])}
-      {group("Lost", ch["lost"], ch["totals"]["lost"])}
-      {group("Close date pushed out 30+ days", ch["slipped"], ch["totals"]["slipped"], slip)}
-      {group("New deals", ch["created"], ch["totals"]["created"])}
-      {ui.how("Rebuilt from the CRM's change history, which we keep even where the CRM drops it.")}</section>"""
+      {group("Won", ch["won"], ch["totals"]["won"], see_all=metrics.deals_link(status="won", close_from=ch["since"], close_to=t))}
+      {group("Lost", ch["lost"], ch["totals"]["lost"], see_all=metrics.deals_link(status="lost", close_from=ch["since"], close_to=t))}
+      {group("Pushed to a later month", ch["slipped"], ch["totals"]["slipped"], slip)}
+      {group("New deals", ch["created"], ch["totals"]["created"], see_all=metrics.deals_link(status="all", created_from=ch["since"], created_to=t, sort="created"))}
+      {ui.how("Won and lost are by close date, the same rule as bookings. 'Pushed to a later month' comes from the CRM's change history, which we keep even where the CRM drops it.")}</section>"""
 
 
 # ---------------------------------------------------------------- scorecard
@@ -151,25 +155,31 @@ def scorecard(request):
     fmt = {"money": lambda v: money(v, True), "count": ui.num, "pct": lambda v: "—" if v is None else f"{v:.1f}%"}
     rows = []
     for r in sc["rows"]:
-        cells = []
+        cells, scored, hits = [], 0, 0
         for i, v in enumerate(r["values"]):
             last = i == len(weeks) - 1
             cls = ""
-            if r["goal"] is not None and v is not None and not (last and r["key"] not in ("win_rate_dollars", "ar_over_60")):
+            # This week isn't over, so totals aren't scored yet. Rates and balances are, since they're "as of now".
+            if r["goal"] is not None and v is not None and not (last and r["key"] not in ("win_rate_dollars", "ar_over_60", "billed_4wk")):
                 hit = v >= r["goal"] if r["higher_is_better"] else v <= r["goal"]
                 cls = "hit" if hit else "miss"
+                if not last:
+                    scored += 1
+                    hits += hit
             if last:
                 cls += " partial"
             cells.append(f'<td class="n {cls}">{fmt[r["format"]](v)}</td>')
-        goal = "—" if r["goal"] is None else (("≥ " if r["higher_is_better"] else "≤ ") + fmt[r["format"]](r["goal"]))
-        rows.append(f'<tr><th class="sticky" scope="row">{esc(r["label"])}'
+        goal = "" if r["goal"] is None else (("Goal ≥ " if r["higher_is_better"] else "Goal ≤ ") + fmt[r["format"]](r["goal"]))
+        record = f"{hits} of {scored}" if scored else "—"
+        rows.append(f'<tr><th class="sticky measure" scope="row">{esc(r["label"])}'
+                    f'<span class="goal">{goal}</span>'
                     f'<details class="how"><summary>How</summary><p>{esc(r["how"])}</p></details></th>'
-                    f'<td class="n">{goal}</td>{"".join(cells)}</tr>')
+                    f'{"".join(cells)}<td class="n record">{record}</td></tr>')
     note = ("Goals are company-wide, so they're hidden when you see only some branches." if scope else
-            "Green: hit the weekly goal. Red: missed it. This week is still in progress, so it isn't scored yet.")
+            "Green: goal hit. Red (✕): missed. This week is still in progress, so its totals aren't scored yet.")
     body = f"""<section class="card">
-<p class="muted" style="margin-top:0">{esc(note)} Goals are set in the client settings.</p>
-<div class="scroll"><table class="data"><thead><tr><th class="sticky">Measure</th><th class="n">Weekly goal</th>{head}</tr></thead>
+<p class="muted" style="margin-top:0">{esc(note)}</p>
+<div class="scroll" data-scroll-end><table class="data scorecard"><thead><tr><th class="sticky">Measure</th>{head}<th class="n">Weeks on goal</th></tr></thead>
 <tbody>{"".join(rows)}</tbody></table></div></section>"""
     return ui.page(request, "Weekly scorecard", body, "Scorecard",
                    subtitle="Fills itself in from the CRM and accounting every hour. Weeks run Monday to Sunday.", wide=True)
@@ -188,13 +198,14 @@ def _deal_filters(request, scope):
     f = {
         "status": q.get("status") if q.get("status") in STATUS_SQL else "open",
         "branch": q.get("branch") or "", "deal_type": q.get("deal_type") or "", "segment": q.get("segment") or "",
+        "stage": q.get("stage") or "",
         "close_from": _date_param(q.get("close_from")), "close_to": _date_param(q.get("close_to")),
         "created_from": _date_param(q.get("created_from")), "created_to": _date_param(q.get("created_to")),
         "sort": q.get("sort") if q.get("sort") in SORTS else "amount",
     }
     where = [STATUS_SQL[f["status"]]]
     p = {"scope": scope}
-    for key, col in (("branch", "branch_code"), ("deal_type", "deal_type"), ("segment", "segment")):
+    for key, col in (("branch", "branch_code"), ("deal_type", "deal_type"), ("segment", "segment"), ("stage", "stage")):
         if f[key]:
             where.append(f"{col} = %({key})s")
             p[key] = f[key]
@@ -215,15 +226,19 @@ def _deal_rows(where, p, sort, limit=None):
                         FROM rpt.deals WHERE {where} ORDER BY {SORTS[sort]}{lim}""", p)
 
 
+STAGE_ORDER = ["Prospecting", "Qualification", "Proposal", "Negotiation"]
+
+
 def deals(request):
     scope = scope_of(request)
+    t = metrics.today()
     f, where, p = _deal_filters(request, scope)
     totals = db.one(f"""SELECT count(*) AS n, coalesce(sum(amount), 0) AS amount, coalesce(sum(weighted_amount), 0) AS weighted
                         FROM rpt.deals WHERE {where}""", p)
     rows = _deal_rows(where, p, f["sort"], limit=500)
     opts = lambda values, sel: "".join(f'<option value="{esc(v)}"{" selected" if v == sel else ""}>{esc(lbl)}</option>'
                                        for v, lbl in values)
-    branches = [("", "All branches")] + [(b["code"], b["name"]) for b in _branches(scope)]
+    branches = [("", "All your branches" if scope else "All branches")] + [(b["code"], b["name"]) for b in _branches(scope)]
     types = [("", "All types")] + [(r["deal_type"], r["deal_type"]) for r in
                                    db.query("SELECT DISTINCT deal_type FROM rpt.deals WHERE deal_type IS NOT NULL ORDER BY 1")]
     segs = [("", "All segments")] + [(r["segment"], r["segment"]) for r in
@@ -231,39 +246,83 @@ def deals(request):
     statuses = [("open", "Open"), ("won", "Won"), ("lost", "Lost"), ("closed", "Won or lost"), ("all", "All")]
     sorts = [("amount", "Biggest first"), ("close", "Closing soonest"), ("created", "Newest first")]
     dv = lambda d: d.isoformat() if d else ""
+    more_open = " open" if (f["created_from"] or f["created_to"] or f["stage"]) else ""
+    stage_input = f'<input type="hidden" name="stage" value="{esc(f["stage"])}">' if f["stage"] else ""
     filters = f"""<form class="filters" method="get" action="/deals">
   <label>Status<select name="status">{opts(statuses, f["status"])}</select></label>
   <label>Branch<select name="branch">{opts(branches, f["branch"])}</select></label>
   <label>Type<select name="deal_type">{opts(types, f["deal_type"])}</select></label>
   <label>Segment<select name="segment">{opts(segs, f["segment"])}</select></label>
-  <label>Close from<input type="date" name="close_from" value="{dv(f["close_from"])}"></label>
-  <label>Close to<input type="date" name="close_to" value="{dv(f["close_to"])}"></label>
-  <label>Created from<input type="date" name="created_from" value="{dv(f["created_from"])}"></label>
-  <label>Created to<input type="date" name="created_to" value="{dv(f["created_to"])}"></label>
+  <label>Close date<span class="range"><input type="date" name="close_from" value="{dv(f["close_from"])}" aria-label="Close date from">
+    <span class="muted">to</span><input type="date" name="close_to" value="{dv(f["close_to"])}" aria-label="Close date to"></span></label>
   <label>Sort<select name="sort">{opts(sorts, f["sort"])}</select></label>
   <button class="primary" type="submit">Apply</button>
-  <a class="btn secondary" href="/deals.csv?{esc(request.url.query)}">Download for Excel</a>
+  <a class="btn ghost" href="/deals?status={esc(f["status"])}">Clear</a>
+  <details class="more"{more_open}><summary>More filters</summary>
+    <label>Created<span class="range"><input type="date" name="created_from" value="{dv(f["created_from"])}" aria-label="Created from">
+    <span class="muted">to</span><input type="date" name="created_to" value="{dv(f["created_to"])}" aria-label="Created to"></span></label>
+    {stage_input}{f'<span class="muted">Stage: {esc(f["stage"])}</span>' if f["stage"] else ""}
+  </details>
 </form>"""
     open_cols = f["status"] == "open"
+
+    stages_html = ""
+    if open_cols and not f["stage"]:
+        st = db.query(f"""SELECT CASE WHEN close_date < %(t)s THEN 'Past due' ELSE stage END AS stage,
+                                 count(*) AS n, sum(amount) AS amount, sum(weighted_amount) AS weighted
+                          FROM rpt.deals WHERE {where} GROUP BY 1""", dict(p, t=t))
+        by = {r["stage"]: r for r in st}
+        top = max([float(r["amount"] or 0) for r in st] or [1]) or 1
+        items = []
+        base = dict(request.query_params)
+        for name in STAGE_ORDER + ["Past due"]:
+            r = by.get(name)
+            if not r:
+                continue
+            width = 100 * float(r["amount"] or 0) / top
+            if name == "Past due":
+                link = "/deals?" + urlencode(
+                    dict(base, close_to=(t - dt.timedelta(days=1)).isoformat(), close_from=""))
+            else:
+                # Match the bar: a stage's bar excludes past-due deals, so its link does too.
+                link = "/deals?" + urlencode(dict(base, stage=name, close_from=max(f["close_from"] or t, t).isoformat()))
+            items.append(f"""<a class="stage{' pastdue' if name == 'Past due' else ''}" href="{esc(link)}">
+<span class="stage-name">{esc(name)}</span><span class="stage-bar"><i style="width:{width:.1f}%"></i></span>
+<span class="stage-n">{r["n"]}</span><span class="stage-amt">{money(r["amount"], True)}</span>
+<span class="stage-w muted">{money(r["weighted"], True)} wtd</span></a>""")
+        if items:
+            stages_html = (f'<div class="stages" aria-label="Pipeline by stage">{"".join(items)}</div>'
+                           '<p class="muted" style="font-size:13px;margin:4px 0 14px">"Past due" means the close date has '
+                           'already passed but the deal is still open. Usually these need updating in the CRM.</p>')
+
     trs = []
     for r in rows:
         margin = "—" if r["margin_pct"] is None else "%.1f%%" % float(r["margin_pct"])
         extra = (f'<td>{esc(r["stage"])}</td><td class="n">{r["probability"]:.0f}%</td><td class="n">{money(r["weighted_amount"])}</td>'
                  if open_cols else f'<td>{esc(r["stage"])}</td><td class="n">{margin}</td><td>{esc(r["loss_reason"] or "")}</td>')
+        late = (' <span class="pill warn">past due</span>'
+                if open_cols and r["close_date"] and r["close_date"] < t else "")
         trs.append(f'<tr><td class="wrap">{ui.source_link("crm_deal", r["id"], r["name"])}</td>'
                    f'<td>{esc(r["branch"])}</td><td>{esc(r["deal_type"])}</td><td class="n">{money(r["amount"])}</td>{extra}'
-                   f'<td class="n">{ui.date(r["close_date"])}</td><td>{esc(r["owner_name"])}</td></tr>')
+                   f'<td class="n">{ui.date(r["close_date"])}{late}</td><td>{esc(r["owner_name"])}</td></tr>')
     head_extra = ('<th>Stage</th><th class="n">Probability</th><th class="n">Weighted</th>' if open_cols
                   else '<th>Stage</th><th class="n">Margin</th><th>Loss reason</th>')
     shown = f"Showing the first 500 of {totals['n']:,}. Download for the full list." if totals["n"] > 500 else ""
-    summary = (f'<p><strong>{totals["n"]:,} deals</strong> · {money(totals["amount"])} total'
-               + (f' · {money(totals["weighted"])} weighted' if open_cols else "") + f' <span class="muted">{shown}</span></p>')
-    body = f"""<section class="card">{filters}{summary}
+    summary = (f'<div class="summary-row"><p><strong>{totals["n"]:,} deals</strong> · {money(totals["amount"])} total'
+               + (f' · {money(totals["weighted"])} weighted' if open_cols else "") + f' <span class="muted">{shown}</span></p>'
+               f'<a class="btn secondary" href="/deals.csv?{esc(request.url.query)}">Download for Excel</a></div>')
+    body = f"""<section class="card">{filters}{stages_html}{summary}
 <div class="scroll"><table class="data"><thead><tr><th>Deal</th><th>Branch</th><th>Type</th><th class="n">Amount</th>{head_extra}
-<th class="n">Close date</th><th>Owner</th></tr></thead><tbody>{"".join(trs) or '<tr><td colspan="9">No deals match.</td></tr>'}</tbody></table></div>
+<th class="n">Close date</th><th>Owner</th></tr></thead><tbody>{"".join(trs) or '<tr><td colspan="9">No deals match these filters.</td></tr>'}</tbody></table></div>
 {ui.how(metrics.HOW["pipeline"] if open_cols else metrics.HOW["win_rate"])}</section>"""
-    title = {"open": "Open pipeline", "won": "Won deals", "lost": "Lost deals"}.get(f["status"], "Deals")
-    return ui.page(request, title, body, "Pipeline", subtitle="Every deal links to its record in the CRM.", wide=True)
+    title = {"open": "Open pipeline", "won": "Won deals", "lost": "Lost deals", "closed": "Closed deals"}.get(f["status"], "All deals")
+    bits = [dict(branches).get(f["branch"]) if f["branch"] else None, f["deal_type"] or None, f["segment"] or None,
+            f["stage"] or None]
+    if f["close_from"] or f["close_to"]:
+        bits.append(f'closing {ui.date(f["close_from"]) if f["close_from"] else "any time"} to '
+                    f'{ui.date(f["close_to"]) if f["close_to"] else "any time"}')
+    subtitle = " · ".join(esc(b) for b in bits if b) or "Every deal links to its record in the CRM."
+    return ui.page(request, title, body, "Pipeline", subtitle=subtitle, wide=True)
 
 
 def deals_csv(request):
@@ -282,7 +341,7 @@ def deals_csv(request):
 
 def _csv_safe(v):
     """Stop spreadsheet formula injection from text fields."""
-    if isinstance(v, str) and v[:1] in ("=", "+", "-", "@"):
+    if isinstance(v, str) and v[:1] in ("=", "+", "-", "@", "\t", "\r"):
         return "'" + v
     return "" if v is None else v
 
@@ -488,86 +547,175 @@ def cleanup_page(request):
     scope = scope_of(request)
     results = cleanup.run_checks(scope)
     total = sum(r["count"] for r in results)
+    short = {"placeholder_close": "Placeholder date", "duplicates": "Duplicates", "stale_open": "Stale open",
+             "missing_margin": "No margin", "lost_no_reason": "No loss reason", "won_not_billed": "Not billed",
+             "unlinked_customer": "Unlinked customer", "unmapped_branch": "Unknown branch"}
+    active = [r["check"] for r in results if r["count"]]
+    branch_rows = "".join(
+        f'<tr><th class="sticky" scope="row">{esc(b["branch"])}</th><td class="n"><strong>{b["count"]}</strong></td>'
+        + "".join(f'<td class="n">{b["checks"].get(c.key, 0) or "<span class=muted>·</span>"}</td>' for c in active) + "</tr>"
+        for b in cleanup.by_branch(results))
+    summary = (f'<section class="card"><h2>Where the clean-up is</h2><div class="scroll"><table class="data">'
+               f'<thead><tr><th class="sticky">Branch</th><th class="n">Total</th>'
+               + "".join(f'<th class="n"><a href="#{c.key}">{esc(short.get(c.key, c.key))}</a></th>' for c in active)
+               + f'</tr></thead><tbody>{branch_rows}</tbody></table></div></section>') if total else ""
     blocks = []
     for r in results:
         c = r["check"]
         rows = "".join(f'<tr><td class="wrap">{ui.source_link(c.link, x["id"], x["label"])}</td><td>{esc(x["detail"])}</td>'
+                       f'<td>{esc(x.get("branch") or "")}</td><td>{esc(x.get("owner_name") or "")}</td>'
                        f'<td class="n">{money(x["amount"])}</td></tr>' for x in r["rows"])
         more = f'<p class="muted">Showing the first {len(r["rows"])} of {r["count"]}.</p>' if r["count"] > len(r["rows"]) else ""
         table = (f'<div class="scroll" style="max-height:420px"><table class="data"><thead><tr><th>Record</th><th>Detail</th>'
-                 f'<th class="n">Amount</th></tr></thead><tbody>{rows}</tbody></table></div>{more}') if r["count"] else ""
+                 f'<th>Branch</th><th>Owner</th><th class="n">Amount</th></tr></thead><tbody>{rows}</tbody></table></div>{more}') if r["count"] else ""
         status = ui.status_pill("ok") if not r["count"] else f'<span class="count">{r["count"]} · {money(r["amount"], True)}</span>'
         blocks.append(f"""<details class="check" id="{c.key}"{' open' if r["count"] and len(blocks) < 1 else ''}>
 <summary><strong>{esc(c.title)}</strong>{status}</summary>
 <p>{esc(c.why)} <strong>Fix:</strong> {esc(c.fix)} <span class="muted">({'CRM' if c.system == 'crm' else 'Accounting'})</span></p>{table}</details>""")
-    body = f"""<section class="card"><p style="margin-top:0">{total} records to fix. These are fixed in the source systems, not
-patched over here, so every report gets more accurate. Each record opens in its own system.</p>{"".join(blocks)}</section>"""
+    body = f"""<p class="lead">{total} records to fix. They get fixed in the source systems, not patched over here, so every report
+gets more accurate. Each record opens in its own system, and the owner column says who should fix it.</p>
+{summary}<section class="card">{"".join(blocks)}</section>"""
     return ui.page(request, "Clean-up list", body, "Clean-up", subtitle="Data problems that make reports wrong")
 
 
 # ---------------------------------------------------------------- health (admin)
 
+SYNC_NAMES = {"crm.users": "CRM · Users", "crm.accounts": "CRM · Accounts", "crm.opportunities": "CRM · Deals",
+              "crm.opportunity_history": "CRM · Deal change history", "acct.customers": "Accounting · Customers",
+              "acct.invoices": "Accounting · Invoices", "backup": "Nightly backup"}
+PAGE_NAMES = {"/": "Home", "/scorecard": "Scorecard", "/deals": "Pipeline / deals", "/winloss": "Win / loss",
+              "/receivables": "Receivables", "/invoices": "Invoices", "/cleanup": "Clean-up", "/health": "Health"}
+
+
+def _local(ts):
+    if not ts:
+        return "never"
+    return ts.astimezone(ZoneInfo(get_settings().tz)).strftime("%b %-d, %-I:%M %p")
+
+
 def health(request):
-    syncs = db.query("SELECT * FROM core.sync_state ORDER BY object")
+    syncs = db.query("SELECT * FROM core.sync_state ORDER BY object = 'backup', object")
     now = db.one("SELECT now() AS n")["n"]
     rows = []
-    for s in syncs:
-        status = s["last_status"]
-        if status in ("ok", "warning") and s["last_success_at"] and (now - s["last_success_at"]).total_seconds() > 3 * 3600:
+    for s_ in syncs:
+        status = s_["last_status"]
+        limit = 26 * 3600 if s_["object"] == "backup" else 3 * 3600
+        if status in ("ok", "warning") and s_["last_success_at"] and (now - s_["last_success_at"]).total_seconds() > limit:
             status = "stale"
-        rows.append(f'<tr><td>{esc(s["object"])}</td><td>{esc(s["source"])}</td><td>{ui.status_pill(status)}</td>'
-                    f'<td class="n">{s["last_success_at"].strftime("%b %-d %H:%M UTC") if s["last_success_at"] else "never"}</td>'
-                    f'<td class="n">{ui.num(s["rows_seen"])}</td><td class="n">{ui.num(s["rows_pruned"])}</td>'
-                    f'<td class="wrap">{esc(s["last_message"])}</td></tr>')
+        rows.append(f'<tr><td>{esc(SYNC_NAMES.get(s_["object"], s_["object"]))}</td><td>{ui.status_pill(status)}</td>'
+                    f'<td class="n">{_local(s_["last_success_at"])}</td>'
+                    f'<td class="n">{ui.num(s_["rows_seen"])}</td><td class="n">{ui.num(s_["rows_pruned"])}</td>'
+                    f'<td class="wrap">{esc(s_["last_message"])}</td></tr>')
     visits = db.query("""SELECT path, count(*) AS n, count(DISTINCT user_id) AS users FROM core.page_visits
                          WHERE at > now() - interval '30 days' GROUP BY 1 ORDER BY 2 DESC LIMIT 12""")
-    vrows = "".join(f'<tr><td>{esc(v["path"])}</td><td class="n">{v["n"]}</td><td class="n">{v["users"]}</td></tr>' for v in visits)
+    vrows = "".join(f'<tr><td>{esc(PAGE_NAMES.get(v["path"], v["path"]))}</td><td class="n">{v["n"]}</td>'
+                    f'<td class="n">{v["users"]}</td></tr>' for v in visits)
     users = db.query("SELECT email, name, role, branches, last_login_at FROM core.app_users WHERE active ORDER BY name")
-    urows = "".join(f'<tr><td>{esc(u["name"])}</td><td>{esc(u["email"])}</td><td>{esc(u["role"])}</td>'
-                    f'<td>{esc(", ".join(u["branches"]) if u["branches"] else "All")}</td>'
-                    f'<td class="n">{u["last_login_at"].strftime("%b %-d %H:%M UTC") if u["last_login_at"] else "never"}</td></tr>' for u in users)
+    names = {b["code"]: b["name"] for b in _branches(None)}
+    urows = "".join(f'<tr><td>{esc(u["name"])}<div class="meta muted">{esc(u["email"])}</div></td>'
+                    f'<td>{"Admin" if u["role"] == "admin" else "Viewer"}</td>'
+                    f'<td>{esc(", ".join(names.get(b, b) for b in u["branches"]) if u["branches"] else "All branches")}</td>'
+                    f'<td class="n">{_local(u["last_login_at"])}</td></tr>' for u in users)
+    tz = esc(get_settings().tz)
     body = f"""<section class="card"><h2>Data syncs and backups</h2>
-<div class="scroll"><table class="data"><thead><tr><th>What</th><th>Source</th><th>Status</th><th class="n">Last success</th>
-<th class="n">Rows</th><th class="n">Removed</th><th>Note</th></tr></thead><tbody>{"".join(rows) or '<tr><td colspan="7">Nothing has synced yet.</td></tr>'}</tbody></table></div>
-{ui.how("Syncs run hourly. A sync is flagged out of date after 3 hours without success. The removal step refuses to delete more than 10% of a table in one run.")}</section>
+<div class="scroll"><table class="data"><thead><tr><th>What</th><th>Status</th><th class="n">Last success</th>
+<th class="n">Rows</th><th class="n">Removed</th><th>Note</th></tr></thead><tbody>{"".join(rows) or '<tr><td colspan="6">Nothing has synced yet.</td></tr>'}</tbody></table></div>
+{ui.how(f"Syncs run hourly and are flagged out of date after 3 hours without success; the backup after 26 hours. The removal step refuses to delete more than 10% of a table in one run. Times are {tz}.")}</section>
 <div class="cols even"><section class="card"><h2>Most-used pages, last 30 days</h2>
 <div class="scroll"><table class="data"><thead><tr><th>Page</th><th class="n">Visits</th><th class="n">People</th></tr></thead><tbody>{vrows}</tbody></table></div></section>
 <section class="card"><h2>People with access</h2>
-<div class="scroll"><table class="data"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Branches</th><th class="n">Last sign-in</th></tr></thead><tbody>{urows}</tbody></table></div></section></div>"""
+<div class="scroll"><table class="data"><thead><tr><th>Person</th><th>Role</th><th>Sees</th><th class="n">Last sign-in</th></tr></thead><tbody>{urows}</tbody></table></div></section></div>"""
     return ui.page(request, "Health", body, "Health", subtitle="Is the data fresh, are backups running, who's using what")
 
 
 # ---------------------------------------------------------------- demo stand-in source pages
 
+FIELD_LABELS = {
+    "opportunity": [("name", "Opportunity name"), ("account", "Account"), ("stage", "Stage"), ("amount", "Amount"),
+                    ("probability", "Probability (%)"), ("close_date", "Close date"), ("deal_type", "Record type"),
+                    ("owner", "Owner"), ("branch_code", "Branch code"), ("margin_pct", "Margin (%)"),
+                    ("lead_source", "Lead source"), ("loss_reason", "Loss reason"), ("created_at", "Created"),
+                    ("modified_at", "Last modified"), ("exclude_from_reporting", "Exclude from reporting"), ("id", "Record ID")],
+    "account": [("name", "Account name"), ("segment", "Segment"), ("city", "City"), ("state", "State"),
+                ("branch_code", "Branch code"), ("created_at", "Created"), ("id", "Record ID")],
+    "invoice": [("number", "Invoice no."), ("customer", "Customer"), ("invoice_date", "Invoice date"), ("due_date", "Due date"),
+                ("amount", "Total"), ("amount_paid", "Amount paid"), ("paid_date", "Paid date"), ("reference", "Reference"),
+                ("memo", "Memo"), ("id", "Record ID")],
+    "customer": [("name", "Display name"), ("crm_account_id", "CRM account ID"), ("terms_days", "Payment terms (days)"),
+                 ("id", "Record ID")],
+}
+
+
+def _fmt_field(key, v):
+    if v is None or v == "":
+        return '<span class="muted">(blank)</span>'
+    if key in ("amount", "amount_paid"):
+        return money(v)
+    if isinstance(v, bool):
+        return "Yes" if v else "No"
+    if isinstance(v, dt.datetime):
+        return esc(_local(v))
+    if isinstance(v, dt.date):
+        return esc(ui.date(v))
+    return esc(v)
+
+
 def demo_source(request, system: str, obj: str, rec_id: str):
     scope = scope_of(request)
+    hist, related = [], ""
     if system == "crm" and obj == "opportunity":
-        r = db.one("SELECT * FROM crm.opportunities WHERE id = %(i)s", {"i": rec_id})
+        r = db.one("""SELECT o.*, a.name AS account, u.name AS owner FROM crm.opportunities o
+                      LEFT JOIN crm.accounts a ON a.id = o.account_id LEFT JOIN crm.users u ON u.id = o.owner_id
+                      WHERE o.id = %(i)s""", {"i": rec_id})
         if r and scope and r["branch_code"] not in scope:
             r = None
-        hist = db.query("SELECT field, old_value, new_value, changed_at FROM crm.opportunity_history WHERE opportunity_id = %(i)s ORDER BY changed_at",
-                        {"i": rec_id}) if r else []
-        title = "CRM · Opportunity"
+        if r:
+            hist = db.query("""SELECT field, old_value, new_value, changed_at FROM crm.opportunity_history
+                               WHERE opportunity_id = %(i)s ORDER BY changed_at""", {"i": rec_id})
+            inv = db.query("SELECT id, number, invoice_date, amount, amount_paid FROM acct.invoices WHERE reference = %(i)s ORDER BY invoice_date",
+                           {"i": rec_id})
+            if inv:
+                related = ("<h3>Invoices in accounting that reference this deal</h3><ul class=\"list\">" + "".join(
+                    f'<li>{ui.source_link("accounting_invoice", x["id"], "Invoice " + x["number"])}'
+                    f'<span class="amt">{ui.date(x["invoice_date"])} · {money(x["amount"])}'
+                    f'{" · paid" if x["amount_paid"] else " · unpaid"}</span></li>' for x in inv) + "</ul>")
+        system_name, kind = "CRM", "opportunity"
     elif system == "crm" and obj == "account":
         r = db.one("SELECT * FROM crm.accounts WHERE id = %(i)s", {"i": rec_id})
-        hist, title = [], "CRM · Account"
+        if r and scope and r["branch_code"] not in scope:
+            r = None
+        system_name, kind = "CRM", "account"
     elif system == "accounting" and obj == "invoice":
-        r = db.one("SELECT * FROM acct.invoices WHERE id = %(i)s", {"i": rec_id})
-        hist, title = [], "Accounting · Invoice"
+        r = db.one("""SELECT i.*, c.name AS customer FROM acct.invoices i LEFT JOIN acct.customers c ON c.id = i.customer_id
+                      WHERE i.id = %(i)s""", {"i": rec_id})
+        if r and scope and not db.one("SELECT 1 AS ok FROM rpt.invoices WHERE id = %(i)s AND branch_code = ANY(%(s)s)",
+                                      {"i": rec_id, "s": scope}):
+            r = None
+        system_name, kind = "Accounting", "invoice"
     elif system == "accounting" and obj == "customer":
         r = db.one("SELECT * FROM acct.customers WHERE id = %(i)s", {"i": rec_id})
-        hist, title = [], "Accounting · Customer"
+        if r and scope and not db.one("SELECT 1 AS ok FROM rpt.invoices WHERE customer_id = %(i)s AND branch_code = ANY(%(s)s) LIMIT 1",
+                                      {"i": rec_id, "s": scope}):
+            r = None
+        system_name, kind = "Accounting", "customer"
     else:
-        r, hist, title = None, [], "Not found"
+        r, system_name, kind = None, "", ""
     if not r:
-        return ui.page(request, "Record not found", '<section class="card">That record isn\'t there, or you don\'t have access.</section>')
-    kv = "".join(f"<dt>{esc(k.replace('_', ' ').capitalize())}</dt><dd>{esc(v)}</dd>" for k, v in r.items()
-                 if k not in ("extra", "synced_at"))
-    h = "".join(f'<tr><td class="n">{c["changed_at"].strftime("%b %-d, %Y")}</td><td>{esc(c["field"])}</td>'
-                f'<td>{esc(c["old_value"])}</td><td>{esc(c["new_value"])}</td></tr>' for c in hist)
-    hist_html = (f'<h3 style="margin-top:18px">Field history</h3><div class="scroll"><table class="data"><thead><tr><th class="n">Date</th>'
+        return ui.page(request, "Record not found", '<section class="card">That record isn\'t there, or you don\'t have access to it.</section>')
+    kv = "".join(f"<dt>{esc(label)}</dt><dd>{_fmt_field(key, r.get(key))}</dd>" for key, label in FIELD_LABELS[kind])
+    labels = {"StageName": "Stage", "CloseDate": "Close date", "Amount": "Amount"}
+    def hv(field, v):
+        if field == "Amount" and v:
+            return money(v)
+        if field == "CloseDate" and v:
+            return esc(ui.date(v))
+        return esc(v)
+    h = "".join(f'<tr><td class="n">{esc(_local(c["changed_at"]))}</td><td>{esc(labels.get(c["field"], c["field"]))}</td>'
+                f'<td>{hv(c["field"], c["old_value"])}</td><td>{hv(c["field"], c["new_value"])}</td></tr>' for c in hist)
+    hist_html = (f'<h3>Field history</h3><div class="scroll"><table class="data"><thead><tr><th class="n">When</th>'
                  f'<th>Field</th><th>From</th><th>To</th></tr></thead><tbody>{h}</tbody></table></div>') if hist else ""
-    body = f"""<div class="fake-src"><p class="muted" style="margin-top:0">This page stands in for the client's own {esc(title.split(' · ')[0])}.
-With a real client, this link opens the record in Salesforce, HubSpot, QuickBooks or whichever system holds it.</p>
-<dl class="kv">{kv}</dl>{hist_html}</div>"""
-    return ui.page(request, title, body)
+    title = r.get("name") or r.get("number") or rec_id
+    body = f"""<div class="fake-src"><div class="fake-src-head"><span class="pill warn">Stand-in {esc(system_name)}</span>
+<span class="muted">With a real client, this link opens the record in their own system (Salesforce, HubSpot, QuickBooks and so on).</span></div>
+<dl class="kv">{kv}</dl>{related}{hist_html}</div>"""
+    return ui.page(request, f"{kind.capitalize()}: {title}", body, subtitle=f"{system_name} record")

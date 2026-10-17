@@ -58,6 +58,7 @@ def _login_page(error="", nxt="/"):
     demo = ('<p class="muted" style="font-size:13px">This is a demo with a fictional company and made-up data.</p>'
             if settings.is_demo else "")
     return ui.bare_page("Sign in", f"""<div class="signin">
+<div class="brand" style="margin-bottom:14px"><span class="mark" aria-hidden="true"></span></div>
 <h1 style="margin-bottom:4px">{ui.esc(client.get("short_name", "Hub"))} Hub</h1>
 <p class="muted" style="margin-top:0">{ui.esc(client.get("company", ""))}</p>{demo}{err}
 <form method="post" action="/login"><input type="hidden" name="next" value="{ui.esc(auth.safe_next(nxt))}">
@@ -99,7 +100,9 @@ def healthz():
     """For an uptime monitor: is the app up and is the data fresh? Reveals nothing else."""
     r = db.one("""SELECT count(*) FILTER (WHERE last_status = 'failed' OR last_success_at < now() - interval '3 hours') AS bad
                   FROM core.sync_state WHERE object <> 'backup'""")
-    return PlainTextResponse("ok" if r and not r["bad"] else "stale", status_code=200 if r and not r["bad"] else 503)
+    synced = db.one("SELECT count(*) AS n FROM core.sync_state WHERE object <> 'backup'")["n"]
+    ok = bool(synced) and not r["bad"]
+    return PlainTextResponse("ok" if ok else "stale", status_code=200 if ok else 503)
 
 
 def _html(fn):

@@ -176,3 +176,42 @@ def test_csv_blocks_formula_injection():
     from kit.hub.pages import _csv_safe
     assert _csv_safe("=HYPERLINK(1)") == "'=HYPERLINK(1)"
     assert _csv_safe("Dallas") == "Dallas"
+
+
+def test_branch_user_cannot_open_other_branches_records(client):
+    c, pw = client
+    login(c, "austin@test.invalid", pw)
+    inv = db.one("SELECT id FROM rpt.invoices WHERE branch_code = 'DAL-01' LIMIT 1")["id"]
+    acc = db.one("SELECT id FROM crm.accounts WHERE branch_code = 'DAL-01' LIMIT 1")["id"]
+    cust = db.one("""SELECT customer_id AS id FROM rpt.invoices GROUP BY 1
+                     HAVING bool_and(branch_code = 'DAL-01') LIMIT 1""")["id"]
+    for path in (f"/demo-source/accounting/invoice/{inv}", f"/demo-source/crm/account/{acc}",
+                 f"/demo-source/accounting/customer/{cust}"):
+        assert "isn't there" in c.get(path).text, path
+    own = db.one("SELECT id FROM rpt.invoices WHERE branch_code = 'AUS-03' LIMIT 1")["id"]
+    assert "isn't there" not in c.get(f"/demo-source/accounting/invoice/{own}").text
+
+
+def test_stage_bar_matches_its_click_through(client):
+    import re
+    c, pw = client
+    login(c, "admin@test.invalid", pw)
+    html = c.get("/deals?status=open").text
+    links = re.findall(r'<a class="stage" href="([^"]+)">.*?<span class="stage-n">(\d+)</span>', html, re.S)
+    assert links
+    for href, n in links:
+        page = c.get(href.replace("&amp;", "&")).text
+        assert f"<strong>{n} deals</strong>" in page, href
+
+
+def test_dry_run_changes_nothing(monkeypatch):
+    from kit import sync
+    called = []
+    monkeypatch.setattr(sync, "load_reference", lambda *a: called.append(1))
+    assert sync.run(dry_run=True) == 0
+    assert not called
+
+
+def test_chart_data_cannot_close_script_tag():
+    from kit.hub.ui import chart
+    assert "</script><b>" not in chart("x", {"labels": ["</script><b>"]})

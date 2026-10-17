@@ -12,9 +12,10 @@ The reusable system we install for each client: data in one place, tools on top,
 | Business rules | `metrics.py`, `cleanup.py` | Every number, computed once. Pages (and the AI, later) call these, so figures always match. |
 | Hub | `hub/` | Web app: sign-in, home, scorecard, pipeline, win/loss, receivables, clean-up, health. |
 | Admin | `manage.py` | Set up the database, add users, prove the AI login is read-only. |
-| Ops | `../ops/` | Backups (verified, off-site hook), restore test, cron, nginx, systemd. |
+| Ops | `../ops/`, `pgenv.py` | Backups (verified, off-site hook), restore test that fails loudly, cron, nginx, systemd. Scripts read `.env` safely and keep the password off the command line. |
 
 ## Run the demo locally
+Needs Python 3.10+ and PostgreSQL 14+.
 ```bash
 pip install -r requirements.txt
 cp .env.example .env && chmod 600 .env    # fill in DATABASE_URL, SESSION_SECRET, AI_READER_PASSWORD
@@ -23,7 +24,7 @@ python -m kit.manage init-db
 python -m kit.sync
 python -m kit.manage create-user you@example.com "Your Name" --admin
 uvicorn kit.hub.app:app --port 8000       # then open http://127.0.0.1:8000
-python -m pytest -q tests                 # 23 tests
+python -m pytest -q tests                 # 27 tests
 ```
 Set `SECURE_COOKIES=0` only when testing without HTTPS.
 

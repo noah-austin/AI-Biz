@@ -29,6 +29,8 @@ HOW = {
                 "close date has already passed are shown separately as 'past due'.",
     "new_pipeline": "Deals created in the period, whatever has happened to them since.",
     "billed": "Total of invoices dated in the period, from accounting.",
+    "billed_4wk": "Invoices dated in the 31 days ending each week. Service contracts bill on the 1st of the month, "
+                  "so single weeks swing a lot; any 31 days holds at least one month-start.",
     "collected": "Payments received in the period (by paid date), from accounting.",
     "ar": "Unpaid invoice balances today, grouped by how far past the due date they are.",
     "ar_over_60": "Unpaid balance on invoices more than 60 days past due, as it stood at the end of each week.",
@@ -208,7 +210,7 @@ SCORECARD = [  # key, label, format, higher_is_better, how
     ("new_pipeline", "New pipeline created", "money", True, "new_pipeline"),
     ("bookings", "Bookings (won)", "money", True, "bookings"),
     ("win_rate_dollars", "Win rate by $, trailing 90 days", "pct", True, "win_rate"),
-    ("billed", "Billed", "money", True, "billed"),
+    ("billed_4wk", "Billed, past 31 days", "money", True, "billed_4wk"),
     ("collected", "Cash collected", "money", True, "collected"),
     ("ar_over_60", "AR over 60 days past due", "money", False, "ar_over_60"),
 ]
@@ -232,8 +234,6 @@ def scorecard(t: dt.date, weeks=13, scope=None) -> dict:
     new_pipe = {r["w"]: float(r["amt"] or 0) for r in created}
     bookings = by_week(f"""SELECT {wk.format(col='close_date')} AS w, sum(amount) AS v FROM rpt.deals
                            WHERE is_won AND close_date BETWEEN %(first)s AND %(t)s {_scope(scope)} GROUP BY 1""")
-    billed = by_week(f"""SELECT {wk.format(col='invoice_date')} AS w, sum(amount) AS v FROM rpt.invoices
-                         WHERE invoice_date BETWEEN %(first)s AND %(t)s {_scope(scope)} GROUP BY 1""")
     collected = by_week(f"""SELECT {wk.format(col='paid_date')} AS w, sum(amount_paid) AS v FROM rpt.invoices
                             WHERE paid_date BETWEEN %(first)s AND %(t)s {_scope(scope)} GROUP BY 1""")
     # Point-in-time figures, rebuilt for the last day of each week.
@@ -244,6 +244,11 @@ def scorecard(t: dt.date, weeks=13, scope=None) -> dict:
         FROM unnest(%(starts)s::date[], %(ends)s::date[]) AS w(s, e)
         JOIN rpt.deals d ON d.is_closed AND d.close_date BETWEEN w.e - 89 AND w.e {_scope(scope, 'd.branch_code')}
         GROUP BY 1""", p2)}
+    billed_4wk = by_week(f"""
+        SELECT w.s AS w, sum(i.amount) AS v
+        FROM unnest(%(starts)s::date[], %(ends)s::date[]) AS w(s, e)
+        JOIN rpt.invoices i ON i.invoice_date BETWEEN w.e - 30 AND w.e {_scope(scope, 'i.branch_code')}
+        GROUP BY 1""", p2)
     ar60 = by_week(f"""
         -- Accounting gives one paid date per invoice, so this treats payments as paid in full.
         SELECT w.s AS w, sum(i.amount) AS v
@@ -252,7 +257,7 @@ def scorecard(t: dt.date, weeks=13, scope=None) -> dict:
              AND (i.paid_date IS NULL OR i.paid_date > w.e) {_scope(scope, 'i.branch_code')}
         GROUP BY 1""", p2)
     series = {
-        "new_deals": new_deals, "new_pipeline": new_pipe, "bookings": bookings, "billed": billed,
+        "new_deals": new_deals, "new_pipeline": new_pipe, "bookings": bookings, "billed_4wk": billed_4wk,
         "collected": collected, "ar_over_60": ar60,
         "win_rate_dollars": {w: (100 * a / b if b else None) for w, (a, b) in win.items()},
     }
@@ -277,22 +282,23 @@ def recent_changes(t: dt.date, days=7, scope=None) -> dict:
     created = db.query(f"""SELECT id, name, account_name, branch, deal_type, amount FROM rpt.deals
                            WHERE created_date BETWEEN %(since)s AND %(t)s {_scope(scope)}
                            ORDER BY amount DESC NULLS LAST""", p)
-    stage = db.query(f"""SELECT h.deal_id AS id, h.deal_name AS name, h.branch, d.amount, h.new_value AS stage, h.changed_date
-                         FROM rpt.deal_history h JOIN rpt.deals d ON d.id = h.deal_id
-                         WHERE h.field = 'StageName' AND h.new_value IN ('Closed Won', 'Closed Lost')
-                           AND h.changed_date BETWEEN %(since)s AND %(t)s {_scope(scope, 'h.branch_code')}
-                         ORDER BY d.amount DESC NULLS LAST""", p)
+    closed = db.query(f"""SELECT id, name, branch, amount, is_won FROM rpt.deals
+                          WHERE is_closed AND close_date BETWEEN %(since)s AND %(t)s {_scope(scope)}
+                          ORDER BY amount DESC NULLS LAST""", p)
     slipped = db.query(f"""
         SELECT DISTINCT ON (h.deal_id) h.deal_id AS id, h.deal_name AS name, h.branch, d.amount,
-               h.old_value::date AS old_close, h.new_value::date AS new_close
+               CASE WHEN h.field = 'CloseDate' THEN h.old_value::date END AS old_close,
+               CASE WHEN h.field = 'CloseDate' THEN h.new_value::date END AS new_close
         FROM rpt.deal_history h JOIN rpt.deals d ON d.id = h.deal_id
         WHERE h.field = 'CloseDate' AND d.is_open AND h.changed_date BETWEEN %(since)s AND %(t)s
-          AND h.new_value::date >= h.old_value::date + 30
+          -- Only CloseDate rows hold dates; the CASE stops the cast ever touching Amount or Stage values.
+          AND date_trunc('month', CASE WHEN h.field = 'CloseDate' THEN h.new_value::date END)
+            > date_trunc('month', CASE WHEN h.field = 'CloseDate' THEN h.old_value::date END)
           {_scope(scope, 'h.branch_code')}
         ORDER BY h.deal_id, h.changed_at DESC""", p)
     slipped.sort(key=lambda r: -(float(r["amount"] or 0)))
-    won = [r for r in stage if r["stage"] == "Closed Won"]
-    lost = [r for r in stage if r["stage"] == "Closed Lost"]
+    won = [r for r in closed if r["is_won"]]
+    lost = [r for r in closed if not r["is_won"]]
     total = lambda rows: sum(float(r["amount"] or 0) for r in rows)
     return {"since": since, "created": created, "won": won, "lost": lost, "slipped": slipped,
             "totals": {"created": total(created), "won": total(won), "lost": total(lost), "slipped": total(slipped)}}
