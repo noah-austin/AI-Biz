@@ -1,6 +1,6 @@
 # Business name shortlist
 
-*2026-10-17. Style: plain and credible. Each name works on its own or with "Data Co." / "Data" after it. 50 names screened; 29 survive.*
+*2026-10-17. Style: plain and credible. Each name works on its own or with "Data Co." / "Data" after it. 90 names screened; 59 survive.*
 
 ## How these were checked
 - **Same-name screen (done):** web searches for companies with the same or a confusingly similar name in data, software, consulting or field service. "Clean" means nothing turned up, not that a trademark search is clear.
@@ -65,11 +65,90 @@ True Level (close to *Trueleveler*, contractor software) · Catchment (small Ber
 
 Crowded words skipped without screening: Groundwork, Bedrock, Cornerstone, Keystone, Clearline, Dovetail, Estuary, Riverbed, Lantern, Tandem.
 
+## Round 3: compound names (more likely to have a free .com)
+40 more screened; 30 survive. None of the clean ones showed a live website at the bare .com (a hint only, not a registry check).
+
+**Best of round 3**
+| Name | The idea | Screen |
+|---|---|---|
+| **Joinwright** | A "wright" is a maker (wheelwright, shipwright): the maker who joins things. Pairs with the Joinery idea and is much more likely to be free. | Clean |
+| **Gatherhouse** | One house where everything is gathered. | Clean |
+| **Ledgerhouse** | Where the books are kept. Sounds established. | Clean |
+| **Trueground** | Solid, true ground to build on. | Clean |
+| **Kingpost** | The main upright that holds up a roof truss. | Clean |
+| **Tie Beam** | The beam that ties a structure together. | Clean |
+| **Cornerpost** | The post a fence line is built from. | Clean |
+| **Even Keel** | Steady, balanced, no surprises. | Minor: a 1–10 person bookkeeping firm in Vermont |
+| **Onehold** | One place that holds it all. | Minor: a dormant Dutch holding company |
+| **Millrace** | The channel that feeds water to a mill: what keeps the work running. | Clean, but the meaning is less obvious |
+
+**Also clean:** Allstead, Steadfield, Countwell, Commonyard, Stillview, Straightedge (a dictionary word; .com likely taken), Ridgebeam (*Ridge AI* is an analytics firm nearby).
+
+**Also usable (minor issues):**
+- Ledgerstone: a stone-panel product.
+- Truestead: UK builders.
+- Plumbwork: plumbers.
+- Fitwell: fitness and building-health brands.
+- Openfield: French software firm.
+- Groundline: Australian engineers.
+- Keelwork: near Keel & Company.
+- Fieldhouse: FieldhouseUSA, a Texas sports company.
+- Headgate: German HR firm.
+- Wellhouse: nonprofits.
+- One Roof: housing software.
+- Commonhouse and Steadyhand: their .com sites are live, so they're effectively taken.
+
+**Dropped (used in data, software or consulting):**
+- Datawright: UK ERP software.
+- Springhouse: an IT/BI consultancy.
+- Truework: verification SaaS.
+- Squarework: a NetSuite consultancy.
+- Highview: a BI firm.
+- Clearfield: Nasdaq fiber tech.
+- Townsquare: Townsquare Media.
+- Brightwater: a BI consultancy.
+- Runwell: a managed IT provider.
+- Tallyworks: inventory software.
+
+## Bulk domain check
+Paste into namecheap.com/domains/bulk-domain-search:
+```
+joinwright.com
+gatherhouse.com
+ledgerhouse.com
+trueground.com
+kingpost.co
+kingpostdata.com
+tiebeam.com
+cornerpostdata.com
+evenkeeldata.com
+onehold.com
+millrace.co
+allstead.com
+steadfield.com
+countwell.com
+commonyard.com
+joinerydata.com
+commonsourcedata.com
+overlookdata.com
+squareandlevel.com
+keelson.co
+footingdata.com
+holdfastdata.com
+mortisedata.com
+datastead.com
+onesteaddata.com
+tallyhouse.com
+sillandbeam.com
+```
+
 ## Recommendation
 **Joinery** is still my first pick: one word that tells the story (we join what you have and build on it), and it stands out. Strong alternatives with different feels:
 - **Common Source:** corporate and safe.
 - **Overlook:** about seeing the whole business.
 - **Square & Level:** a builder's trustworthiness.
 - **Keelson:** distinctive, with a story to tell.
+
+From round 3, **Joinwright** is the standout: the Joinery story, and a made-up word, so the .com is more likely free. **Gatherhouse** and **Ledgerhouse** are close behind.
 
 Pick 3–5 favourites, check their .com, then decide.
