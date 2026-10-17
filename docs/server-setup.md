@@ -64,7 +64,7 @@ Work in plain English with Noah. Ask before anything hard to undo. Follow `CLAUD
 2. **Install:** PostgreSQL 16 (listening on localhost only), Python 3 with a virtualenv at `~/AI-Biz/venv` (`pip install -r requirements.txt`), Caddy as the web front end (automatic HTTPS).
 3. **Databases:** one per install (`hub_company`, `hub_demo`), each with its own app role and its own `ai_reader` role. Secrets go in a root-only `.env` per install, never in git.
 4. **Installs:** run each kit install as its own systemd service on its own localhost port:
-   - **company hub** (`clients/company/`, once that folder exists) on 8001;
+   - **company hub** (`clients/company/`, the practice tracker) on 8001. Its data is entered by Noah in the hub; it starts empty;
    - **Bluestem demo** (`clients/demo/`) on 8002.
 5. **Web addresses:** until there's a domain, use `<ip-with-dashes>.sslip.io` hostnames (for example `company.1-2-3-4.sslip.io`) so Caddy can get real HTTPS certificates. Switch to the business domain when it exists.
 6. **Scheduled jobs (cron):**

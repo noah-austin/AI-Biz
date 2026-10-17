@@ -4,7 +4,8 @@
   function compactMoney(v) {
     const a = Math.abs(v), s = v < 0 ? "-" : "";
     if (a >= 1e6) return s + "$" + (a / 1e6).toFixed(a >= 1e7 ? 0 : 1) + "M";
-    if (a >= 1e3) return s + "$" + Math.round(a / 1e3) + "K";
+    if (a >= 1e4) return s + "$" + Math.round(a / 1e3) + "K";
+    if (a >= 1e3) return s + "$" + (a / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
     return s + "$" + Math.round(a);
   }
   function fullMoney(v) { return (v < 0 ? "-$" : "$") + Math.abs(Math.round(v)).toLocaleString("en-US"); }

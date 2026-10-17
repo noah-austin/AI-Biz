@@ -47,6 +47,13 @@
 | How Claude works on it | Claude Code installed on the server, linked with Remote Control | Shows up in the Claude app; uses the subscription, not the API. Cloud sessions can't SSH, so code also flows through GitHub. |
 | What runs there | Company hub, Bluestem demo, later the website | Never client data. Steps in `docs/server-setup.md`. |
 
+## 2026-10-17: company hub
+| Topic | Decision | Notes |
+|---|---|---|
+| Where prospect and client info lives | Built into the hub (the "practice" app), not an outside CRM | Prospects, partners, conversations, engagements, time, invoices, expenses. Exports to Excel any time. |
+| One kit, different apps | `apps` setting per install | Clients and the demo get analytics; our hub gets the practice tracker. Ask AI adapts to each. |
+| Invoices | Sent from an invoicing tool; recorded in the hub | The hub tracks revenue, cash and overdue invoices; it doesn't send invoices (yet). |
+
 ## Open questions
 - Business name (ideas in `concept.md` §8).
 - Year-one income goal (scenarios in `concept.md` §5).

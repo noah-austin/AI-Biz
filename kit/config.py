@@ -47,6 +47,11 @@ class Settings:
         return self.client.get("timezone", "America/Chicago")
 
     @property
+    def apps(self) -> list[str]:
+        """Which apps this install shows: "analytics" (CRM/accounting pages) and/or "practice" (built-in tracker)."""
+        return list(self.client.get("apps", ["analytics"]))
+
+    @property
     def is_demo(self) -> bool:
         return bool(self.client.get("demo", False))
 

@@ -11,6 +11,13 @@ from ..config import get_settings
 
 CHART_JS = "/static/vendor/chart-4.4.1.umd.js"  # pinned copy, MIT licence; no outside CDN needed
 
+PRACTICE_NAV = [
+    ("/", "Today", False),
+    ("/pipeline", "Pipeline", False),
+    ("/clients", "Clients", False),
+    ("/time", "Time", False),
+    ("/money", "Money", False),
+]
 NAV = [  # path, label, admin only
     ("/", "Home", False),
     ("/scorecard", "Scorecard", False),
@@ -140,7 +147,11 @@ def page(request, title: str, body: str, active: str = "", subtitle: str = "", w
     client = settings.client
     user = getattr(request.state, "user", None)
     nav = []
-    for path, label, admin_only in NAV:
+    apps = settings.apps
+    items = (PRACTICE_NAV if "practice" in apps else []) + (
+        [n for n in NAV if n[1] != "Health" and not ("practice" in apps and n[0] == "/")] if "analytics" in apps else [])
+    items.append(NAV[-1])  # Health
+    for path, label, admin_only in items:
         if admin_only and (not user or user["role"] != "admin"):
             continue
         cur = ' aria-current="page"' if active == label else ""

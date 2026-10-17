@@ -124,8 +124,14 @@ class ToolError(ValueError):
 
 def tools_for(user) -> list[dict]:
     """Branch-limited users don't get raw SQL, because SQL can't be held to their branches."""
-    sql_ok = not user.get("branches") and bool(get_settings().ai_reader_password)
-    return TOOLS + ([SQL_TOOL] if sql_ok else [])
+    apps = get_settings().apps
+    out = []
+    if "practice" in apps:
+        out += PRACTICE_TOOLS
+    if "analytics" in apps:
+        sql_ok = not user.get("branches") and bool(get_settings().ai_reader_password)
+        out += TOOLS + ([SQL_TOOL] if sql_ok else [])
+    return out
 
 
 def _d(v, name):
@@ -171,6 +177,12 @@ def run(name: str, args: dict, user: dict) -> str:
     scope = user.get("branches") or None
     t = metrics.today()
     args = args or {}
+    if name in {tool["name"] for tool in PRACTICE_TOOLS}:
+        if "practice" not in get_settings().apps:
+            raise ToolError("The practice tracker isn't switched on here.")
+        return json.dumps(_clean(run_practice(name, args)), default=str)
+    if "analytics" not in get_settings().apps:
+        raise ToolError("Those reports aren't switched on here.")
     if name == "company_overview":
         (ys, ye), (ls, le) = metrics.ytd_windows(t)
         out = {"today": t, "this_year": {"from": ys, "to": ye, **metrics.closed_summary(ys, ye, scope),
@@ -281,5 +293,88 @@ def describe_call(name: str, args: dict) -> str:
               "open_pipeline": "Looking at the open pipeline", "find_deals": "Finding the deals",
               "weekly_scorecard": "Reading the scorecard", "recent_changes": "Checking what changed",
               "where_we_sell_best": "Comparing where we win", "receivables": "Checking receivables",
-              "data_problems": "Checking the clean-up list", "run_sql": "Running a custom query"}
+              "data_problems": "Checking the clean-up list", "run_sql": "Running a custom query",
+              "practice_overview": "Checking today's numbers", "find_companies": "Looking through your contacts",
+              "company_history": "Reading the history", "pipeline_report": "Looking at the pipeline",
+              "time_report": "Adding up hours", "money_report": "Checking the money"}
     return labels.get(name, "Working")
+
+
+# ---------------------------------------------------------------- practice app tools
+
+PRACTICE_TOOLS = [
+    {"name": "practice_overview",
+     "description": "Today's headline numbers for the consulting practice: revenue and cash this year vs goal, monthly "
+                    "recurring revenue, pipeline (total and weighted), conversations this month vs target, hours this week "
+                    "vs target, unpaid and overdue invoices, effective hourly rate, plus follow-ups due in the next 7 days.",
+     "input_schema": {"type": "object", "properties": {}, "additionalProperties": False}},
+    {"name": "find_companies",
+     "description": "List prospects, clients, referral partners or past clients, with stage, contact, how we met, "
+                    "estimated value and next step. Each comes with a hub link.",
+     "input_schema": {"type": "object", "properties": {
+         "kind": {"type": "string", "enum": ["prospect", "client", "partner", "past_client"]},
+         "stage": {"type": "string", "enum": ["lead", "contacted", "conversation", "proposal", "won", "lost", "not_now"]},
+         "name_contains": {"type": "string"},
+         "limit": {"type": "integer", "minimum": 1, "maximum": 100}}, "additionalProperties": False}},
+    {"name": "company_history",
+     "description": "Everything about one company: details, every logged conversation and note, engagements, time and invoices.",
+     "input_schema": {"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"],
+                      "additionalProperties": False}},
+    {"name": "pipeline_report",
+     "description": "Prospects by stage (count, value, weighted value) and which channels (how we met) produce conversations and wins.",
+     "input_schema": {"type": "object", "properties": {}, "additionalProperties": False}},
+    {"name": "time_report",
+     "description": "Hours logged between two dates, by company, billable vs not.",
+     "input_schema": {"type": "object", "properties": {"start": DATE, "end": DATE}, "required": ["start", "end"],
+                      "additionalProperties": False}},
+    {"name": "money_report",
+     "description": "Revenue (invoices issued), cash collected and expenses by month for a year, plus open invoices.",
+     "input_schema": {"type": "object", "properties": {"year": {"type": "integer"}}, "required": ["year"],
+                      "additionalProperties": False}},
+]
+
+
+def run_practice(name: str, args: dict) -> dict:
+    from ..practice import metrics as pm
+    t = metrics.today()
+    if name == "practice_overview":
+        o = pm.overview(t)
+        return {**o, "follow_ups": [dict(r, link=f"/companies/{r['id']}") for r in pm.follow_ups(t)], "link": "/"}
+    if name == "find_companies":
+        rows = db.query("""SELECT id, name, kind, stage, contact_name, contact_title, industry, city, source, est_value,
+                                  next_step, next_step_date, updated_at
+                           FROM practice.companies WHERE NOT archived
+                             AND (%(k)s::text IS NULL OR kind = %(k)s) AND (%(s)s::text IS NULL OR stage = %(s)s)
+                             AND (%(n)s::text IS NULL OR name ILIKE '%%' || %(n)s || '%%')
+                           ORDER BY next_step_date NULLS LAST, name LIMIT %(l)s""",
+                        {"k": args.get("kind"), "s": args.get("stage"), "n": args.get("name_contains"),
+                         "l": max(1, min(100, int(args.get("limit") or 50)))})
+        return {"companies": [dict(r, link=f"/companies/{r['id']}") for r in rows]}
+    if name == "company_history":
+        c = db.one("""SELECT * FROM practice.companies WHERE name ILIKE %(n)s OR name ILIKE '%%' || %(n)s || '%%'
+                      ORDER BY (lower(name) = lower(%(n)s)) DESC, length(name) LIMIT 1""", {"n": args.get("name", "")})
+        if not c:
+            raise ToolError(f"No company matching {args.get('name')!r}.")
+        p = {"i": c["id"]}
+        return {"company": dict(c, link=f"/companies/{c['id']}"),
+                "activities": db.query("SELECT happened_on, kind, summary FROM practice.activities WHERE company_id = %(i)s "
+                                       "ORDER BY happened_on DESC", p),
+                "engagements": db.query("SELECT offer, name, status, price, monthly_fee, hours_budget, start_date, end_date "
+                                        "FROM practice.engagements WHERE company_id = %(i)s", p),
+                "hours_logged": db.one("SELECT coalesce(sum(hours), 0) AS h FROM practice.time_entries WHERE company_id = %(i)s", p)["h"],
+                "invoices": db.query("SELECT number, issued_date, due_date, amount, paid_date FROM practice.invoices "
+                                     "WHERE company_id = %(i)s ORDER BY issued_date", p)}
+    if name == "pipeline_report":
+        return {"by_stage": pm.pipeline_by_stage(), "by_source": pm.source_results(), "link": "/pipeline"}
+    if name == "time_report":
+        s, e = _d(args.get("start"), "start"), _d(args.get("end"), "end")
+        rows = pm.hours_by_company(s, e)
+        return {"period": {"from": s, "to": e}, "by_company": rows,
+                "total_hours": sum(float(r["hours"]) for r in rows), "link": "/time"}
+    if name == "money_report":
+        year = int(args.get("year") or t.year)
+        return {"year": year, "by_month": pm.monthly_money(year),
+                "open_invoices": db.query("""SELECT i.number, c.name AS client, i.issued_date, i.due_date, i.amount
+                                             FROM practice.invoices i JOIN practice.companies c ON c.id = i.company_id
+                                             WHERE i.paid_date IS NULL ORDER BY i.due_date"""), "link": "/money"}
+    raise ToolError(f"Unknown tool {name}")

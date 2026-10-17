@@ -11,6 +11,7 @@ The reusable system we install for each client: data in one place, tools on top,
 | Sync | `sync.py` | Hourly copy. Upsert, then prune with a safety limit (refuses 0-row pulls and deletions over 10%). History tables only grow. Results go to `core.sync_state`. |
 | Business rules | `metrics.py`, `cleanup.py` | Every number, computed once. Pages (and the AI, later) call these, so figures always match. |
 | Hub | `hub/` | Web app: sign-in, home, scorecard, pipeline, win/loss, receivables, clean-up, health. |
+| Practice app | `practice/` | Built-in tracker for running a consulting business: prospects, partners, conversations, engagements, time, invoices, expenses. Turned on with `apps = ["practice"]`. Our own company hub uses it. |
 | AI | `ai/` | "Ask AI" chat on every page, and home-page insights. See "The AI layer" below. |
 | Admin | `manage.py` | Set up the database, add users, prove the AI login is read-only. |
 | Ops | `../ops/`, `pgenv.py` | Backups (verified, off-site hook), restore test that fails loudly, cron, nginx, systemd. Scripts read `.env` safely and keep the password off the command line. |
@@ -25,9 +26,14 @@ python -m kit.manage init-db
 python -m kit.sync
 python -m kit.manage create-user you@example.com "Your Name" --admin
 uvicorn kit.hub.app:app --port 8000       # then open http://127.0.0.1:8000
-python -m pytest -q tests                 # 36 tests (the AI tests use a fake Claude, no key needed)
+python -m pytest -q tests                 # 41 tests (the AI tests use a fake Claude, no key needed)
 ```
 Set `SECURE_COOKIES=0` only when testing without HTTPS.
+
+## Apps per install
+`apps` in a client's `config.toml` picks what the hub shows: `["analytics"]` (default: the CRM/accounting pages,
+for clients and the demo), `["practice"]` (the built-in tracker, for our own company hub), or both. The Ask AI chat
+gets the matching tools.
 
 ## The AI layer
 - **Ask AI** (button in the header of every page): questions in plain English. Claude answers by calling the

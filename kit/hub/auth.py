@@ -120,3 +120,19 @@ SECURITY_HEADERS = {
     "Referrer-Policy": "same-origin",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
 }
+
+
+# ---------- forms: protection against cross-site form posts ----------
+# SameSite=Lax cookies already stop most of these; the token makes sure every form post came from our own page.
+
+def csrf_token(cookie: str | None) -> str:
+    import hashlib
+    import hmac
+    return hmac.new(get_settings().session_secret.encode(), b"csrf:" + (cookie or "").encode(),
+                    hashlib.sha256).hexdigest()[:40]
+
+
+def csrf_ok(request, form) -> bool:
+    import hmac
+    sent = str(form.get("_csrf") or "")
+    return bool(sent) and hmac.compare_digest(sent, csrf_token(request.cookies.get(COOKIE)))

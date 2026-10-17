@@ -56,6 +56,10 @@ def valid(item: dict) -> bool:
 
 
 def generate(force=False, client=None) -> int:
+    from ..config import get_settings
+    if "analytics" not in get_settings().apps:
+        print("Insights are for analytics installs; skipping.")
+        return 0
     if not usage.is_configured("insights"):
         print("No API key for insights (ANTHROPIC_API_KEY_INSIGHTS); skipping.")
         return 0

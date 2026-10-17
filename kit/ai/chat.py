@@ -173,6 +173,12 @@ def history(conversation_id: str, user: dict) -> list[dict]:
 
 
 def suggestions(user: dict) -> list[str]:
+    from ..config import get_settings
+    if "practice" in get_settings().apps:
+        return ["Who do I need to follow up with this week?",
+                "Am I on track for my revenue goal?",
+                "Which channels are producing conversations?",
+                "Where did my hours go this month?"]
     base = ["How are we doing this year compared with last year?",
             "Which big deals were won or lost this week, and why?",
             "Where do we win the most money?",
