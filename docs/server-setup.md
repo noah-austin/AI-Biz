@@ -37,7 +37,7 @@ gh auth login
 ```
 Choose **GitHub.com → HTTPS → Login with a web browser**. It shows a code; open github.com/login/device on your phone and enter it. Then:
 ```bash
-gh repo clone noah-austin/AI-Biz ~/AI-Biz && cd ~/AI-Biz
+gh repo clone noah-austin/AI-Biz ~/AI-Biz -- -b claude/new-business-brainstorm-vt7nkx && cd ~/AI-Biz
 ```
 
 **6. Sign in to Claude:** run `claude`, type `/login`, and choose your Claude account (Pro/Max). Press `c` to copy the link, open it on your phone, sign in, and paste back the code it shows. Type `/exit` when done.
