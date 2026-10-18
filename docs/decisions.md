@@ -121,6 +121,11 @@
 | Payment reminders | Friendly reminder drafts only for invoices 61 to 120 days late | Older ones need a phone call from a person. |
 | Forecast calls | Start from stage (75%+ Commit, 40%+ Best case); admins save changes, with who and when | Guests can try changes but nothing is saved. |
 
+## 2026-10-18: domain
+| Topic | Decision | Notes |
+|---|---|---|
+| Domain and email | Buy sanfordoperations.com during Google Workspace signup (registered through Squarespace) | Simplest: Google sets up the email records. Server records are added in Squarespace's DNS page. Keep the recovery email on Noah's personal Gmail. |
+
 ## Open questions
 - Texas sales tax treatment of the retainer and hosting: ask a CPA.
 - Hosting price for hosted clients (at cost, or a set monthly fee).

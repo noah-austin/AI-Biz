@@ -4,12 +4,17 @@ One server for the business: the company hub (to run the business on), the Blues
 
 Claude Code runs *on* the server, linked to Noah's Claude account with Remote Control, so it shows up in the Claude app (desktop and phone). Usage counts toward the Claude subscription, not the API.
 
-## Before you start: the domain (Noah, about 15 minutes)
-Register **sanfordoperations.com** at Namecheap, signed in with your **personal Gmail** (keep it as the login for good: it's how you get back in if Workspace ever has a problem). Turn on auto-renew, the free privacy protection and two-factor sign-in. Skip the add-ons: no hosting, email, SSL or site builder (the server makes its own HTTPS certificates).
+## Before you start: the domain and email (Noah, about 15 minutes)
+**Sign up for Google Workspace** (Business Starter) and choose **buy a new domain**: `sanfordoperations.com`. Google buys it through its partner Squarespace and sets up email for you: MX, SPF and verification are done automatically. Turn on the domain's **auto-renew** in the Admin console, and two-factor sign-in on the Workspace admin account.
 
-**In Namecheap:** Domain List → **Manage** → **Advanced DNS**. Leave nameservers on *Namecheap BasicDNS*. Under Host Records, **delete the two parking records Namecheap adds**: the `www` CNAME to `parkingpage.namecheap.com` and the `@` URL Redirect. They clash with the records below.
+Then in the Admin console:
+- create `hello@sanfordoperations.com` and your own address;
+- turn on **DKIM**: Apps → Google Workspace → Gmail → **Authenticate email** → Generate, then Start authentication. It may not be ready until a day or two after signup; if not, try the next day. If it asks you to add the record yourself, add it in Squarespace (below) as a TXT record named `google._domainkey`;
+- write down where the domain's recovery email goes. Make sure it's your personal Gmail, so you can still reach the domain if the Workspace account ever has a problem.
 
-The server can be set up before the domain points anywhere: it starts on temporary `sslip.io` addresses. Add these records in the registrar's **DNS** page once the server exists (step 1 below shows its IP address):
+**Add DMARC** (one record, helps keep our emails out of spam): open the domain's DNS settings (Admin console → Account → Domains → Manage domains → your domain → **Advanced DNS settings**, which opens Squarespace) and add a TXT record named `_dmarc` with value `v=DMARC1; p=none; rua=mailto:hello@sanfordoperations.com`.
+
+**On Monday, once the server exists** (step 1 below shows its IP address), add these records in the same Squarespace DNS page. The server can be set up before this: it starts on temporary `sslip.io` addresses.
 
 | Type | Name | Value | For |
 |---|---|---|---|
@@ -18,16 +23,7 @@ The server can be set up before the domain points anywhere: it starts on tempora
 | A | `hub` | the server's IPv4 address | hub.sanfordoperations.com (our company hub) |
 | A | `demo` | the server's IPv4 address | demo.sanfordoperations.com (the Bluestem demo) |
 
-If the registrar offers a "proxy" or "CDN" switch on these records (Cloudflare's orange cloud), turn it **off** so HTTPS certificates work.
-
-**Email (Google Workspace).** Sign up for Business Starter and choose that you already have a domain. Workspace lists the records to add and checks them for you. Expect:
-- TXT (verification): `@` → the `google-site-verification=…` value Workspace shows;
-- MX: in Advanced DNS → **Mail Settings**, choose **Custom MX**, then `@` → `smtp.google.com`, priority 1 (and no other MX records);
-- TXT (SPF): `@` → `v=spf1 include:_spf.google.com ~all`;
-- TXT (DKIM): `google._domainkey` → the value Workspace generates (Admin console → Apps → Gmail → Authenticate email);
-- TXT (DMARC): `_dmarc` → `v=DMARC1; p=none; rua=mailto:hello@sanfordoperations.com`.
-
-Only one SPF record per domain. DKIM may not be available until a day or two after Gmail is active; if the option isn't ready, try again the next day. Without SPF, DKIM and DMARC, emails to prospects tend to land in spam. Namecheap changes usually show up within 30 minutes; Google can take up to 48 hours to confirm.
+If Squarespace already has a record for `@` or `www` that isn't Google's email (for example a default website or parking record), delete it first. **Don't touch the MX, SPF or `google…` records.** Changes usually show up within an hour.
 
 ## Part 1: Noah (about 20 minutes, copy-paste)
 
