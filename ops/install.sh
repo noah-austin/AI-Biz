@@ -245,7 +245,7 @@ UNIT
     "$domain" "$domain" "$domain" > "$CADDY_SITES/website.caddy"
   [ "$NO_SYSTEMD" = 1 ] || systemctl reload caddy
   say "Done. Point the domain's DNS (A records for $domain and www.$domain) at this server's IP first."
-  echo "Edit the words in website/pages.py and the name, email and prices in website/config.toml."
+  echo "Edit the words in website/pages.py and the name, email and addresses in website/config.toml."
 }
 
 cmd_update() {

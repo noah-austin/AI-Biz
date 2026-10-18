@@ -4,6 +4,28 @@ One server for the business: the company hub (to run the business on), the Blues
 
 Claude Code runs *on* the server, linked to Noah's Claude account with Remote Control, so it shows up in the Claude app (desktop and phone). Usage counts toward the Claude subscription, not the API.
 
+## Before you start: the domain (Noah, about 15 minutes)
+Register **sanfordoperations.com** at any registrar (Cloudflare, Porkbun, Namecheap and Squarespace Domains all work). Turn on auto-renew and the free privacy protection.
+
+The server can be set up before the domain points anywhere: it starts on temporary `sslip.io` addresses. Add these records in the registrar's **DNS** page once the server exists (step 1 below shows its IP address):
+
+| Type | Name | Value | For |
+|---|---|---|---|
+| A | `@` | the server's IPv4 address | sanfordoperations.com (the website) |
+| A | `www` | the server's IPv4 address | www, which redirects to the website |
+| A | `hub` | the server's IPv4 address | hub.sanfordoperations.com (our company hub) |
+| A | `demo` | the server's IPv4 address | demo.sanfordoperations.com (the Bluestem demo) |
+
+If the registrar offers a "proxy" or "CDN" switch on these records (Cloudflare's orange cloud), turn it **off** so HTTPS certificates work.
+
+**Email (Google Workspace).** When you set up Workspace on the domain, it lists the records to add and checks them for you. Expect:
+- MX: `@` → `smtp.google.com`, priority 1;
+- TXT (SPF): `@` → `v=spf1 include:_spf.google.com ~all`;
+- TXT (DKIM): `google._domainkey` → the value Workspace generates (Admin console → Apps → Gmail → Authenticate email);
+- TXT (DMARC): `_dmarc` → `v=DMARC1; p=none; rua=mailto:hello@sanfordoperations.com`.
+
+Without SPF, DKIM and DMARC, emails to prospects tend to land in spam. Changes usually show up within an hour.
+
 ## Part 1: Noah (about 20 minutes, copy-paste)
 
 **1. Create the server** on DigitalOcean (its in-browser console supports copy-paste):
@@ -68,8 +90,14 @@ Work in plain English with Noah. Ask before anything hard to undo. Follow `CLAUD
    - `sudo ops/install.sh add company clients/company 8001 auto`: Noah's company hub (practice tracker and agents).
    - `sudo ops/install.sh add demo clients/demo 8002 auto`: the Bluestem demo.
 
-   Each gets its own database and logins, settings file (`/etc/hub/NAME.env`), service, scheduled jobs and an HTTPS address on `sslip.io`. Swap to the real domain once it exists: re-run `add` with the hostname.
-   - Once the domain exists: `sudo ops/install.sh website sanfordoperations.com company`. It sets up the public website, saving enquiries into the company hub. Also re-run `add company … hub.sanfordoperations.com` and `add demo … demo.sanfordoperations.com` for the real addresses, and set `demo_url` in `website/config.toml` to `https://demo.sanfordoperations.com/guest`.
+   Each gets its own database and logins, settings file (`/etc/hub/NAME.env`), service, scheduled jobs and an HTTPS address on `sslip.io`.
+   - **Once the DNS records above exist** (check with `getent hosts hub.sanfordoperations.com`; it should print the server's IP), move to the real addresses, in this order:
+     1. `sudo ops/install.sh add company clients/company 8001 hub.sanfordoperations.com`
+     2. `sudo ops/install.sh add demo clients/demo 8002 demo.sanfordoperations.com`
+     3. `sudo ops/install.sh website sanfordoperations.com company`: the public website, saving enquiries into the company hub.
+
+     The website goes last because it reads the hub's address once, when it's first installed, for the link in new-enquiry alerts. If the hub's address changes later, update `HUB_URL` in `/etc/hub/website.env` and restart `hub-website`.
+   - Then check: https://sanfordoperations.com loads with the seal, www redirects to it, "See a live demo" signs in as the guest, and the contact form's test enquiry reaches the hub's Inbox and Noah's phone. `website/config.toml` already has the real addresses.
 3. **Logins:** have Noah create his admin login on each install with the command the installer prints. He types the password himself.
 4. **Keys and alerts**, typed hidden by Noah with `kit.manage set-secret` (the installer prints the exact form):
    - `ANTHROPIC_API_KEY_CHAT` and `ANTHROPIC_API_KEY_AGENTS` on the company hub, and `ANTHROPIC_API_KEY_CHAT` on the demo;
