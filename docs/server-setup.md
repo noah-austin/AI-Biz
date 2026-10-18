@@ -8,9 +8,10 @@ Claude Code runs *on* the server, linked to Noah's Claude account with Remote Co
 **Sign up for Google Workspace** (Business Starter) and choose **buy a new domain**: `sanfordoperations.com`. Google buys it through its partner Squarespace and sets up email for you: MX, SPF and verification are done automatically. Turn on the domain's **auto-renew** in the Admin console, and two-factor sign-in on the Workspace admin account.
 
 Then in the Admin console:
-- create `hello@sanfordoperations.com` and your own address;
+- at signup, give your **personal Gmail** as the current email (it becomes the recovery address) and create **noah@sanfordoperations.com** as your account and the admin login;
+- add **hello@sanfordoperations.com** as a free alias on your account (Directory → Users → you → Add alternate emails). It can become a shared Google Group later;
 - turn on **DKIM**: Apps → Google Workspace → Gmail → **Authenticate email** → Generate, then Start authentication. It may not be ready until a day or two after signup; if not, try the next day. If it asks you to add the record yourself, add it in Squarespace (below) as a TXT record named `google._domainkey`;
-- write down where the domain's recovery email goes. Make sure it's your personal Gmail, so you can still reach the domain if the Workspace account ever has a problem.
+- check the recovery email is your personal Gmail, so you can still reach the domain if the Workspace account ever has a problem.
 
 **Add DMARC** (one record, helps keep our emails out of spam): open the domain's DNS settings (Admin console → Account → Domains → Manage domains → your domain → **Advanced DNS settings**, which opens Squarespace) and add a TXT record named `_dmarc` with value `v=DMARC1; p=none; rua=mailto:hello@sanfordoperations.com`.
 
