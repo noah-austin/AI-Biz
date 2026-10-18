@@ -60,12 +60,12 @@ for i, (a, b, l1, l2) in enumerate(CAPS):
 # ------------------------------------------------------------------ systems (left)
 SYSTEMS = [
     # name, detail (before), detail (after), scattered dx, dy, rot, conflict
-    ("CRM", "Deals and customers", "Deals and customers", 60, 50, -4, False),
-    ("Accounting", "Invoices and payments", "Invoices and payments", 740, -50, 3, False),
-    ("ERP", "Jobs and costs", "Jobs and costs", 1340, -200, 2, False),
-    ("Project tool", "Hours and tasks", "Hours and tasks", 400, 210, -3, False),
-    ("HR & payroll", "People and payroll", "People and payroll", 880, -170, 4, False),
-    ("Spreadsheets", "Forecasts and trackers", "Forecasts and trackers", 1260, -40, -2, False),
+    ("CRM", "Deals and customers", "Deals and customers", 20, 30, -4, False),
+    ("Accounting", "Invoices and payments", "Invoices and payments", 480, -120, 3, False),
+    ("ERP", "Jobs and costs", "Jobs and costs", 940, -200, 2, False),
+    ("Project tool", "Hours and tasks", "Hours and tasks", 1340, -340, -3, False),
+    ("HR & payroll", "People and payroll", "People and payroll", 220, -190, 4, False),
+    ("Spreadsheets", "Forecasts and trackers", "Forecasts and trackers", 700, -290, -2, False),
 ]
 COL_X, COL_Y0, CW, CH, GAP = 120, 250, 360, 96, 24
 for i, (name, d1, d2, dx, dy, rot, conflict) in enumerate(SYSTEMS):
@@ -90,6 +90,24 @@ for i, (name, d1, d2, dx, dy, rot, conflict) in enumerate(SYSTEMS):
         good = show(10.6, 19.6, 0.35)
         inner += f'<div class="pill bad {bad}">Doesn’t match</div><div class="pill good {good}">Matches</div>'
     html.append(f'<div class="{fade}" style="position:absolute;left:{COL_X}px;top:{y}px"><div class="card sys {mv}">{inner}</div></div>')
+
+# more systems: scattered at the start, then pulled into the hub as it appears
+EXTRAS = [("Email and files", "Contracts and attachments", 1280, 570, 3),
+          ("Inventory", "Stock and orders", 130, 810, -3),
+          ("Support desk", "Tickets and requests", 640, 830, 2),
+          ("Marketing", "Leads and campaigns", 1160, 820, -2),
+          ("Field service", "Visits and work orders", 1500, 760, 4)]
+for i, (name, det, x, y, rot) in enumerate(EXTRAS):
+    tx, ty = 960 - (x + CW / 2), 560 - (y + CH / 2)
+    t1 = 5.5 + i * 0.12
+    mv = anim([(0, f"transform:translate(0,0) rotate({rot}deg) scale(1);opacity:1"),
+               (1.8, f"transform:translate(-9px,10px) rotate({rot - 1}deg) scale(1);opacity:1"),
+               (3.5, f"transform:translate(8px,-8px) rotate({rot + 1}deg) scale(1);opacity:1"),
+               (t1, f"transform:translate(0,0) rotate({rot}deg) scale(1);opacity:1"),
+               (t1 + 1.1, f"transform:translate({tx:.0f}px,{ty:.0f}px) rotate(0deg) scale(.25);opacity:0")])
+    fade = show(0.7 + (i + 6) * 0.1, None, 0.6)
+    html.append(f'<div class="{fade}" style="position:absolute;left:{x}px;top:{y}px"><div class="card sys {mv}">'
+                f'<div class="sname">{name}</div><div class="sdet">{det}</div></div></div>')
 
 # ------------------------------------------------------------------ connectors and the hub
 HX, HY, HR = 960, 560, 150
