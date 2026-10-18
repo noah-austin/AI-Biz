@@ -104,7 +104,7 @@
 |---|---|---|
 | Business name | **Sanford Operations** | Domain sanfordoperations.com is available (checked by Noah). Classic firm style, as Noah chose. "Operations" says what we're about: running the company on its data. Screen: no company uses the exact name; avoid "Sanford Data/Analytics" (Sanford Health's data programme) and "Sanford & Co" (a Las Vegas accounting firm). |
 | Addresses | Website sanfordoperations.com; hub hub.sanfordoperations.com; demo demo.sanfordoperations.com; email hello@sanfordoperations.com | Email via Google Workspace on the domain. |
-| Still to do | Register the domain; Texas SOSDirect name search; USPTO search (classes 35 and 42); LLC filing as Sanford Operations LLC | |
+| Still to do | Texas SOSDirect name search; USPTO search (classes 35 and 42); LLC filing as Sanford Operations LLC | Domain registered and Google Workspace set up 2026-10-18 (noah@sanfordoperations.com). |
 
 ## 2026-10-18: logo
 | Topic | Decision | Notes |
