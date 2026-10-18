@@ -308,3 +308,19 @@ body.bare { display: grid; place-items: center; min-height: 100vh; padding: 16px
 .google-btn { width: 100%; justify-content: center; gap: 10px; background: var(--card); color: var(--ink); border: 1px solid var(--axis); }
 .google-btn span { font-weight: 800; color: var(--accent); }
 .signin .or { text-align: center; color: var(--muted); font-size: 13px; margin: 12px 0; }
+
+/* public demo: banner link and the guest "start here" card */
+.demo-banner a { color: inherit; font-weight: 600; }
+.demo-banner .demo-cta { margin-left: 6px; white-space: nowrap; }
+.tour { border-color: var(--accent); }
+.tour .muted { margin: 0 0 12px; }
+.tour-steps { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; counter-reset: s; }
+.tour-steps li { counter-increment: s; display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--ink-2); }
+.tour-steps li::before { content: counter(s); width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff;
+  display: grid; place-items: center; font-size: 12.5px; font-weight: 700; margin-bottom: 4px; }
+.tour-steps strong { color: var(--ink); font-size: 15px; }
+.tour-steps .linkish { font: inherit; font-weight: 700; padding: 0; }
+@media (max-width: 760px) {
+  .tour-steps { grid-template-columns: 1fr 1fr; }
+  nav { -webkit-mask-image: linear-gradient(90deg, #000 82%, transparent); mask-image: linear-gradient(90deg, #000 82%, transparent); }
+}

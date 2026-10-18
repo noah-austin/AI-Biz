@@ -30,6 +30,9 @@
 3. **Scorecard.** "If you run EOS or any weekly scorecard: this fills itself in. Nobody types it on Monday morning."
 4. **Win / loss → Where we sell best.** "Industrial projects and healthcare service contracts are where you win the most money. Here's the proof, and every cell clicks through."
 5. **Receivables → Who to call first.** CRM and accounting joined: "Sales and finance looking at the same customer."
-6. **Clean-up list.** "This is why your reports never match. Here's the exact list to fix, linked to each record." This is usually the moment that sells the Health Check.
+6. **Data checks (in passing).** "As a side benefit, it flags records that look wrong in your systems, linked to each one." Mention it and move on; it isn't the pitch.
 7. **Branch view.** Sign in as a branch manager: they see only their branches.
-8. **What's next (AI).** "Ask it questions in plain English. It reads the same numbers, follows the same rules, and can't change anything."
+8. **Ask AI.** "Ask it questions in plain English. It reads the same numbers, follows the same rules, and can't change anything."
+9. **Agents.** The demo doesn't run agents yet. Walk through the website's "A day with your agents" section, and our own company hub's Agents page if it's appropriate to show.
+
+Visitors who arrive from the website's "See a live demo" button sign in as a guest and see a short "Welcome to the demo" card; the banner links back to the website to book a call.

@@ -27,7 +27,7 @@ NAV = [  # path, label, admin only
     ("/deals?status=open", "Pipeline", False),
     ("/winloss", "Win / loss", False),
     ("/receivables", "Receivables", False),
-    ("/cleanup", "Clean-up", False),
+    ("/cleanup", "Data checks", False),
     ("/health", "Health", True),
 ]
 
@@ -172,9 +172,14 @@ def page(request, title: str, body: str, active: str = "", subtitle: str = "", w
             worst = "critical" if any(a["severity"] == "critical" for a in found) else "warning"
             alert_bar = (f'<a class="alert-banner {worst}" href="/health#alerts"><span aria-hidden="true">!</span> '
                          f'{esc(found[0]["message"])}{f" (+{len(found) - 1} more)" if len(found) > 1 else ""}</a>')
-    demo = ('<div class="demo-banner">Demo company with made-up data. Bluestem Facility Services is fictional.'
-            + (' You\'re looking around as a guest.' if user and user["email"].endswith("@demo.invalid") else "")
-            + '</div>' if settings.is_demo else "")
+    demo = ""
+    if settings.is_demo:
+        by, cta = client.get("demo_by"), client.get("demo_cta_url")
+        demo = ('<div class="demo-banner"><span>Demo company with made-up data: '
+                f'{esc(client.get("company", "this company"))} is fictional.</span>'
+                + (f' <span>Built by <a href="{esc(client.get("demo_by_url", "#"))}">{esc(by)}</a>.</span>' if by else "")
+                + (f' <a class="demo-cta" href="{esc(cta)}">See it on your own data: book a call →</a>' if cta else "")
+                + "</div>")
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(title)} · {esc(client.get("short_name", "Hub"))}</title>

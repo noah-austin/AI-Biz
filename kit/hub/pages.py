@@ -32,6 +32,30 @@ def _branches(scope):
 
 # ---------------------------------------------------------------- home
 
+def guest_tour(request) -> str:
+    """Public demo only: a short "start here" card for guests. Hidden once they click Hide (remembered in the browser)."""
+    user = getattr(request.state, "user", None)
+    if not (get_settings().is_demo and user and user["email"].endswith("@demo.invalid")):
+        return ""
+    steps = [("/scorecard", "Scorecard", "The weekly numbers, filled in automatically. Green means the goal was hit."),
+             ("#", "Click any number", "Every tile, bar and row opens the records behind it, down to the deal."),
+             ("/deals?status=open", "Pipeline", "Every open deal, filtered any way you like, with a download to Excel."),
+             (None, "Ask AI", "Ask a question in plain English, like \u201cWhich branch is behind on billing?\u201d")]
+    items = ""
+    for href, t, d in steps:
+        if href is None:
+            head = f'<button type="button" class="linkish" data-ask-open>{esc(t)}</button>'
+        elif href == "#":
+            head = esc(t)
+        else:
+            head = f'<a href="{href}">{esc(t)}</a>'
+        items += f"<li><strong>{head}</strong><span>{esc(d)}</span></li>"
+    return (f'<section class="card tour" data-tour><div class="card-head"><h2>Welcome to the demo</h2>'
+            f'<button type="button" class="linkish" data-tour-hide>Hide</button></div>'
+            f'<p class="muted">A fictional facility-services company with nearly three years of realistic data. Four things to try:</p>'
+            f'<ol class="tour-steps">{items}</ol></section>')
+
+
 def home(request):
     scope = scope_of(request)
     t = metrics.today()
@@ -125,11 +149,12 @@ def home(request):
   </div>
   <div>
     {changes}
-    <section class="card"><div class="card-head"><h2>Needs fixing at the source</h2><a href="/cleanup">See all</a></div>
+    <section class="card"><div class="card-head"><h2>Data checks</h2><a href="/cleanup">See all</a></div>
       <ul class="list">{issue_items or '<li>Nothing flagged.</li>'}</ul></section>
     <p class="muted" style="font-size:13px">{esc(fresh_txt)}. Today is {ui.date(t)} ({esc(get_settings().tz)}).</p>
   </div>
 </div>"""
+    body = guest_tour(request) + body
     return ui.page(request, "Where we stand", body, "Home",
                    subtitle=f"Year to date, {ui.date(dt.date(t.year, 1, 1))} to {ui.date(t)}, compared with the same dates last year")
 
@@ -568,7 +593,7 @@ def cleanup_page(request):
         f'<tr><th class="sticky" scope="row">{esc(b["branch"])}</th><td class="n"><strong>{b["count"]}</strong></td>'
         + "".join(f'<td class="n">{b["checks"].get(c.key, 0) or "<span class=muted>·</span>"}</td>' for c in active) + "</tr>"
         for b in cleanup.by_branch(results))
-    summary = (f'<section class="card"><h2>Where the clean-up is</h2><div class="scroll"><table class="data">'
+    summary = (f'<section class="card"><h2>Where they are</h2><div class="scroll"><table class="data">'
                f'<thead><tr><th class="sticky">Branch</th><th class="n">Total</th>'
                + "".join(f'<th class="n"><a href="#{c.key}">{esc(short.get(c.key, c.key))}</a></th>' for c in active)
                + f'</tr></thead><tbody>{branch_rows}</tbody></table></div></section>') if total else ""
@@ -588,7 +613,8 @@ def cleanup_page(request):
     body = f"""<p class="lead">{total} records to fix. They get fixed in the source systems, not patched over here, so every report
 gets more accurate. Each record opens in its own system, and the owner column says who should fix it.</p>
 {summary}<section class="card">{"".join(blocks)}</section>"""
-    return ui.page(request, "Clean-up list", body, "Clean-up", subtitle="Data problems that make reports wrong")
+    return ui.page(request, "Data checks", body, "Data checks",
+                   subtitle="Records in the source systems that look wrong. Fixing them there makes every report more accurate.")
 
 
 # ---------------------------------------------------------------- health (admin)
@@ -597,7 +623,7 @@ SYNC_NAMES = {"crm.users": "CRM · Users", "crm.accounts": "CRM · Accounts", "c
               "crm.opportunity_history": "CRM · Deal change history", "acct.customers": "Accounting · Customers",
               "acct.invoices": "Accounting · Invoices", "backup": "Nightly backup"}
 PAGE_NAMES = {"/": "Home", "/scorecard": "Scorecard", "/deals": "Pipeline / deals", "/winloss": "Win / loss",
-              "/receivables": "Receivables", "/invoices": "Invoices", "/cleanup": "Clean-up", "/health": "Health"}
+              "/receivables": "Receivables", "/invoices": "Invoices", "/cleanup": "Data checks", "/health": "Health"}
 
 
 def _local(ts):

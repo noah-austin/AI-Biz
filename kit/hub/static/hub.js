@@ -67,6 +67,12 @@
     setTimeout(() => { b.textContent = "Copy"; }, 2500);
   });
   document.addEventListener("DOMContentLoaded", () => {
+    const tour = document.querySelector("[data-tour]");
+    if (tour) {
+      try { if (localStorage.getItem("hub-tour-hidden") === "1") tour.hidden = true; } catch (e) {}
+      const hide = tour.querySelector("[data-tour-hide]");
+      if (hide) hide.addEventListener("click", () => { tour.hidden = true; try { localStorage.setItem("hub-tour-hidden", "1"); } catch (e) {} });
+    }
     // Wide time tables open on the latest weeks.
     document.querySelectorAll("[data-scroll-end]").forEach(el => { el.scrollLeft = el.scrollWidth; });
     start();

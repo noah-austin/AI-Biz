@@ -7,6 +7,9 @@ short_name = "Bluestem"
 timezone = "America/Chicago"
 demo = true
 demo_guest = true          # the website's "See a live demo" button signs visitors in as a read-only guest
+demo_by = "Sanford Operations"
+demo_by_url = "https://sanfordoperations.com"
+demo_cta_url = "https://sanfordoperations.com/contact?interest=demo"
 fiscal_year_start_month = 1
 
 # Where "open in source system" links go. In the demo they open a stand-in page.

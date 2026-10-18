@@ -215,3 +215,13 @@ def test_dry_run_changes_nothing(monkeypatch):
 def test_chart_data_cannot_close_script_tag():
     from kit.hub.ui import chart
     assert "</script><b>" not in chart("x", {"labels": ["</script><b>"]})
+
+
+def test_demo_guest_sees_the_tour_and_a_way_back(client):
+    c, pw = client
+    c.cookies.clear()
+    r = c.get("/guest", follow_redirects=True)
+    assert r.status_code == 200 and "data-tour" in r.text and "Welcome to the demo" in r.text
+    assert "book a call" in r.text and "sanfordoperations.com/contact" in r.text
+    login(c, "admin@test.invalid", pw)
+    assert "data-tour" not in c.get("/").text  # signed-in staff never see the guest tour

@@ -55,4 +55,4 @@ An invoice's branch comes from its deal; if it has no deal reference, from the c
 | AR over 60 days | $400K or less |
 
 ## 6. Known data problems
-See the hub's **Clean-up** page for the live list: placeholder close dates, duplicates, stale open deals, missing margins (mostly Houston South, 2025), lost deals without reasons, won deals with no invoice, and customers not linked to the CRM.
+See the hub's **Data checks** page for the live list: placeholder close dates, duplicates, stale open deals, missing margins (mostly Houston South, 2025), lost deals without reasons, won deals with no invoice, and customers not linked to the CRM.
