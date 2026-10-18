@@ -1,6 +1,6 @@
 # Business name shortlist
 
-*2026-10-17. Style: plain and credible. Each name works on its own or with "Data Co." / "Data" after it. 170 names screened; 115 survive. Noah's preferred styles: **plain English** and **classic firm-sounding**.*
+*2026-10-17. Style: plain and credible. Each name works on its own or with "Data Co." / "Data" after it. 174 names screened: 51 clean, 67 with minor issues, 56 dropped. Noah's preferred styles: **plain English** and **classic firm-sounding**.*
 
 ## How these were checked
 - **Same-name screen (done):** web searches for companies with the same or a confusingly similar name in data, software, consulting or field service. "Clean" means nothing turned up, not that a trademark search is clear.
@@ -292,3 +292,191 @@ ledgerhouse.com
 From round 3, **Joinwright** is the standout: the Joinery story, and a made-up word, so the .com is more likely free. **Gatherhouse** and **Ledgerhouse** are close behind.
 
 Pick 3–5 favourites, check their .com, then decide.
+
+## Every name checked (174)
+Alphabetical within each group. Notes on each name are in the sections above.
+- **Clean:** no company found using it in data, software, IT or consulting.
+- **Minor:** a small, foreign or unrelated company uses it.
+- **Dropped:** already used in our field.
+
+### Clean (51)
+1. Allstead
+2. Ashby & Lane
+3. Austin Operations
+4. Bancroft & Lowe
+5. Bowline
+6. Calloway & Reed
+7. Common Numbers
+8. Common Source
+9. Commonyard
+10. Cornerpost
+11. Countwell
+12. Datastead
+13. Footing
+14. Gatherhouse
+15. Harlow & Finch
+16. Hitchline
+17. Holdfast
+18. Hollis & Pike
+19. Joined Up
+20. Joinery
+21. Joinwright
+22. Keelson
+23. Kent & Carver
+24. Kingpost
+25. Known Numbers
+26. Lanyard
+27. Ledgerhouse
+28. Ledgerton
+29. Llano
+30. Main & Ledger
+31. Merit & Mile
+32. Millrace
+33. Mortise
+34. Onestead (.com live/taken)
+35. Overlook
+36. Ridgebeam
+37. Same Numbers
+38. Sill & Beam
+39. Single Picture
+40. Sound Numbers
+41. Square & Level
+42. Steadfield
+43. Steady State
+44. Stillview
+45. Straightedge
+46. Tallyhouse
+47. Tie Beam
+48. Trueground
+49. Whitfield & Grey
+50. Whole Picture
+51. Whole Picture Partners
+
+### Minor issues (67)
+1. Allsource
+2. Barnraise
+3. Barrow & Field
+4. Bindery
+5. Caprock
+6. Catchment
+7. Cedar & Stone
+8. Clear Numbers
+9. Clear Picture
+10. Cohesa
+11. Common Source Partners
+12. Commonhouse (.com live/taken)
+13. Commonplace
+14. Commons
+15. Countinghouse
+16. Even Keel
+17. Fairway & Main
+18. Fieldhouse
+19. Fitwell
+20. Fundament
+21. Good Numbers Co
+22. Granary
+23. Gristmill
+24. Groundline
+25. Hale & Hart
+26. Headgate
+27. Hearthline
+28. Heartwood
+29. Honest Numbers
+30. Keelwork
+31. Ledger & Main
+32. Ledgerhouse Partners
+33. Ledgerline
+34. Ledgerstone
+35. Lintel
+36. Mainspring
+37. Masonry
+38. Mesquite
+39. Mooring
+40. Northline
+41. One Ledger
+42. One Roof
+43. One Table
+44. Onefold
+45. Onehold
+46. Openfield
+47. Operating Picture
+48. Plain Facts
+49. Plumbwork
+50. Post Oak
+51. Seamwork
+52. Steadily (.com live/taken)
+53. Steadwell
+54. Steadyhand (.com live/taken)
+55. Sterling & Main
+56. Straight Numbers
+57. Thornbury Partners
+58. Totum
+59. Tributary
+60. True Level
+61. Truecount
+62. Truestead
+63. Unova
+64. Wellhouse
+65. Whole Company
+66. Wholly
+67. Wideview
+
+### Dropped (56)
+1. Allview
+2. Austin & Co
+3. Basin
+4. Bearing
+5. Brazos
+6. Brightwater
+7. Cairn
+8. Clear Books
+9. Clearfield
+10. Corral
+11. Datawright
+12. Daylight
+13. Fieldstone
+14. Foreman
+15. Full Count
+16. Headwater
+17. Hearth
+18. Highview
+19. Hitch
+20. Ironwood
+21. Junction
+22. Keel
+23. Ledger & Co
+24. One Source Partners
+25. One View Partners
+26. Oneplace Partners
+27. Open Books
+28. Plain Numbers
+29. Plainly
+30. Plainsight
+31. Plainview
+32. Plinth
+33. Runwell
+34. Sextant
+35. Single Origin
+36. Splice
+37. Springhouse
+38. Squarework
+39. Steady Numbers
+40. Sumwise
+41. Tabula
+42. Tallyworks
+43. Tether
+44. Throughline
+45. Townsquare
+46. True Books
+47. Truework
+48. Truss
+49. Unitas
+50. Veriton
+51. Vinculum
+52. Wayfinder
+53. Wellspring
+54. Whetstone
+55. Workbench
+56. Working Numbers
+
+Also skipped without screening (obviously crowded): Groundwork, Bedrock, Cornerstone, Keystone, Clearline, Dovetail, Estuary, Riverbed, Lantern, Tandem.
