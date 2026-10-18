@@ -111,6 +111,7 @@
 |---|---|---|
 | Logo | The seal: SANFORD on top, OPERATIONS below, stars at the sides, serif S centre; oxblood on parchment | No date or place on it. Files and rules in `docs/brand.md`. |
 | Website look | Restyled to match the seal: parchment, oxblood and brass, Playfair Display headings | Replaces the blue and green. |
+| Website refinements | Added a trust line, a "Who we work with" strip, an FAQ, and "Now taking a small number of founding clients" on the calls to action | The founding-client line matches the founding-client deal in `concept.md`; remove it once the first clients are signed. |
 
 ## Open questions
 - Texas sales tax treatment of the retainer and hosting: ask a CPA.

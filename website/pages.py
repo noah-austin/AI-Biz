@@ -39,7 +39,7 @@ def layout(title: str, body: str, path: str = "/", description: str = "") -> str
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(page_title)}</title><meta name="description" content="{esc(desc)}">
 <meta property="og:title" content="{esc(page_title)}"><meta property="og:description" content="{esc(desc)}">
-<link rel="icon" href="/static/brand/mark.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/static/brand/apple-touch-icon.png"><meta property="og:image" content="{esc(c["url"])}/static/brand/profile-800.png"><link rel="stylesheet" href="/static/site.css">
+<link rel="icon" href="/static/brand/mark.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/static/brand/apple-touch-icon.png"><meta property="og:image" content="{esc(c["url"])}/static/brand/profile-800.png"><meta property="og:url" content="{esc(c["url"])}{esc(path)}"><link rel="canonical" href="{esc(c["url"])}{esc(path)}"><link rel="stylesheet" href="/static/site.css">
 </head><body>
 <header class="site-head"><div class="wrap">
   <a class="logo" href="/" aria-label="{esc(c["name"])}, home"><picture><source srcset="/static/brand/lockup-reversed.svg" media="(prefers-color-scheme: dark)"><img src="/static/brand/lockup.svg" alt="{esc(c["name"])}" width="262" height="64"></picture></a>
@@ -70,6 +70,29 @@ def cta_row(primary=("Book a call", "/contact?interest=call")) -> str:
             f'<a class="btn ghost" href="{esc(c["demo_url"])}">See a live demo →</a></div>')
 
 
+FAQ = [
+    ("Do we have to replace our systems?",
+     "No. We connect to the systems you already use, read-only, and your team keeps working in them the same way. We add to what you have."),
+    ("We already have Power BI or Tableau. Does this still help?",
+     "Yes. Those tools are only as good as the data behind them. We build the trusted foundation underneath, and your existing dashboards can read from it too."),
+    ("Is our data safe?",
+     "We connect read-only, so nothing in your systems can be changed. It runs on a server in your company's name, or on a separate one we host just for you, with nightly backups, and each person sees only what they should. We sign a confidentiality agreement before any work starts, and the AI runs on business-grade services that don't train on your data."),
+    ("How much does it cost?",
+     "Every build is quoted to your company: how many systems we connect, how much data there is, and what we build on top. After our first conversations you get a written proposal with a fixed quote. A monthly plan then keeps it running."),
+    ("How long does it take?",
+     "It depends on the scope, and your proposal sets out the timeline. We work in stages, starting by reproducing the reports you already trust, so you see working results early."),
+    ("Who looks after it once it's built?",
+     "We do, on a monthly plan: monitoring, fixes, backups, and new tools and agents as you need them. Everything is documented, so you're never locked in."),
+    ("Do we need a data team?",
+     "No. That's the point. We are the data team you don't have to hire, and the tools are built for the people already running the business."),
+]
+
+
+def faq_html() -> str:
+    items = "".join(f'<details class="faq"><summary>{esc(q)}</summary><p>{esc(a)}</p></details>' for q, a in FAQ)
+    return f'<div class="faq-list">{items}</div>'
+
+
 def home() -> str:
     c = cfg()
     gallery = [
@@ -90,7 +113,7 @@ def home() -> str:
                         for n, (i, t, d) in enumerate(steps, 1))
     why = [("people", "Operators, not a vendor", "We come from running companies, as COO and chief of staff."),
            ("blocks", "Built around you", "No off-the-shelf package. Nothing you use gets replaced."),
-           ("server", "Your data, your choice", "Your own server or hosted by us. No per-seat licences."),
+           ("server", "Your data, your choice", "Your own server or hosted by us. No per-seat licenses."),
            ("shield", "Safe by design", "Read-only access, nightly backups, and everyone sees only what they should.")]
     why_html = "".join(f'<div class="why">{v.icon(i)}<h3>{t}</h3><p>{d}</p></div>' for i, t, d in why)
     body = f"""
@@ -101,8 +124,15 @@ def home() -> str:
     <p class="lead">We connect the systems your company runs on into one place, then build what that makes possible:
     reports that build themselves, tools, AI, and AI agents that do real work.</p>
     {cta_row()}
+    <ul class="trust">{"".join(f"<li>{v.icon('check')}{t}</li>" for t in ("Read-only access", "Your data stays yours", "Fixed quote up front"))}</ul>
   </div>
   {v.hub_diagram()}
+</div></section>
+
+<section class="who"><div class="wrap who-row">
+  <p class="who-label">Who we work with</p>
+  <div class="who-roles">{"".join(f'<span class="chip">{v.icon(i)}{t}</span>' for i, t in (("people", "COOs"), ("dollar", "CFOs"), ("blocks", "Owners &amp; presidents"), ("clipboard", "Operations leaders")))}</div>
+  <p class="who-note">at companies of 20 to 1,000 people, in any industry, that run on several systems and don't have a data team.</p>
 </div></section>
 
 <section class="band"><div class="wrap">
@@ -134,7 +164,8 @@ def home() -> str:
     <p class="lead">A fictional company with realistic data: the scorecard, pipeline, win/loss, receivables and the AI assistant. No sign-up needed.</p>
     <a class="btn" href="{esc(c["demo_url"])}">Open the live demo →</a>
   </div>
-  {v.demo_shot("home", "The demo hub's home page: bookings, win rate, pipeline, billing and cash, with a bookings-by-month chart.")}
+  <div class="demo-shot">{v.demo_shot("home", "The demo hub's home page: bookings, win rate, pipeline, billing and cash, with a bookings-by-month chart.")}
+  <p class="fine">Shown in the demo company's colors. Your hub uses yours.</p></div>
 </div></section>
 
 <section><div class="wrap">
@@ -142,8 +173,13 @@ def home() -> str:
   <div class="why-grid">{why_html}</div>
 </div></section>
 
+<section class="band"><div class="wrap narrow">
+  {sec_head("Questions", "What people usually ask")}
+  {faq_html()}
+</div></section>
+
 <section class="offer"><div class="wrap narrow center">
-  <p class="eyebrow">Getting started</p>
+  <p class="eyebrow">Now taking a small number of founding clients</p>
   <h2>Start with a conversation</h2>
   <p class="lead">Tell us how your company runs and where your data lives. If there's a fit, you'll get a custom proposal.</p>
   <div class="cta-row center"><a class="btn" href="/contact?interest=call">Book a call</a><a class="btn ghost light" href="/what-we-build">What we build</a></div>
@@ -159,7 +195,7 @@ def what_we_build() -> str:
               ("search", "Research", "For example, new companies that look like your best customers.")]
     agent_html = "".join(f'<div class="agent-row">{v.icon(i)}<div><h3>{t}</h3><p>{d}</p></div></div>' for i, t, d in agents)
     factors = [("blocks", "Systems we connect"), ("db", "How much data"), ("chart", "What we build on top")]
-    factor_html = "".join(f'<span class="chip">{v.icon(i)}{t}</span>' for i, t in factors)
+    factor_html = "".join(f'<li>{v.icon(i)}{t}</li>' for i, t in factors)
     body = f"""
 <section class="hero slim with-cta"><div class="wrap">
   <p class="eyebrow">What we build</p>
@@ -223,7 +259,7 @@ def what_we_build() -> str:
       <h2>How it's priced</h2>
       <p>Each build is quoted to your company. After our first conversations you get a written proposal with a fixed
       quote, then a monthly plan keeps it running and adds what's next.</p>
-      <div class="chips left">{factor_html}</div>
+      <ul class="factors">{factor_html}</ul>
     </div>
     <div>
       <p class="eyebrow">Hosting</p>
@@ -239,6 +275,7 @@ def what_we_build() -> str:
 </div></section>
 
 <section class="offer"><div class="wrap narrow center">
+  <p class="eyebrow">Now taking a small number of founding clients</p>
   <h2>Let's talk about your company</h2>
   <p class="lead">A short conversation, then a custom proposal with a fixed quote.</p>
   <div class="cta-row center"><a class="btn" href="/contact?interest=call">Book a call</a><a class="btn ghost light" href="{esc(cfg()["demo_url"])}">See a live demo →</a></div>
@@ -249,30 +286,40 @@ def what_we_build() -> str:
 
 def about() -> str:
     c = cfg()
+    principles = [("blocks", "The business first", "We start from how you run the company, not from the technology."),
+                  ("check", "Your numbers first", "We reproduce the reports you already use, to the cent, before building anything new."),
+                  ("server", "You own everything", "Your data and your documentation, wherever it runs. No lock-in."),
+                  ("chat", "Plain English", "You'll always know what changed, how it was checked, and what it costs.")]
+    p_html = "".join(f'<div class="why">{v.icon(i)}<h3>{t}</h3><p>{d}</p></div>' for i, t, d in principles)
     body = f"""
 <section class="hero slim"><div class="wrap">
   <p class="eyebrow">About us</p>
   <h1>Built by operators, for operators</h1>
+  <p class="lead">{esc(c["name"])} helps small and mid-size companies bring their data together in one place and put it to work.</p>
 </div></section>
-<section><div class="wrap"><div class="prose">
-  <p>{esc(c["name"])} helps small and mid-size companies bring their data together in one place and put it to work.</p>
-  <p>We come from business operations, as COO and chief of staff: the people responsible for the numbers a company
-  runs on. We've lived with data spread across a CRM, an accounting system and a pile of spreadsheets, with reports
-  rebuilt by hand every week. We've also seen what changes once it's all in one place: tools, reports and AI that weren't
-  possible while everything was scattered.</p>
-  <p>Most companies don't need more software. They need a foundation that connects what they already have, and someone
-  who understands how the business runs to build on it.</p>
-  <p>We work with companies in any industry, across the US, that run on several systems and don't have a data team of
-  their own. {esc(c["name"])} was founded by {esc(c["owner"])}.</p>
-  <h2>How we work</h2>
-  <ul class="checks">
-    <li><strong>The business first.</strong> We start from how you run the company, not from the technology.</li>
-    <li><strong>Your numbers first.</strong> We reproduce the reports you already use, to the cent, before building anything new.</li>
-    <li><strong>You own everything.</strong> Your data and your documentation, wherever it runs. No lock-in.</li>
-    <li><strong>Plain English.</strong> You'll always know what changed, how it was checked, and what it costs.</li>
-  </ul>
-  {cta_row(("Talk to us", "/contact?interest=call"))}
-</div></div></section>"""
+<section><div class="wrap split about-split">
+  <div class="prose">
+    <p>We come from business operations, as COO and chief of staff: the people responsible for the numbers a company
+    runs on. We've lived with data spread across a CRM, an accounting system and a pile of spreadsheets, with reports
+    rebuilt by hand every week. We've also seen what changes once it's all in one place: tools, reports and AI that
+    weren't possible while everything was scattered.</p>
+    <p>Most companies don't need more software. They need a foundation that connects what they already have, and someone
+    who understands how the business runs to build on it.</p>
+    <p>We work with companies in any industry, across the US, that run on several systems and don't have a data team of
+    their own. {esc(c["name"])} was founded by {esc(c["owner"])}.</p>
+  </div>
+  <div class="about-seal"><picture><source srcset="/static/brand/seal-reversed.svg" media="(prefers-color-scheme: dark)"><img src="/static/brand/seal.svg" alt="" width="280" height="280"></picture></div>
+</div></section>
+<section class="band"><div class="wrap">
+  {sec_head("How we work", "Four things we hold to")}
+  <div class="why-grid">{p_html}</div>
+</div></section>
+<section class="offer"><div class="wrap narrow center">
+  <p class="eyebrow">Now taking a small number of founding clients</p>
+  <h2>Let's talk about your company</h2>
+  <p class="lead">A short conversation, then a custom proposal with a fixed quote.</p>
+  <div class="cta-row center"><a class="btn" href="/contact?interest=call">Talk to us</a><a class="btn ghost light" href="{esc(c["demo_url"])}">See a live demo →</a></div>
+</div></section>"""
     return layout("About", body, "/about")
 
 

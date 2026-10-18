@@ -384,3 +384,36 @@ section { padding: 104px 0; }
 @media (prefers-reduced-motion: reduce) {
   .d-flow, .d-halo, .found-flow i, .push.p0 { animation: none; }
 }
+
+
+/* ---------- refinement pass ---------- */
+.trust { list-style: none; padding: 0; margin: 22px 0 0; display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14.5px; color: var(--ink-2); }
+.trust li { display: flex; align-items: center; gap: 6px; }
+.trust .ico { width: 16px; height: 16px; color: var(--good); }
+.who { padding: 26px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--card); }
+.who-row { display: flex; align-items: center; gap: 14px 22px; flex-wrap: wrap; }
+.who-label { margin: 0; font-size: 12.5px; font-weight: 650; letter-spacing: .1em; text-transform: uppercase; color: var(--accent-2); }
+.who-roles { display: flex; flex-wrap: wrap; gap: 8px; }
+.who-note { margin: 0; color: var(--ink-2); font-size: 15px; flex: 1 1 260px; }
+.demo-shot .fine { margin-top: 12px; text-align: right; }
+.faq-list { border-top: 1px solid var(--line); }
+.faq { border-bottom: 1px solid var(--line); }
+.faq summary { list-style: none; cursor: pointer; padding: 20px 40px 20px 0; font-weight: 600; font-size: 17px; position: relative; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; position: absolute; right: 4px; top: 16px; font-size: 24px; font-weight: 400; color: var(--accent); transition: transform .2s; }
+.faq[open] summary::after { transform: rotate(45deg); }
+.faq p { margin: -6px 0 20px; color: var(--ink-2); max-width: 64ch; }
+.offer { position: relative; overflow: hidden; }
+.offer::after { content: ""; position: absolute; width: 440px; height: 440px; right: -110px; bottom: -150px; opacity: .07;
+  background: url("/static/brand/seal-reversed.svg") center / contain no-repeat; pointer-events: none; }
+.offer .wrap { position: relative; z-index: 1; }
+.factors { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 10px; }
+.factors li { display: flex; align-items: center; gap: 12px; font-weight: 600; }
+.factors .ico { width: 36px; height: 36px; padding: 8px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); box-sizing: border-box; }
+.about-split { align-items: center; }
+.about-seal { display: grid; place-items: center; }
+.about-seal img { width: min(280px, 70vw); height: auto; }
+@media (max-width: 760px) {
+  .who-row { gap: 10px; } .offer::after { width: 300px; height: 300px; right: -120px; bottom: -120px; }
+  .demo-shot .fine { text-align: left; }
+}
