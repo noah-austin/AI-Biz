@@ -22,6 +22,9 @@ Rebuild after changes: `python website/brand/build.py`, then `node website/brand
 | Oxblood | `#6b1f2a` | The seal, buttons, links, headings accents |
 | Parchment | `#f5efe4` | Backgrounds, the seal on dark |
 | Ink | `#2a2622` | Body text, "Operations" in the lockup |
+| Brass | `#8f6f3e` | Small labels and second accent (eyebrows, rules) |
+
+The website uses these as its colour tokens (`website/static/site.css`), with a warm dark mode (rose `#e3a7ae` accent on near-black `#141011`). Data colours in charts and examples (green = on goal, red = missed) stay as they are.
 
 ## Type
 - **Logo and headings:** Playfair Display (bold; italic for "Operations").
