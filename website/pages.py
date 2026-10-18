@@ -199,7 +199,7 @@ def what_we_build() -> str:
     body = f"""
 <section class="hero slim with-cta"><div class="wrap">
   <p class="eyebrow">What we build</p>
-  <h1>All your data in one place, and everything it unlocks</h1>
+  <h1>Your data in one place, put to work</h1>
   <p class="lead">Every build is custom. These are the pieces we put together, on top of the systems you already use.</p>
   {cta_row()}
 </div></section>

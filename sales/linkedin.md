@@ -18,10 +18,10 @@ Edit your profile, then paste each piece into the matching box.
 
 **Profile banner:** `website/brand/linkedin/profile-banner.png` (1584 × 396). Profile → the camera icon on the banner → Upload. The lower left stays clear for your photo.
 
-**Headline (option A, recommended)** (157/220 characters)
+**Headline (option A, recommended)** (153/220 characters)
 
 ```
-Founder, Sanford Operations · I bring a company’s data into one place, then build the reports, tools and AI agents it unlocks · Former COO and chief of staff
+Founder, Sanford Operations · I bring a company’s data into one place, then build the reports, tools and AI agents on top · Former COO and chief of staff
 ```
 
 Only the first 60 or so characters show next to your name in the feed, so it starts with what you do now.
@@ -92,7 +92,7 @@ Add one at a time under Skills. Pin the top two.
 
 - Link 1: https://sanfordoperations.com
 - Title: Sanford Operations
-- Description: All your data in one place, and everything it unlocks.
+- Description: Your data in one place. Numbers everyone trusts, put to work.
 - Link 2 (after the server is live): https://demo.sanfordoperations.com/guest
 - Title: Live demo: a working hub
 - Description: Click around a hub built on a fictional company’s data: scorecard, forecast, alerts and AI agents.
@@ -121,10 +121,10 @@ linkedin.com → For Business → Create a Company Page → Company.
 - Location: [Your city], Texas, United States
 - Button: Visit website → https://sanfordoperations.com/contact
 
-**Tagline** (54/120 characters)
+**Tagline** (61/120 characters)
 
 ```
-All your data in one place, and everything it unlocks.
+Your data in one place. Numbers everyone trusts, put to work.
 ```
 
 Same line as the website, so it’s recognized.
@@ -193,7 +193,7 @@ Image: `website/brand/linkedin/post-launch.png`
 ```
 Sanford Operations is open.
 
-We bring a small or mid-size company’s data into one place, then build the reports, tools, AI and AI agents it unlocks.
+We bring a small or mid-size company’s data into one place, then put it to work with reports, tools, AI and AI agents.
 
 See a working hub built on a fictional company’s data, or book a call: sanfordoperations.com
 ```

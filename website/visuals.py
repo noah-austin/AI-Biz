@@ -1,4 +1,4 @@
-"""Graphics for the website: icons, the "systems -> one place -> what it unlocks" diagram, and small example screens.
+"""Graphics for the website: icons, the "systems -> one place -> put to work" diagram, and small example screens.
 
 Everything is inline SVG or plain HTML styled by static/site.css (the site's security policy allows no inline styles
 or scripts), so it follows light and dark mode. All example figures are made up; most match the fictional Bluestem demo.
@@ -94,7 +94,7 @@ def hub_diagram() -> str:
                  + f'<text class="d-hub-label" x="{hub_x}" y="{hub_y + 22}" text-anchor="middle">One place</text>'
                  f'<text class="d-hub-sub" x="{hub_x}" y="{hub_y + 40}" text-anchor="middle">yours</text>')
     parts.append(f'<text class="d-col" x="{pill_w / 2}" y="12" text-anchor="middle">YOUR SYSTEMS</text>'
-                 f'<text class="d-col" x="{w - pill_w / 2}" y="12" text-anchor="middle">WHAT IT UNLOCKS</text></svg>')
+                 f'<text class="d-col" x="{w - pill_w / 2}" y="12" text-anchor="middle">PUT TO WORK</text></svg>')
     chips = lambda items, cls="": "".join(f'<span class="chip {cls}">{icon(i)}{l}</span>' for i, l in items)
     mobile = (f'<div class="hub-stack" aria-hidden="true"><div class="chips">{chips(SOURCES)}</div>'
               f'<div class="stack-arrow"></div><div class="stack-hub">{icon("db")}<strong>One place</strong><span>yours</span></div>'

@@ -126,6 +126,11 @@
 |---|---|---|
 | Domain and email | Buy sanfordoperations.com during Google Workspace signup (registered through Squarespace) | Simplest: Google sets up the email records. Server records are added in Squarespace's DNS page. Keep the recovery email on Noah's personal Gmail. |
 
+## 2026-10-18: tagline
+| Topic | Decision | Notes |
+|---|---|---|
+| Tagline | "Your data in one place. Numbers everyone trusts, put to work." | Replaces "All your data in one place, and everything it unlocks", which was too vague about what clients get. Where two lines fit, the same words split after the first sentence. |
+
 ## Open questions
 - Texas sales tax treatment of the retainer and hosting: ask a CPA.
 - Hosting price for hosted clients (at cost, or a set monthly fee).

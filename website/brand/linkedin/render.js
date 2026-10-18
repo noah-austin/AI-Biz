@@ -13,10 +13,10 @@ const base = `*{box-sizing:border-box;margin:0}body{overflow:hidden;position:rel
 const jobs = {
   // Personal banner 1584x396. Profile photo covers the lower left, so content sits right.
   'profile-banner.png': [1584, 396, `<body style="background:${PA};position:relative">
-    <img src="${svg('seal.svg')}" style="position:absolute;right:-70px;top:-60px;width:520px;opacity:.07">
+    <img src="${svg('seal.svg')}" style="position:absolute;right:-190px;top:-60px;width:520px;opacity:.07">
     <div style="position:absolute;left:600px;right:90px;top:72px;display:flex;flex-direction:column;gap:18px">
       <div class="eb" style="font-size:17px;color:${BR}">Sanford Operations</div>
-      <div class="pf" style="font-size:50px;line-height:1.08;color:${INK}">All your data in one place,<br>and everything it unlocks.</div>
+      <div class="pf" style="font-size:46px;line-height:1.1;color:${INK}">Your data in one place.<br>Numbers everyone trusts, put to work.</div>
       <div style="font-size:21px;color:#4f4842">Reports that build themselves · Tools · AI and AI agents</div>
       <div style="font-size:21px;font-weight:600;color:${OX}">sanfordoperations.com</div>
     </div>
@@ -25,7 +25,7 @@ const jobs = {
   'company-cover.png': [1512, 256, `<body style="background:${OX};position:relative">
     <img src="${svg('seal-reversed.svg')}" style="position:absolute;right:-40px;top:-90px;width:430px;opacity:.10">
     <div style="position:absolute;left:400px;right:120px;top:0;bottom:0;display:flex;flex-direction:column;justify-content:center;gap:12px">
-      <div class="pf" style="font-size:42px;line-height:1.1;color:${PA}">All your data in one place,<br>and everything it unlocks.</div>
+      <div class="pf" style="font-size:42px;line-height:1.1;color:${PA}">Your data in one place.<br>Numbers everyone trusts, put to work.</div>
       <div style="font-size:19px;color:${SOFT}">Reports, tools, AI and AI agents for small and mid-size companies · sanfordoperations.com</div>
     </div>
     <div style="position:absolute;left:0;right:0;bottom:0;height:6px;background:${LBR}"></div></body>`],
@@ -37,7 +37,7 @@ const jobs = {
     <img src="${svg('seal-reversed.svg')}" style="width:330px;flex:none">
     <div style="display:flex;flex-direction:column;gap:22px">
       <div class="eb" style="font-size:18px;color:${SOFT}">Now open</div>
-      <div class="pf" style="font-size:54px;line-height:1.08;color:${PA}">All your data in one place, and everything it unlocks.</div>
+      <div class="pf" style="font-size:50px;line-height:1.1;color:${PA}">Your data in one place. Numbers everyone trusts, put to work.</div>
       <div style="font-size:24px;color:${SOFT}">sanfordoperations.com</div>
     </div></body>`],
   'post-crm-ai.png': [1200, 627, `<body style="background:${PA};padding:0 90px;display:flex;flex-direction:column;justify-content:center;gap:40px">

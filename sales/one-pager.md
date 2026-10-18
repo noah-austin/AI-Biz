@@ -1,4 +1,4 @@
-# Sanford Operations: all your data in one place, and everything it unlocks
+# Sanford Operations: your data in one place. Numbers everyone trusts, put to work.
 
 **For COOs, CFOs and owners of small and mid-size companies, in any industry.**
 
