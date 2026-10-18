@@ -134,8 +134,8 @@
 ## 2026-10-18: data hub and explainer
 | Topic | Decision | Notes |
 |---|---|---|
-| Name for the centre | "Your data hub" (was "One place"), with "every system, one set of numbers" | Matches the demo's "Bluestem Hub"; a client's own becomes "[Company] Hub". |
-| Explainer | 24-second animation on the home page (live CSS, no video player) and as an MP4 for LinkedIn | Source in `website/brand/animation/`; the site version is generated into `website/static/explainer.css`. Numbers on screen are illustrative. |
+| Name for the centre | "Your data hub" (was "One place"), with "every system, together" | Matches the demo's "Bluestem Hub"; a client's own becomes "[Company] Hub". |
+| Explainer | 24-second animation on the home page (live CSS, no video player) and as an MP4 for LinkedIn | Story: data split across systems → brought together → works as one → we build on it (not reconciliation). Source in `website/brand/animation/`; the site version is generated into `website/static/explainer.css`. Numbers on screen are illustrative. |
 
 ## Open questions
 - Texas sales tax treatment of the retainer and hosting: ask a CPA.

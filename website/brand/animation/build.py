@@ -48,10 +48,10 @@ def el(cls, style, inner="", tag="div"):
 
 # ------------------------------------------------------------------ captions (top left)
 CAPS = [
-    (0.8, 4.8, "Your data lives in ten places,", "and the numbers don’t match."),
-    (5.3, 8.9, "We bring it into one place.", "Read-only. Nothing gets replaced."),
-    (9.3, 12.8, "Every number is defined once.", "So everyone works from the same one."),
-    (13.2, 19.0, "Then we put it to work.", "Reports, tools, AI and AI agents."),
+    (0.8, 4.8, "Your data lives in many systems.", "Each one only sees its own piece."),
+    (5.3, 8.9, "We bring it all together.", "Every system, copied into one place you own."),
+    (9.3, 12.8, "Now it works as one.", "See across every system at once."),
+    (13.2, 19.0, "Then we build on it.", "Reports, tools, AI and AI agents."),
 ]
 for i, (a, b, l1, l2) in enumerate(CAPS):
     c = show(a, b, 0.5, "transform:translateY(0)", "transform:translateY(14px)")
@@ -60,12 +60,12 @@ for i, (a, b, l1, l2) in enumerate(CAPS):
 # ------------------------------------------------------------------ systems (left)
 SYSTEMS = [
     # name, detail (before), detail (after), scattered dx, dy, rot, conflict
-    ("CRM", "Bookings $4.2M", "Bookings $4.2M", 60, 50, -4, True),
-    ("Accounting", "Revenue $4.0M", "Bookings $4.2M", 740, -50, 3, True),
+    ("CRM", "Deals and customers", "Deals and customers", 60, 50, -4, False),
+    ("Accounting", "Invoices and payments", "Invoices and payments", 740, -50, 3, False),
     ("ERP", "Jobs and costs", "Jobs and costs", 1340, -200, 2, False),
     ("Project tool", "Hours and tasks", "Hours and tasks", 400, 210, -3, False),
-    ("HR & payroll", "Headcount 212", "Headcount 212", 880, -170, 4, False),
-    ("Spreadsheets", "Bookings $3.9M", "Bookings $4.2M", 1260, -40, -2, True),
+    ("HR & payroll", "People and payroll", "People and payroll", 880, -170, 4, False),
+    ("Spreadsheets", "Forecasts and trackers", "Forecasts and trackers", 1260, -40, -2, False),
 ]
 COL_X, COL_Y0, CW, CH, GAP = 120, 250, 360, 96, 24
 for i, (name, d1, d2, dx, dy, rot, conflict) in enumerate(SYSTEMS):
@@ -138,13 +138,14 @@ ring = anim([(7.4, "transform:scale(1);opacity:0"), (7.8, "transform:scale(1);op
              (12.6, "transform:scale(1);opacity:0"), (13.0, "transform:scale(1);opacity:.5"), (14.4, "transform:scale(1.5);opacity:0")])
 el(f"ring {ring}", f"left:{HX - HR}px;top:{HY - HR}px")
 el(f"hub {hub}", f"left:{HX - HR}px;top:{HY - HR}px",
-   '<div class="hub1">Your data hub</div><div class="hub2">Every system,<br>one set of numbers</div>')
+   '<div class="hub1">Your data hub</div><div class="hub2">Every system,<br>together</div>')
 
-# rulebook card under the hub
+# one customer, seen across systems at once (the payoff of having it together)
 rb = show(9.6, 19.4, 0.5, "transform:translateY(0)", "transform:translateY(16px)")
-el(f"card rule {rb}", f"left:{HX - 230}px;top:{HY - HR - 186}px;width:490px",
-   '<div class="rlabel">The rulebook</div><div class="rline"><b>Bookings</b> = signed deals, counted on their close date</div>'
-   '<div class="rnum">$4.2M <span>· one number, everyone agrees</span></div>')
+rows = [("3 open deals · $412K", "CRM"), ("$31K unpaid, 62 days", "Accounting"), ("2 jobs in progress", "ERP")]
+rows_html = "".join(f'<div class="vrow"><span>{t}</span><em>{src}</em></div>' for t, src in rows)
+el(f"card rule {rb}", f"left:{HX - 245}px;top:{HY - HR - 214}px;width:490px",
+   '<div class="rlabel">One customer, every system</div><div class="vname">Prairie Surgical Hospital</div>' + rows_html)
 
 # ------------------------------------------------------------------ tools (right)
 TOOLS = [
@@ -212,7 +213,9 @@ STAGE_CSS = f"""
 .hub2 {{ font-size:21px; color:{SOFT}; text-align:center; line-height:1.3 }}
 .rule {{ background:{CARD}; border:1.5px solid {LINE}; padding:16px 22px; box-shadow:0 10px 30px rgba(42,38,34,.08); opacity:0 }}
 .rlabel {{ font-size:16px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:{BRASS} }}
-.rline {{ font-size:20px; line-height:1.35; margin-top:8px; color:{INK} }}
+.vname {{ font-family:'Playfair Display', 'Playfair', Georgia, serif; font-weight:700; font-size:30px; color:{INK}; margin:4px 0 6px }}
+.vrow {{ display:flex; justify-content:space-between; align-items:center; font-size:19px; color:{INK}; padding:5px 0; border-top:1px solid {LINE} }}
+.vrow em {{ font-style:normal; font-size:15px; font-weight:600; color:{BRASS}; background:#f1e7d6; padding:2px 9px; border-radius:999px }}
 .rnum {{ font-family:'Playfair Display', 'Playfair', Georgia, serif; font-weight:700; font-size:34px; color:{OX}; margin-top:6px }}
 .rnum span {{ font-family:'Inter', system-ui, Arial, sans-serif; font-weight:500; font-size:19px; color:{GOOD} }}
 .tool {{ width:400px; height:{CH}px; background:{INK}; color:{PA}; padding:18px 24px; opacity:0; box-shadow:0 12px 30px rgba(42,38,34,.18) }}
@@ -231,7 +234,7 @@ STAGE_CSS = f"""
 
 
 def stage():
-    return f'<div class="stage" id="stage" role="img" aria-label="Animation: a company’s scattered systems are brought into one place, every number is defined once, and the data is put to work in reports, tools, AI and AI agents.">{"".join(html)}</div>'
+    return f'<div class="stage" id="stage" role="img" aria-label="Animation: a company’s scattered systems are brought together into one data hub, where they work as one, and reports, tools, AI and AI agents are built on top.">{"".join(html)}</div>'
 
 
 PAGE = """<title>Sanford Explainer</title>
@@ -264,17 +267,17 @@ STAGE_CSS
 <div class="wrap">
   <p class="eyebrow">Sanford Operations</p>
   <h1>What we do, in 24 seconds</h1>
-  <p class="lead">Scattered systems come together in one place, every number is defined once, and the data is put to work. It loops; the video file for LinkedIn and the website is made from this same animation.</p>
+  <p class="lead">Data from many systems comes together in your data hub, works as one, and we build on it. It loops; the video file for LinkedIn and the website is made from this same animation.</p>
   <div class="frame" id="frame">STAGE</div>
   <div class="controls">
     <button type="button" class="primary" id="toggle">Pause</button>
     <button type="button" id="replay">Play from the start</button>
   </div>
   <ol class="beats">
-    <li>0–5 s · Your data lives in ten places, and the numbers don’t match.</li>
-    <li>5–9 s · We bring it into one place.</li>
-    <li>9–13 s · Every number is defined once.</li>
-    <li>13–19 s · Then we put it to work: scorecard, forecast, alerts, Ask AI, AI agents.</li>
+    <li>0–5 s · Your data lives in many systems. Each one only sees its own piece.</li>
+    <li>5–9 s · We bring it all together.</li>
+    <li>9–13 s · Now it works as one: one customer, seen across every system.</li>
+    <li>13–19 s · Then we build on it: scorecard, forecast, alerts, Ask AI, AI agents.</li>
     <li>19–24 s · Your data in one place. Numbers everyone trusts, put to work.</li>
   </ol>
 </div>
