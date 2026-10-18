@@ -14,7 +14,7 @@ The **seal**: "SANFORD" across the top, "OPERATIONS" along the bottom, a star ei
 
 Rebuild after changes: `python website/brand/build.py`, then `node website/brand/render_png.js` (PNG sizes).
 
-**Rules:** keep clear space around the seal of at least the width of the S. Don't stretch, recolour outside the palette, add effects, or put the line version on busy photos (use the solid one). Below 48px, use `mark.svg`.
+**Rules:** keep clear space around the seal of at least the width of the S. Don't stretch, recolour outside the palette, add effects, or put the line version on busy photos (use the solid one). Below 48px, use `mark.svg`. The lockup is at least 160px wide on screen (about 1.5 in in print).
 
 ## Colours
 | Name | Hex | Use |
@@ -24,10 +24,20 @@ Rebuild after changes: `python website/brand/build.py`, then `node website/brand
 | Ink | `#2a2622` | Body text, "Operations" in the lockup |
 | Brass | `#8f6f3e` | Small labels and second accent (eyebrows, rules) |
 
-The website uses these as its colour tokens (`website/static/site.css`), with a warm dark mode (rose `#e3a7ae` accent on near-black `#141011`). Data colours in charts and examples (green = on goal, red = missed) stay as they are.
+The website uses these as its colour tokens (`website/static/site.css`), with a warm dark mode (rose `#e3a7ae` accent on near-black `#141011`). **Balance:** roughly 60% parchment, 25% ink, 10% oxblood, 5% brass on any page or slide. Oxblood works because it's rare.
+
+**Print:** have the printer match the hex values to the nearest Pantone colours and approve a proof before a full run.
+
+Data colours in charts and examples (green = on goal, red = missed) stay as they are.
 
 ## Type
 - **Logo and headings:** Playfair Display (bold; italic for "Operations").
 - **Body text:** Inter.
 
 Both are free (SIL Open Font License); copies and licences are in `website/brand/fonts/` and `website/static/fonts/`.
+
+## Business card
+3.5 × 2 in. Front: the parchment seal centred on oxblood. Back: parchment, the lockup top left, then name, title and email.
+
+## Brand deck
+The full guide as slides: https://claude.ai/artifact/NwwB1MsmV6JfZZvbNu5A4v (private; share it from the deck's Share menu).
