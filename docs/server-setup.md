@@ -27,7 +27,7 @@ If the registrar offers a "proxy" or "CDN" switch on these records (Cloudflare's
 - TXT (DKIM): `google._domainkey` → the value Workspace generates (Admin console → Apps → Gmail → Authenticate email);
 - TXT (DMARC): `_dmarc` → `v=DMARC1; p=none; rua=mailto:hello@sanfordoperations.com`.
 
-Only one SPF record per domain. DKIM can only be generated a day or two after Gmail is active; if the button isn't ready, come back tomorrow. Without SPF, DKIM and DMARC, emails to prospects tend to land in spam. Namecheap changes usually show up within 30 minutes; Google can take up to 48 hours to confirm.
+Only one SPF record per domain. DKIM may not be available until a day or two after Gmail is active; if the option isn't ready, try again the next day. Without SPF, DKIM and DMARC, emails to prospects tend to land in spam. Namecheap changes usually show up within 30 minutes; Google can take up to 48 hours to confirm.
 
 ## Part 1: Noah (about 20 minutes, copy-paste)
 
