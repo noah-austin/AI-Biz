@@ -106,6 +106,11 @@
 | Addresses | Website sanfordoperations.com; hub hub.sanfordoperations.com; demo demo.sanfordoperations.com; email hello@sanfordoperations.com | Email via Google Workspace on the domain. |
 | Still to do | Register the domain; Texas SOSDirect name search; USPTO search (classes 35 and 42); LLC filing as Sanford Operations LLC | |
 
+## 2026-10-18: logo
+| Topic | Decision | Notes |
+|---|---|---|
+| Logo | The seal: SANFORD on top, OPERATIONS below, stars at the sides, serif S centre; oxblood on parchment | No date or place on it. Files and rules in `docs/brand.md`. |
+
 ## Open questions
 - Texas sales tax treatment of the retainer and hosting: ask a CPA.
 - Hosting price for hosted clients (at cost, or a set monthly fee).

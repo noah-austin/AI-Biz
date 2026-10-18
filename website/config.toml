@@ -1,5 +1,6 @@
-# The public website. Change these once the business has a name and domain.
+# The public website.
 name = "Sanford Operations"
+url = "https://sanfordoperations.com"
 tagline = "All your data in one place, and everything it unlocks."
 owner = "Noah Austin"
 owner_title = "Founder"

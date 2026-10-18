@@ -39,17 +39,17 @@ def layout(title: str, body: str, path: str = "/", description: str = "") -> str
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(page_title)}</title><meta name="description" content="{esc(desc)}">
 <meta property="og:title" content="{esc(page_title)}"><meta property="og:description" content="{esc(desc)}">
-<link rel="icon" href="/static/icon.svg" type="image/svg+xml"><link rel="stylesheet" href="/static/site.css">
+<link rel="icon" href="/static/brand/mark.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/static/brand/apple-touch-icon.png"><meta property="og:image" content="{esc(c["url"])}/static/brand/profile-800.png"><link rel="stylesheet" href="/static/site.css">
 </head><body>
 <header class="site-head"><div class="wrap">
-  <a class="logo" href="/"><span class="mark" aria-hidden="true"></span>{esc(c["name"])}</a>
+  <a class="logo" href="/" aria-label="{esc(c["name"])}, home"><picture><source srcset="/static/brand/lockup-reversed.svg" media="(prefers-color-scheme: dark)"><img src="/static/brand/lockup.svg" alt="{esc(c["name"])}" width="262" height="64"></picture></a>
   <nav aria-label="Main">{nav}</nav>
   <a class="btn small" href="/contact?interest=call">Book a call</a>
 </div></header>
 <main>{body}</main>
 <footer class="site-foot"><div class="wrap">
   <div class="foot-grid">
-    <div class="foot-brand"><a class="logo" href="/"><span class="mark" aria-hidden="true"></span>{esc(c["name"])}</a>
+    <div class="foot-brand"><a class="logo" href="/" aria-label="{esc(c["name"])}, home"><picture><source srcset="/static/brand/lockup-reversed.svg" media="(prefers-color-scheme: dark)"><img src="/static/brand/lockup.svg" alt="{esc(c["name"])}" width="262" height="64"></picture></a>
       <p>{esc(c["tagline"])}</p></div>
     <div><h4>Company</h4><a href="/what-we-build">What we build</a><a href="/about">About</a><a href="{esc(c["demo_url"])}">Live demo</a></div>
     <div><h4>Get in touch</h4><a href="/contact">Book a call</a><a href="mailto:{esc(c["email"])}">{esc(c["email"])}</a><span>{esc(c["city"])}</span></div>
