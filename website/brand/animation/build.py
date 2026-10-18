@@ -8,7 +8,8 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 REPO = Path(__file__).resolve().parents[3]
-T = 24.0  # seconds per loop
+OFF = 2.5  # title card at the start
+T = 24.0 + OFF  # seconds per loop
 
 OX, PA, INK, INK2, BRASS, SOFT, CARD, LINE = "#6b1f2a", "#f5efe4", "#2a2622", "#4f4842", "#8f6f3e", "#e9dcc9", "#fbf8f2", "#d9cdb9"
 BAD, GOOD = "#b8322a", "#137a4f"
@@ -17,8 +18,11 @@ css, html = [], []
 _n = [0]
 
 
-def anim(points, ease="cubic-bezier(.45,0,.25,1)"):
-    """points: [(seconds, 'css declarations')]. Returns a class name with that keyframe animation."""
+def anim(points, ease="cubic-bezier(.45,0,.25,1)", shift=True):
+    """points: [(seconds, 'css declarations')], timed from the end of the title card unless shift=False.
+    Returns a class name with that keyframe animation."""
+    if shift:
+        points = [(t + OFF, d) for t, d in points]
     _n[0] += 1
     name = f"k{_n[0]}"
     pts = sorted(points)
@@ -197,14 +201,19 @@ for i, (name, det) in enumerate(TOOLS):
 
 # ------------------------------------------------------------------ end card
 seal = base64.b64encode((REPO / "website/static/brand/seal.svg").read_bytes()).decode()
-veil = anim([(0, "opacity:1"), (0.6, "opacity:0"), (19.3, "opacity:0"), (19.9, "opacity:1")])
+TITLE = (f'<img src="data:image/svg+xml;base64,{seal}" alt="" width="170" height="170">'
+         '<div class="t-eyebrow">Sanford Operations</div><div class="t-title">How we put your data to work</div>')
+veil = anim([(0, "opacity:1"), (OFF - 0.5, "opacity:1"), (OFF + 0.1, "opacity:0"), (19.3 + OFF, "opacity:0"), (19.9 + OFF, "opacity:1")], shift=False)
 el(f"veil {veil}", "")
+intro = anim([(0, "opacity:1;transform:translateY(0)"), (OFF - 0.55, "opacity:1;transform:translateY(0)"), (OFF - 0.05, "opacity:0;transform:translateY(-12px)"),
+              (T - 0.6, "opacity:0;transform:translateY(10px)"), (T, "opacity:1;transform:translateY(0)")], shift=False)
 endc = anim([(19.8, "opacity:0;transform:translateY(18px)"), (20.6, "opacity:1;transform:translateY(0)"),
              (23.2, "opacity:1;transform:translateY(0)"), (23.8, "opacity:0;transform:translateY(0)")])
 el(f"endcard {endc}", "",
    f'<img src="data:image/svg+xml;base64,{seal}" alt="Sanford Operations seal" width="230" height="230">'
    '<div class="end1">Your data in one place.</div><div class="end1">Numbers everyone trusts, put to work.</div>'
    '<div class="end2">sanfordoperations.com</div>')
+el(f"titlecard {intro}", "", TITLE)
 
 STAGE_CSS = f"""
 .stage {{ position:relative; width:1920px; height:1080px; overflow:hidden; background:{PA}; color:{INK};
@@ -246,6 +255,9 @@ STAGE_CSS = f"""
 .veil {{ left:0; top:0; width:1920px; height:1080px; background:{PA} }}
 .endcard {{ left:0; top:0; width:1920px; height:1080px; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0 }}
 .endcard img {{ margin-bottom:44px }}
+.titlecard {{ left:0; top:0; width:1920px; height:1080px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px }}
+.t-eyebrow {{ font-size:26px; font-weight:600; letter-spacing:.2em; text-transform:uppercase; color:{BRASS}; margin-top:14px }}
+.t-title {{ font-family:'Playfair Display', 'Playfair', Georgia, serif; font-weight:700; font-size:92px; color:{INK} }}
 .end1 {{ font-family:'Playfair Display', 'Playfair', Georgia, serif; font-weight:700; font-size:76px; line-height:1.12; color:{INK}; text-align:center }}
 .end2 {{ font-size:34px; font-weight:600; color:{OX}; margin-top:40px; letter-spacing:.02em }}
 """
@@ -284,7 +296,7 @@ STAGE_CSS
 </style>
 <div class="wrap">
   <p class="eyebrow">Sanford Operations</p>
-  <h1>What we do, in 24 seconds</h1>
+  <h1>What we do, in under 30 seconds</h1>
   <p class="lead">Data from many systems comes together in your data hub, works as one, and we build on it. It loops; the video file for LinkedIn and the website is made from this same animation.</p>
   <div class="frame" id="frame">STAGE</div>
   <div class="controls">
@@ -292,11 +304,12 @@ STAGE_CSS
     <button type="button" id="replay">Play from the start</button>
   </div>
   <ol class="beats">
-    <li>0–5 s · Your data lives in many systems. Each one only sees its own piece.</li>
-    <li>5–9 s · We bring it all together.</li>
-    <li>9–13 s · Now it works as one: one customer, seen across every system.</li>
-    <li>13–19 s · Then we build on it: scorecard, forecast, alerts, Ask AI, AI agents.</li>
-    <li>19–24 s · Your data in one place. Numbers everyone trusts, put to work.</li>
+    <li>0–3 s · Title.</li>
+    <li>3–7 s · Your data lives in many systems. Each one only sees its own piece.</li>
+    <li>7–11 s · We bring it all together.</li>
+    <li>11–15 s · Now it works as one: one customer, seen across every system.</li>
+    <li>15–21 s · Then we build on it: scorecard, forecast, alerts, Ask AI, AI agents.</li>
+    <li>21–26 s · Your data in one place. Numbers everyone trusts, put to work.</li>
   </ol>
 </div>
 <script>
@@ -309,7 +322,7 @@ STAGE_CSS
   let paused = false;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const setAll = ms => anims().forEach(a => { a.currentTime = ms; });
-  if (reduce) { setAll(21000); anims().forEach(a => a.pause()); paused = true; btn.textContent = 'Play'; }
+  if (reduce) { setAll(23500); anims().forEach(a => a.pause()); paused = true; btn.textContent = 'Play'; }
   btn.addEventListener('click', () => {
     paused = !paused;
     anims().forEach(a => paused ? a.pause() : a.play());
@@ -362,7 +375,7 @@ def site():
            ".explainer .stage{position:absolute;left:0;top:0;transform-origin:0 0;transform:scale(tan(atan2(100cqw,1920px)))}",
            kf,
            "".join(f".explainer .s{i}{{{r}}}" for i, r in enumerate(rules) if r),
-           "@media (prefers-reduced-motion: reduce){.explainer *{animation-delay:-21s!important;animation-play-state:paused!important}}"]
+           f"@media (prefers-reduced-motion: reduce){{.explainer *{{animation-delay:-{21 + OFF}s!important;animation-play-state:paused!important}}}}"]
     (REPO / "website/static/explainer.css").write_text("\n".join(out) + "\n")
     (REPO / "website/explainer.html").write_text(f'<div class="explainer">{st}</div>\n')
     print("site: wrote website/static/explainer.css and website/explainer.html")

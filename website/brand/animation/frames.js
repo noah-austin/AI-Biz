@@ -6,7 +6,7 @@ const { chromium } = require('playwright');
   const p = await b.newPage({ viewport: { width: 1920, height: 1080 } });
   await p.goto('file://' + file); await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(300);
   await p.evaluate(() => document.getAnimations().forEach(a => a.pause()));
-  const times = mode === 'fps' ? Array.from({ length: Math.round(24 * +rest[0]) }, (_, i) => i * 1000 / +rest[0]) : [mode, ...rest].map(t => +t * 1000);
+  const times = mode === 'fps' ? Array.from({ length: Math.round((+rest[1] || 26.5) * +rest[0]) }, (_, i) => i * 1000 / +rest[0]) : [mode, ...rest].map(t => +t * 1000);
   let i = 0;
   for (const t of times) {
     await p.evaluate(ms => document.getAnimations().forEach(a => { a.currentTime = ms; }), t);

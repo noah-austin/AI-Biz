@@ -138,7 +138,7 @@ def home() -> str:
 </div></section>
 
 <section class="explainer-section"><div class="wrap">
-  {sec_head("In 24 seconds", "What we do", "Your systems come together in your data hub, so they work as one. Then we build reports, tools and AI on top.")}
+  {sec_head("In under 30 seconds", "What we do", "Your systems come together in your data hub, so they work as one. Then we build reports, tools and AI on top.")}
   <link rel="stylesheet" href="/static/explainer.css">
   {EXPLAINER}
 </div></section>
