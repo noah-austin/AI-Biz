@@ -8,9 +8,11 @@ from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
+
 from . import visuals as v
 
 HERE = Path(__file__).parent
+EXPLAINER = (HERE / "explainer.html").read_text()  # built by website/brand/animation/build.py
 
 
 @lru_cache
@@ -135,6 +137,12 @@ def home() -> str:
   <p class="who-note">at companies of 20 to 1,000 people, in any industry, that run on several systems and don't have a data team.</p>
 </div></section>
 
+<section class="explainer-section"><div class="wrap">
+  {sec_head("In 24 seconds", "What we do", "Your systems come together in your data hub, every number is defined once, and then it goes to work.")}
+  <link rel="stylesheet" href="/static/explainer.css">
+  {EXPLAINER}
+</div></section>
+
 <section class="band"><div class="wrap">
   {sec_head("The difference", "From scattered to one place", "Most companies already have the data. It's just spread across systems that don't talk to each other.")}
   {v.before_after()}
@@ -208,7 +216,7 @@ def what_we_build() -> str:
   <div class="split">
     <div>
       <p class="eyebrow">The foundation</p>
-      <h2>One place for your data</h2>
+      <h2>Your data hub</h2>
       <p>We connect every system with data in it into one database that you own. It updates on its own and keeps history.
       Every number is defined once, in plain English, so it means the same thing everywhere.</p>
       <p>Before showing you anything new, we reproduce the reports you already use, to the cent.</p>

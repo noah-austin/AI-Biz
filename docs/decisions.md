@@ -131,6 +131,12 @@
 |---|---|---|
 | Tagline | "Your data in one place. Numbers everyone trusts, put to work." | Replaces "All your data in one place, and everything it unlocks", which was too vague about what clients get. Where two lines fit, the same words split after the first sentence. |
 
+## 2026-10-18: data hub and explainer
+| Topic | Decision | Notes |
+|---|---|---|
+| Name for the centre | "Your data hub" (was "One place"), with "every system, one set of numbers" | Matches the demo's "Bluestem Hub"; a client's own becomes "[Company] Hub". |
+| Explainer | 24-second animation on the home page (live CSS, no video player) and as an MP4 for LinkedIn | Source in `website/brand/animation/`; the site version is generated into `website/static/explainer.css`. Numbers on screen are illustrative. |
+
 ## Open questions
 - Texas sales tax treatment of the retainer and hosting: ask a CPA.
 - Hosting price for hosted clients (at cost, or a set monthly fee).

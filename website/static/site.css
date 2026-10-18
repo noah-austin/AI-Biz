@@ -153,7 +153,7 @@ section { padding: 104px 0; }
 .d-hub { fill: var(--hub); }
 .d-halo { fill: var(--hub); opacity: .12; transform-origin: 310px 222px; animation: pulse 3s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: .04; transform: scale(1.12); } }
-.d-hub-label { font: 750 16px "Inter", system-ui, sans-serif; fill: #fff; }
+.d-hub-label { font: 750 14px "Inter", system-ui, sans-serif; fill: #fff; }
 .d-hub-sub { font: 500 12px "Inter", system-ui, sans-serif; fill: rgba(255,255,255,.8); }
 .hub-stack { display: none; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }

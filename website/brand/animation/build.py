@@ -138,7 +138,7 @@ ring = anim([(7.4, "transform:scale(1);opacity:0"), (7.8, "transform:scale(1);op
              (12.6, "transform:scale(1);opacity:0"), (13.0, "transform:scale(1);opacity:.5"), (14.4, "transform:scale(1.5);opacity:0")])
 el(f"ring {ring}", f"left:{HX - HR}px;top:{HY - HR}px")
 el(f"hub {hub}", f"left:{HX - HR}px;top:{HY - HR}px",
-   '<div class="hub1">One place</div><div class="hub2">Your database,<br>yours to keep</div>')
+   '<div class="hub1">Your data hub</div><div class="hub2">Every system,<br>one set of numbers</div>')
 
 # rulebook card under the hub
 rb = show(9.6, 19.4, 0.5, "transform:translateY(0)", "transform:translateY(16px)")
@@ -192,7 +192,7 @@ STAGE_CSS = f"""
   font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif; transform-origin:0 0 }}
 .stage > * {{ position:absolute }}
 .cap {{ left:120px; top:72px; width:1300px }}
-.cap1 {{ font-family:'Playfair Display', Georgia, serif; font-weight:700; font-size:66px; line-height:1.1; color:{INK} }}
+.cap1 {{ font-family:'Playfair Display', 'Playfair', Georgia, serif; font-weight:700; font-size:66px; line-height:1.1; color:{INK} }}
 .cap2 {{ font-size:30px; color:{INK2}; margin-top:12px }}
 .card {{ border-radius:16px; box-sizing:border-box }}
 .sys {{ position:relative; width:{CW}px; height:{CH}px; background:{CARD}; border:1.5px solid {LINE}; padding:18px 24px;
@@ -208,12 +208,12 @@ STAGE_CSS = f"""
 .hub {{ background:{OX}; color:{PA}; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
   box-shadow:0 20px 50px rgba(107,31,42,.30); opacity:0 }}
 .ring {{ border:3px solid {OX}; opacity:0 }}
-.hub1 {{ font-family:'Playfair Display', Georgia, serif; font-weight:700; font-size:46px }}
+.hub1 {{ font-family:'Playfair Display', 'Playfair', Georgia, serif; font-weight:700; font-size:38px; text-align:center }}
 .hub2 {{ font-size:21px; color:{SOFT}; text-align:center; line-height:1.3 }}
 .rule {{ background:{CARD}; border:1.5px solid {LINE}; padding:16px 22px; box-shadow:0 10px 30px rgba(42,38,34,.08); opacity:0 }}
 .rlabel {{ font-size:16px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:{BRASS} }}
 .rline {{ font-size:20px; line-height:1.35; margin-top:8px; color:{INK} }}
-.rnum {{ font-family:'Playfair Display', Georgia, serif; font-weight:700; font-size:34px; color:{OX}; margin-top:6px }}
+.rnum {{ font-family:'Playfair Display', 'Playfair', Georgia, serif; font-weight:700; font-size:34px; color:{OX}; margin-top:6px }}
 .rnum span {{ font-family:'Inter', system-ui, Arial, sans-serif; font-weight:500; font-size:19px; color:{GOOD} }}
 .tool {{ width:400px; height:{CH}px; background:{INK}; color:{PA}; padding:18px 24px; opacity:0; box-shadow:0 12px 30px rgba(42,38,34,.18) }}
 .tname {{ font-weight:600; font-size:26px }}
@@ -225,7 +225,7 @@ STAGE_CSS = f"""
 .veil {{ left:0; top:0; width:1920px; height:1080px; background:{PA} }}
 .endcard {{ left:0; top:0; width:1920px; height:1080px; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0 }}
 .endcard img {{ margin-bottom:44px }}
-.end1 {{ font-family:'Playfair Display', Georgia, serif; font-weight:700; font-size:76px; line-height:1.12; color:{INK}; text-align:center }}
+.end1 {{ font-family:'Playfair Display', 'Playfair', Georgia, serif; font-weight:700; font-size:76px; line-height:1.12; color:{INK}; text-align:center }}
 .end2 {{ font-size:34px; font-weight:600; color:{OX}; margin-top:40px; letter-spacing:.02em }}
 """
 
@@ -246,7 +246,7 @@ body { background: var(--bg); color: var(--ink); font: 16px/1.5 'Inter', system-
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   display: flex; flex-direction: column; gap: 18px }
 .eyebrow { margin: 0; font-size: 12.5px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: #7a5c30 }
-h1 { margin: 0; font: 700 clamp(26px, 4.5vw, 38px)/1.15 'Playfair Display', Georgia, serif; text-wrap: balance }
+h1 { margin: 0; font: 700 clamp(26px, 4.5vw, 38px)/1.15 'Playfair Display', 'Playfair', Georgia, serif; text-wrap: balance }
 .lead { margin: 0; color: var(--ink-2); max-width: 64ch }
 .frame { position: relative; width: 100%; aspect-ratio: 16 / 9; max-width: 100%; overflow: hidden; border-radius: 14px;
   border: 1px solid var(--line); box-shadow: 0 18px 48px rgba(42,38,34,.14); background: #f5efe4 }
@@ -310,3 +310,41 @@ if __name__ == "__main__":
              f"@font-face{{font-family:'Inter';font-weight:100 900;src:url(data:font/woff2;base64,{f('website/static/fonts/inter-latin-var.woff2')})}}")
     (HERE / "capture.html").write_text(f"<!doctype html><html><head><meta charset='utf-8'><style>{fonts}body{{margin:0}}{allcss}</style></head><body>{st}</body></html>")
     print("keyframes:", _n[0], "html bytes:", len(st))
+
+
+# ------------------------------------------------------------------ website version
+# The site allows no inline styles or scripts (CSP), so every style attribute becomes a class in
+# website/static/explainer.css, and the stage scales to its box with CSS alone.
+def site():
+    import re
+    st = stage().replace(f"data:image/svg+xml;base64,{seal}", "/static/brand/seal.svg")
+    rules = []
+
+    def cls_style(m):
+        n = len(rules)
+        rules.append(m.group(3))
+        return f'{m.group(1)}{m.group(2)} s{n}"'
+    st = re.sub(r'(<\w+ class=")([^"]*)" style="([^"]*)"', cls_style, st)
+    st = re.sub(r'class="([^"]*)"', lambda m: 'class="' + re.sub(r"\bk(\d+)\b", r"exk\1", m.group(1)) + '"', st)
+    assert "style=" not in st, "inline style left"
+
+    def prefix(block):
+        return re.sub(r"(^|\})\s*([^{}@][^{}]*)\{",
+                      lambda m: m.group(1) + ",".join(".explainer " + s.strip() for s in m.group(2).split(",")) + "{", block)
+    kf = "\n".join(css)
+    kf = re.sub(r"@keyframes k(\d+)", r"@keyframes exk\1", kf)
+    kf = re.sub(r"\.k(\d+)\{animation:k(\d+) ", r".explainer .exk\1{animation:exk\2 ", kf)
+    out = ["/* Generated by website/brand/animation/build.py. Do not edit by hand. */",
+           ".explainer{position:relative;width:100%;aspect-ratio:16/9;container-type:inline-size;overflow:hidden;"
+           "border-radius:14px;border:1px solid var(--line);background:#f5efe4;text-align:left;line-height:normal}",
+           prefix(STAGE_CSS.strip()),
+           ".explainer .stage{position:absolute;left:0;top:0;transform-origin:0 0;transform:scale(tan(atan2(100cqw,1920px)))}",
+           kf,
+           "".join(f".explainer .s{i}{{{r}}}" for i, r in enumerate(rules) if r),
+           "@media (prefers-reduced-motion: reduce){.explainer *{animation-delay:-21s!important;animation-play-state:paused!important}}"]
+    (REPO / "website/static/explainer.css").write_text("\n".join(out) + "\n")
+    (REPO / "website/explainer.html").write_text(f'<div class="explainer">{st}</div>\n')
+    print("site: wrote website/static/explainer.css and website/explainer.html")
+
+
+site()

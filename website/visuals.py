@@ -66,7 +66,7 @@ def hub_diagram() -> str:
     src_y = [27 + i * 69 for i in range(len(SOURCES))]           # pill tops
     out_y = [49 + i * 76 for i in range(len(OUTPUTS))]
     parts = [f'<svg class="hub-diagram" viewBox="0 0 {w} 444" role="img" '
-             'aria-label="Your systems (CRM, accounting, ERP, projects, HR, spreadsheets) flow into one place, which '
+             'aria-label="Your systems (CRM, accounting, ERP, projects, HR, spreadsheets) flow into your data hub, which '
              'powers a scorecard, dashboards, alerts, Ask AI and AI agents.">']
     for i, y in enumerate(src_y):                                   # wires in
         cy = y + pill_h / 2
@@ -91,13 +91,13 @@ def hub_diagram() -> str:
     parts.append(f'<circle class="d-halo" cx="{hub_x}" cy="{hub_y}" r="{hub_r + 14}"/>'
                  f'<circle class="d-hub" cx="{hub_x}" cy="{hub_y}" r="{hub_r}"/>'
                  + _svg_icon("db", hub_x - 17, hub_y - 34, 34, "d-ico hub")
-                 + f'<text class="d-hub-label" x="{hub_x}" y="{hub_y + 22}" text-anchor="middle">One place</text>'
-                 f'<text class="d-hub-sub" x="{hub_x}" y="{hub_y + 40}" text-anchor="middle">yours</text>')
+                 + f'<text class="d-hub-label" x="{hub_x}" y="{hub_y + 22}" text-anchor="middle">Your data hub</text>'
+                 f'<text class="d-hub-sub" x="{hub_x}" y="{hub_y + 40}" text-anchor="middle">every system</text>')
     parts.append(f'<text class="d-col" x="{pill_w / 2}" y="12" text-anchor="middle">YOUR SYSTEMS</text>'
                  f'<text class="d-col" x="{w - pill_w / 2}" y="12" text-anchor="middle">PUT TO WORK</text></svg>')
     chips = lambda items, cls="": "".join(f'<span class="chip {cls}">{icon(i)}{l}</span>' for i, l in items)
     mobile = (f'<div class="hub-stack" aria-hidden="true"><div class="chips">{chips(SOURCES)}</div>'
-              f'<div class="stack-arrow"></div><div class="stack-hub">{icon("db")}<strong>One place</strong><span>yours</span></div>'
+              f'<div class="stack-arrow"></div><div class="stack-hub">{icon("db")}<strong>Your data hub</strong><span>every system</span></div>'
               f'<div class="stack-arrow"></div><div class="chips">{chips(OUTPUTS, "out")}</div></div>')
     return f'<div class="hero-visual">{"".join(parts)}{mobile}</div>'
 
@@ -153,7 +153,7 @@ def _spark(points: list[float], cls: str = "spark") -> str:
 
 def mock_foundation() -> str:
     chips = "".join(f'<span class="chip sm">{icon(i)}{l}</span>' for i, l in SOURCES[:4])
-    return _window("One place", f"""<div class="found">
+    return _window("Your data hub", f"""<div class="found">
   <div class="found-chips">{chips}</div>
   <div class="found-flow" aria-hidden="true"><i></i><i></i><i></i></div>
   <div class="found-db">{icon("db")}<div><strong>All your data</strong><span class="live">Updated 6 min ago</span></div></div>
