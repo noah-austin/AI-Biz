@@ -5,7 +5,9 @@ One server for the business: the company hub (to run the business on), the Blues
 Claude Code runs *on* the server, linked to Noah's Claude account with Remote Control, so it shows up in the Claude app (desktop and phone). Usage counts toward the Claude subscription, not the API.
 
 ## Before you start: the domain (Noah, about 15 minutes)
-Register **sanfordoperations.com** at any registrar (Cloudflare, Porkbun, Namecheap and Squarespace Domains all work). Turn on auto-renew and the free privacy protection.
+Register **sanfordoperations.com** at Namecheap, signed in with your **personal Gmail** (keep it as the login for good: it's how you get back in if Workspace ever has a problem). Turn on auto-renew, the free privacy protection and two-factor sign-in. Skip the add-ons: no hosting, email, SSL or site builder (the server makes its own HTTPS certificates).
+
+**In Namecheap:** Domain List → **Manage** → **Advanced DNS**. Leave nameservers on *Namecheap BasicDNS*. Under Host Records, **delete the two parking records Namecheap adds**: the `www` CNAME to `parkingpage.namecheap.com` and the `@` URL Redirect. They clash with the records below.
 
 The server can be set up before the domain points anywhere: it starts on temporary `sslip.io` addresses. Add these records in the registrar's **DNS** page once the server exists (step 1 below shows its IP address):
 
@@ -18,13 +20,14 @@ The server can be set up before the domain points anywhere: it starts on tempora
 
 If the registrar offers a "proxy" or "CDN" switch on these records (Cloudflare's orange cloud), turn it **off** so HTTPS certificates work.
 
-**Email (Google Workspace).** When you set up Workspace on the domain, it lists the records to add and checks them for you. Expect:
-- MX: `@` → `smtp.google.com`, priority 1;
+**Email (Google Workspace).** Sign up for Business Starter and choose that you already have a domain. Workspace lists the records to add and checks them for you. Expect:
+- TXT (verification): `@` → the `google-site-verification=…` value Workspace shows;
+- MX: in Advanced DNS → **Mail Settings**, choose **Custom MX**, then `@` → `smtp.google.com`, priority 1 (and no other MX records);
 - TXT (SPF): `@` → `v=spf1 include:_spf.google.com ~all`;
 - TXT (DKIM): `google._domainkey` → the value Workspace generates (Admin console → Apps → Gmail → Authenticate email);
 - TXT (DMARC): `_dmarc` → `v=DMARC1; p=none; rua=mailto:hello@sanfordoperations.com`.
 
-Without SPF, DKIM and DMARC, emails to prospects tend to land in spam. Changes usually show up within an hour.
+Only one SPF record per domain. DKIM can only be generated a day or two after Gmail is active; if the button isn't ready, come back tomorrow. Without SPF, DKIM and DMARC, emails to prospects tend to land in spam. Namecheap changes usually show up within 30 minutes; Google can take up to 48 hours to confirm.
 
 ## Part 1: Noah (about 20 minutes, copy-paste)
 
