@@ -117,7 +117,7 @@ At 20 hours a week, Steady is realistic. Reaching Strong is the signal to go ful
 
 ## 11. Company setup (Texas)
 Confirm the details with a CPA.
-1. **Pick a name**, check it on SOSDirect, and check the domain.
+1. **Name: Sanford Operations** (sanfordoperations.com). Still to do: register the domain and check SOSDirect.
 2. **Form an LLC** (Form 205, which has cost $300) with a registered agent.
 3. **Get an EIN** and open a business bank account.
 4. **Franchise tax:** the yearly report is required even when no tax is due.
@@ -125,11 +125,10 @@ Confirm the details with a CPA.
 6. **Insurance:** E&O plus cyber.
 7. **Basics:** bookkeeping, an email address on your own domain (Google Workspace), and the website (built; see `website/`).
 
-## 12. Name ideas (shortlist with screening in `docs/names.md`)
-Check availability before getting attached to one: **Plainview Data**, **Groundwork Data Co.**, **Bedrock Operations**, **Single Source Partners**, **Keel Analytics**, **Clearline**.
+## 12. Name
+**Sanford Operations.** Chosen from 175+ screened names (`docs/names.md`).
 
 ## 13. Open questions
-1. Business name.
-2. Whether to lean toward an industry, after the first 15–20 conversations.
-3. Real prices, from the first proposals.
-4. Who is "we" as it grows: subcontractors, a partner, or staying solo for year one.
+1. Whether to lean toward an industry, after the first 15–20 conversations.
+2. Real prices, from the first proposals.
+3. Who is "we" as it grows: subcontractors, a partner, or staying solo for year one.

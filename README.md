@@ -1,6 +1,6 @@
-# AI-Biz (working name)
+# Sanford Operations
 
-Noah's consulting practice: helping mid-size companies pull scattered business data into one place, build useful tools on top of it, and layer AI into those tools.
+Noah's consulting firm (sanfordoperations.com): we bring a company's data together in one place, then build the reports, tools, AI and AI agents it makes possible.
 
 ## What's here
 - `kit/` — the reusable system: sync, business rules, web hub (see `kit/README.md`).

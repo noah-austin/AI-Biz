@@ -14,14 +14,14 @@ Keep them short, personal and specific. Only claim what you can show; swap in re
 >
 > How long does it take your team to put together the leadership numbers each week?
 >
-> We bring a company's systems (CRM, accounting, projects, spreadsheets) into one place, then build on top of it: a weekly scorecard that fills itself in, tools that replace spreadsheets, and AI agents that draft the reports and briefs your team spends hours on. Would a 20-minute call to see if it fits [Company] be worth it?
+> We bring a company's systems (CRM, accounting, projects, spreadsheets) into one place, then build on top of it: a weekly scorecard that fills itself in, tools that replace spreadsheets, and AI agents that draft the reports and briefs your team spends hours on. Would a 20-minute call to see if it fits [their company] be worth it?
 >
 > Noah
 
 **Email 2. Subject: re: your Monday numbers**
 > Hi [Name], once a company's data is in one place, the useful part starts: a scorecard nobody has to build, alerts when a big deal slips, and AI that can actually answer questions about the business.
 >
-> Here's a 2-minute look at a working example: [demo link]. If it's interesting, a short call is the easiest way to see what it would look like for [Company].
+> Here's a 2-minute look at a working example: [demo link]. If it's interesting, a short call is the easiest way to see what it would look like for [their company].
 
 **Email 3. Subject: closing the loop**
 > Hi [Name], I won't keep emailing. If getting trusted numbers out of your CRM becomes a priority, I'm here. I'm happy to talk whenever the timing's right. Good luck with the rest of the year.

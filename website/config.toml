@@ -1,8 +1,8 @@
 # The public website. Change these once the business has a name and domain.
-name = "Company Name"            # placeholder: swap for the real name
+name = "Sanford Operations"
 tagline = "All your data in one place, and everything it unlocks."
 owner = "Noah Austin"
 owner_title = "Founder"
-email = "hello@example.com"      # becomes the Workspace address
+email = "hello@sanfordoperations.com"        # Google Workspace address
 city = "Based in Texas, working across the US"
-demo_url = "https://demo.example.com/guest"   # the Bluestem demo's guest sign-in
+demo_url = "https://demo.sanfordoperations.com/guest"   # the Bluestem demo's guest sign-in

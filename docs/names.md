@@ -1,5 +1,7 @@
 # Business name shortlist
 
+> **Decided 2026-10-18: Sanford Operations** (sanfordoperations.com, available). The rest of this file is the record of how we got there.
+
 *2026-10-17. Style: plain and credible. Each name works on its own or with "Data Co." / "Data" after it. 174 names screened: 51 clean, 67 with minor issues, 56 dropped. Noah's preferred styles: **plain English** and **classic firm-sounding**.*
 
 ## How these were checked

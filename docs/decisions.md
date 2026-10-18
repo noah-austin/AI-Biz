@@ -78,7 +78,7 @@
 | Enquiries | The contact form lands in the company hub's Inbox, with an instant phone alert | One tap adds it to the pipeline. The chief of staff puts new enquiries first in the daily brief. |
 | Spam | Hidden honeypot field, minimum time on page, signed form token, 5 per visitor per hour | No captcha, so nothing annoys real visitors. |
 | Demo access | The "See a live demo" button signs visitors into Bluestem as a read-only guest | No password needed. Guest questions to Ask AI share one daily limit. |
-| Name | "Company Name" placeholder | Swap in `website/config.toml` once chosen. |
+| Name | Sanford Operations (sanfordoperations.com) | Chosen 2026-10-18 from 175+ screened names (`docs/names.md`). Set in `website/config.toml` and the company hub config. |
 | Prices | No prices published on the website or sales material | Every quote depends on the company: how many systems, records and fields. Prospects get a fixed quote after the first call. The ranges in `concept.md` are an internal guide only. |
 
 ## 2026-10-17: how clients start
@@ -99,7 +99,13 @@
 | Hosting | Client's choice: their own server (we manage) or hosted by us | Each hosted client gets its own separate server in our account; never shared. |
 | Audience | Leaders of small and mid-size companies, any industry, US-wide | Lean toward an industry only if one clearly stands out in the first 15–20 conversations. |
 
+## 2026-10-18: name
+| Topic | Decision | Notes |
+|---|---|---|
+| Business name | **Sanford Operations** | Domain sanfordoperations.com is available (checked by Noah). Classic firm style, as Noah chose. "Operations" says what we're about: running the company on its data. Screen: no company uses the exact name; avoid "Sanford Data/Analytics" (Sanford Health's data programme) and "Sanford & Co" (a Las Vegas accounting firm). |
+| Addresses | Website sanfordoperations.com; hub hub.sanfordoperations.com; demo demo.sanfordoperations.com; email hello@sanfordoperations.com | Email via Google Workspace on the domain. |
+| Still to do | Register the domain; Texas SOSDirect name search; USPTO search (classes 35 and 42); LLC filing as Sanford Operations LLC | |
+
 ## Open questions
-- Business name: shortlist in `docs/names.md` (recommended: Joinery). Check .com before choosing.
 - Texas sales tax treatment of the retainer and hosting: ask a CPA.
 - Hosting price for hosted clients (at cost, or a set monthly fee).

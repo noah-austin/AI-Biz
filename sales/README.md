@@ -1,6 +1,6 @@
 # Sales kit
 
-Everything for finding and winning the first clients. Fill in `[Company]` once the business has a name.
+Everything Sanford Operations uses to find and win the first clients.
 
 | File | Use it for |
 |---|---|

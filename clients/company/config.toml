@@ -1,8 +1,7 @@
 # Our own company hub: the practice tracker (prospects, clients, time, money) plus Ask AI.
-# Rename `company` and `short_name` once the business has a name.
 
-company = "Noah's consulting practice"
-short_name = "Practice"
+company = "Sanford Operations"
+short_name = "Sanford Ops"
 timezone = "America/Chicago"
 apps = ["practice"]
 

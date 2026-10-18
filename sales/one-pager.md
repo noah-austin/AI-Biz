@@ -1,4 +1,4 @@
-# [Company]: all your data in one place, and everything it unlocks
+# Sanford Operations: all your data in one place, and everything it unlocks
 
 **For COOs, CFOs and owners of small and mid-size companies, in any industry.**
 
@@ -31,4 +31,4 @@ We connect the systems your company already runs on into one place. Then we buil
 ## The first step
 A conversation about your company. If there's a fit, you get a custom proposal with a fixed quote.
 
-**[Company]** · [email] · [phone] · [booking link]
+**Sanford Operations** · hello@sanfordoperations.com · [phone] · sanfordoperations.com/contact

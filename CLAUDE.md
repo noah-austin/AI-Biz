@@ -1,6 +1,6 @@
 # Working rules for this repo
 
-This is the home base for Noah's consulting business (data → tools → AI for mid-size companies).
+This is the home base for **Sanford Operations** (sanfordoperations.com), Noah's consulting business (data → tools → AI for small and mid-size companies).
 
 - Noah is the owner. Talk in plain English, outcome first, and keep it short (he often reads on a phone).
 - Ask before sizeable work, offering 2–4 options with a recommendation. Decide small things yourself and say what you decided.

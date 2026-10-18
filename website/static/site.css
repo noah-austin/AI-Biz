@@ -42,7 +42,8 @@ section { padding: 104px 0; }
   backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
 .site-head .wrap { display: flex; align-items: center; gap: 24px; min-height: 64px; }
 .logo { display: flex; align-items: center; gap: 10px; font-weight: 750; color: var(--ink); text-decoration: none; font-size: 18px; white-space: nowrap; }
-.mark { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+.mark { width: 26px; height: 26px; border-radius: 7px; background: linear-gradient(135deg, var(--hub), var(--accent-2)); display: grid; place-items: center; flex: none; }
+.mark::after { content: "S"; color: #fff; font-weight: 750; font-size: 15px; line-height: 1; letter-spacing: -.02em; }
 .site-head nav { display: flex; gap: 4px; flex: 1; }
 .site-head nav a { color: var(--ink-2); text-decoration: none; padding: 8px 12px; border-radius: 8px; font-size: 15px; white-space: nowrap; }
 .site-head nav a:hover, .site-head nav a[aria-current] { color: var(--ink); background: var(--band); }
