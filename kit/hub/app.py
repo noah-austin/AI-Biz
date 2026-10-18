@@ -15,7 +15,7 @@ from starlette.concurrency import run_in_threadpool
 from .. import db
 from ..ai import chat, usage as ai_usage
 from ..config import get_settings
-from . import auth, google, pages, ui
+from . import auth, extras, google, pages, ui
 
 log = logging.getLogger("hub")
 settings = get_settings()  # fail loudly at start-up if anything is missing
@@ -167,6 +167,18 @@ if "analytics" in APPS:
     app.get("/receivables", response_class=HTMLResponse)(_html(pages.receivables))
     app.get("/invoices", response_class=HTMLResponse)(_html(pages.invoices))
     app.get("/cleanup", response_class=HTMLResponse)(_html(pages.cleanup_page))
+    app.get("/forecast", response_class=HTMLResponse)(_html(extras.forecast_page))
+    app.get("/alerts", response_class=HTMLResponse)(_html(extras.alerts_page))
+    app.get("/agent-work", response_class=HTMLResponse)(_html(extras.agents_page))
+
+    @app.post("/forecast", response_class=HTMLResponse)
+    async def forecast_save(request: Request):
+        form = await request.form()
+        if not auth.csrf_ok(request, form):
+            return HTMLResponse(ui.page(request, "Please try again",
+                                        '<section class="card">That form expired. Go back, reload the page and try again.</section>'),
+                                status_code=400)
+        return HTMLResponse(extras.forecast_page(request, saved=extras.save_forecast(request, form)))
 
     @app.get("/deals.csv")
     def deals_csv(request: Request):

@@ -39,7 +39,7 @@ def guest_tour(request) -> str:
         return ""
     steps = [("/scorecard", "Scorecard", "The weekly numbers, filled in automatically. Green means the goal was hit."),
              ("#", "Click any number", "Every tile, bar and row opens the records behind it, down to the deal."),
-             ("/deals?status=open", "Pipeline", "Every open deal, filtered any way you like, with a download to Excel."),
+             ("/agent-work", "AI agents", "This morning's brief, payment reminders waiting for approval, and prep for the next big meeting."),
              (None, "Ask AI", "Ask a question in plain English, like \u201cWhich branch is behind on billing?\u201d")]
     items = ""
     for href, t, d in steps:
@@ -623,7 +623,8 @@ SYNC_NAMES = {"crm.users": "CRM · Users", "crm.accounts": "CRM · Accounts", "c
               "crm.opportunity_history": "CRM · Deal change history", "acct.customers": "Accounting · Customers",
               "acct.invoices": "Accounting · Invoices", "backup": "Nightly backup"}
 PAGE_NAMES = {"/": "Home", "/scorecard": "Scorecard", "/deals": "Pipeline / deals", "/winloss": "Win / loss",
-              "/receivables": "Receivables", "/invoices": "Invoices", "/cleanup": "Data checks", "/health": "Health"}
+              "/receivables": "Receivables", "/invoices": "Invoices", "/cleanup": "Data checks", "/forecast": "Forecast",
+              "/alerts": "Alerts", "/agent-work": "AI agents", "/health": "Health"}
 
 
 def _local(ts):

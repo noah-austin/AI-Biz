@@ -324,3 +324,30 @@ body.bare { display: grid; place-items: center; min-height: 100vh; padding: 16px
   .tour-steps { grid-template-columns: 1fr 1fr; }
   nav { -webkit-mask-image: linear-gradient(90deg, #000 82%, transparent); mask-image: linear-gradient(90deg, #000 82%, transparent); }
 }
+
+/* Alerts, AI agents and Forecast pages */
+.alert-list li.alert-row { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; align-items: start; gap: 12px; }
+.alert-row .pill { justify-self: start; margin-top: 2px; }
+.alert-side { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) {
+  .alert-list li.alert-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .alert-row .pill { grid-column: 1 / -1; }
+}
+table.rules th { text-align: left; font-weight: 600; white-space: nowrap; vertical-align: top; padding-right: 14px; }
+table.rules td { color: var(--ink-2); }
+@media (max-width: 640px) { table.rules th, table.rules td { display: block; padding-left: 0; } table.rules th { padding-bottom: 0; border: 0; } }
+.agents-note { border-left: 3px solid var(--accent, currentColor); padding-left: 12px; }
+.list.compact li { padding: 5px 0; display: block; font-size: 14px; }
+.brief .list li { display: block; }
+.facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin: 10px 0 4px; }
+.facts span { display: block; font-size: 12.5px; color: var(--ink-2); }
+.facts strong { font-variant-numeric: tabular-nums; }
+.draft .card-head { margin-bottom: 6px; }
+.draft .pre { margin: 6px 0 10px; line-height: 1.5; }
+.draft + .draft { margin-top: 10px; }
+.btn[disabled] { opacity: .55; cursor: not-allowed; }
+[data-forecast] select { font: inherit; padding: 3px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--ink); }
+[data-forecast] tr.omitted td { opacity: .5; }
+table.data.rules td, table.data.rules th { white-space: normal; }
+table.data.rules { table-layout: auto; width: 100%; }
+.brief ul.list { padding-left: 0; }

@@ -10,6 +10,7 @@ The reusable system we install for each client: data in one place, tools on top,
 | Connectors | `connectors/` | Each source system maps into the standard tables. Today: the demo CRM and demo accounting. |
 | Sync | `sync.py` | Hourly copy. Upsert, then prune with a safety limit (refuses 0-row pulls and deletions over 10%). History tables only grow. Results go to `core.sync_state`. |
 | Business rules | `metrics.py`, `cleanup.py` | Every number, computed once. Pages (and the AI, later) call these, so figures always match. |
+| Watch and forecast | `watch.py`, `hub/extras.py` | Alerts (lines set per client under `[watch]` in config.toml), the daily brief, payment reminder drafts, weekly update, meeting prep, and the quarterly forecast with saved calls (`core.forecast_calls`). |
 | Hub | `hub/` | Web app: sign-in, home, scorecard, pipeline, win/loss, receivables, clean-up, health. |
 | Practice app | `practice/` | Built-in tracker for running a consulting business: prospects, partners, conversations, engagements, time, invoices, expenses. Turned on with `apps = ["practice"]`. Our own company hub uses it. |
 | Agents | `agents/` | Staff-like AI agents with roles and scheduled jobs (business development, social media, chief of staff). Their work lands in the practice Inbox for approval; they never send anything. `python -m kit.agents tick` from cron. |

@@ -113,6 +113,14 @@
 | Website look | Restyled to match the seal: parchment, oxblood and brass, Playfair Display headings | Replaces the blue and green. |
 | Website refinements | Added a trust line, a "Who we work with" strip, an FAQ, and "Now taking a small number of founding clients" on the calls to action | The founding-client line matches the founding-client deal in `concept.md`; remove it once the first clients are signed. |
 
+## 2026-10-18: demo additions
+| Topic | Decision | Notes |
+|---|---|---|
+| Demo pages | Added Forecast, Alerts and AI agents pages to the hub (for every client, not just the demo) | The facts come from `kit/watch.py`; alert lines are set per client under `[watch]`. |
+| Agents in the demo | Agent output is prepared by fixed rules from the data, and the page says so | Keeps the public demo free of AI cost and of anything that could send. "Approve and send" is switched off. |
+| Payment reminders | Friendly reminder drafts only for invoices 61 to 120 days late | Older ones need a phone call from a person. |
+| Forecast calls | Start from stage (75%+ Commit, 40%+ Best case); admins save changes, with who and when | Guests can try changes but nothing is saved. |
+
 ## Open questions
 - Texas sales tax treatment of the retainer and hosting: ask a CPA.
 - Hosting price for hosted clients (at cost, or a set monthly fee).

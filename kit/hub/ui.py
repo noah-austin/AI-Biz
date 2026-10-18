@@ -27,6 +27,9 @@ NAV = [  # path, label, admin only
     ("/deals?status=open", "Pipeline", False),
     ("/winloss", "Win / loss", False),
     ("/receivables", "Receivables", False),
+    ("/forecast", "Forecast", False),
+    ("/alerts", "Alerts", False),
+    ("/agent-work", "AI agents", False),
     ("/cleanup", "Data checks", False),
     ("/health", "Health", True),
 ]

@@ -62,9 +62,10 @@
     if (!b) return;
     const box = b.closest("article, section").querySelector("[data-copy]");
     if (!box) return;
+    const label = b.dataset.label || (b.dataset.label = b.textContent);
     try { await navigator.clipboard.writeText(box.innerText); b.textContent = "Copied"; }
     catch (err) { const r = document.createRange(); r.selectNodeContents(box); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected: copy it"; }
-    setTimeout(() => { b.textContent = "Copy"; }, 2500);
+    setTimeout(() => { b.textContent = label; }, 2500);
   });
   document.addEventListener("DOMContentLoaded", () => {
     const tour = document.querySelector("[data-tour]");
@@ -72,6 +73,24 @@
       try { if (localStorage.getItem("hub-tour-hidden") === "1") tour.hidden = true; } catch (e) {}
       const hide = tour.querySelector("[data-tour-hide]");
       if (hide) hide.addEventListener("click", () => { tour.hidden = true; try { localStorage.setItem("hub-tour-hidden", "1"); } catch (e) {} });
+    }
+    // Forecast: totals follow the calls as they change.
+    const fc = document.querySelector("[data-forecast]");
+    if (fc) {
+      const fmt = v => v >= 1e6 ? "$" + (v / 1e6).toFixed(1) + "M" : v >= 1e3 ? "$" + Math.round(v / 1e3) + "K" : "$" + Math.round(v);
+      const commitEl = document.querySelector('[data-total="commit"]'), bestEl = document.querySelector('[data-total="best"]');
+      const booked = parseFloat(commitEl.dataset.booked) || 0;
+      const sum = () => {
+        let c = 0, b = 0;
+        fc.querySelectorAll("tr[data-amount]").forEach(tr => {
+          const v = tr.querySelector("[data-call]").value, a = parseFloat(tr.dataset.amount) || 0;
+          if (v === "commit") c += a; else if (v === "best") b += a;
+          tr.classList.toggle("omitted", v === "omit");
+        });
+        commitEl.textContent = fmt(booked + c); bestEl.textContent = fmt(booked + c + b);
+      };
+      fc.addEventListener("change", e => { if (e.target.matches("[data-call]")) sum(); });
+      sum();
     }
     // Wide time tables open on the latest weeks.
     document.querySelectorAll("[data-scroll-end]").forEach(el => { el.scrollLeft = el.scrollWidth; });

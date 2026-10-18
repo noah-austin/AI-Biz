@@ -225,3 +225,43 @@ def test_demo_guest_sees_the_tour_and_a_way_back(client):
     assert "book a call" in r.text and "sanfordoperations.com/contact" in r.text
     login(c, "admin@test.invalid", pw)
     assert "data-tour" not in c.get("/").text  # signed-in staff never see the guest tour
+
+
+def _csrf(html):
+    import re
+    return re.search(r'name="_csrf" value="([^"]+)"', html).group(1)
+
+
+def test_alerts_agents_and_forecast_pages_render(client):
+    c, pw = client
+    c.cookies.clear()
+    c.get("/guest", follow_redirects=True)
+    for path, text in [("/alerts", "The rules"), ("/agent-work", "Daily brief"), ("/forecast", "Commit forecast")]:
+        r = c.get(path)
+        assert r.status_code == 200 and text in r.text, path
+    agents = c.get("/agent-work").text
+    assert "Approve and send" in agents and "disabled" in agents  # nothing is ever sent from the demo
+    login(c, "austin@test.invalid", pw)
+    assert "Houston" not in c.get("/forecast").text  # branch-scoped users only see their deals
+
+
+def test_forecast_calls_save_for_admins_only(client):
+    c, pw = client
+    c.cookies.clear()
+    c.get("/guest", follow_redirects=True)
+    page = c.get("/forecast").text
+    import re
+    deal = re.search(r'name="call:([^"]+)"', page).group(1)
+    try:
+        r = c.post("/forecast", data={"_csrf": _csrf(page), f"call:{deal}": "omit"})
+        assert r.status_code == 200
+        assert not db.one("SELECT 1 FROM core.forecast_calls WHERE deal_id = %(d)s", {"d": deal})
+        login(c, "admin@test.invalid", pw)
+        page = c.get("/forecast").text
+        assert c.post("/forecast", data={f"call:{deal}": "omit"}).status_code == 400  # no CSRF token
+        r = c.post("/forecast", data={"_csrf": _csrf(page), f"call:{deal}": "omit", "call:not-a-deal": "commit"})
+        assert "Saved 1 call." in r.text
+        row = db.one("SELECT call, updated_by FROM core.forecast_calls WHERE deal_id = %(d)s", {"d": deal})
+        assert row == {"call": "omit", "updated_by": "admin@test.invalid"}
+    finally:
+        db.execute("DELETE FROM core.forecast_calls WHERE deal_id = %(d)s", {"d": deal})
