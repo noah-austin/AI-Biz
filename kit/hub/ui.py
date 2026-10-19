@@ -11,6 +11,16 @@ from ..config import get_settings
 
 CHART_JS = "/static/vendor/chart-4.4.1.umd.js"  # pinned copy, MIT licence; no outside CDN needed
 
+
+def _version(name: str) -> str:
+    """A short fingerprint of a static file, added to its link so browsers fetch it again whenever it changes."""
+    import hashlib
+    from pathlib import Path
+    return hashlib.sha256((Path(__file__).parent / "static" / name).read_bytes()).hexdigest()[:10]
+
+
+ASSET_V = {name: _version(name) for name in ("hub.css", "hub.js", "ask.js")}
+
 PRACTICE_NAV = [
     ("/", "Today", False),
     ("/inbox", "Inbox", False),
@@ -249,8 +259,8 @@ def page(request, title: str, body: str, active: str = "", subtitle: str = "", w
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(title)} · {esc(client.get("short_name", "Hub"))}</title>
-<link rel="stylesheet" href="/static/hub.css"><link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<script src="{CHART_JS}" defer></script><script src="/static/hub.js" defer></script><script src="/static/ask.js" defer></script>
+<link rel="stylesheet" href="/static/hub.css?v={ASSET_V["hub.css"]}"><link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<script src="{CHART_JS}" defer></script><script src="/static/hub.js?v={ASSET_V["hub.js"]}" defer></script><script src="/static/ask.js?v={ASSET_V["ask.js"]}" defer></script>
 </head><body>
 {demo}{alert_bar}
 <header class="top"><div class="bar">
@@ -268,4 +278,4 @@ def page(request, title: str, body: str, active: str = "", subtitle: str = "", w
 def bare_page(title: str, body: str) -> str:
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1"><title>{esc(title)}</title>
-<link rel="stylesheet" href="/static/hub.css"><link rel="icon" href="/static/icon.svg" type="image/svg+xml"></head><body class="bare">{body}</body></html>"""
+<link rel="stylesheet" href="/static/hub.css?v={ASSET_V["hub.css"]}"><link rel="icon" href="/static/icon.svg" type="image/svg+xml"></head><body class="bare">{body}</body></html>"""

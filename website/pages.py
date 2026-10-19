@@ -24,6 +24,15 @@ def cfg() -> dict:
     return c
 
 
+def _version(name: str) -> str:
+    """A short fingerprint of a static file, added to its link so browsers fetch it again whenever it changes."""
+    import hashlib
+    return hashlib.sha256((HERE / "static" / name).read_bytes()).hexdigest()[:10]
+
+
+ASSET_V = {name: _version(name) for name in ("site.css", "explainer.css")}
+
+
 def esc(v) -> str:
     return html.escape("" if v is None else str(v), quote=True)
 
@@ -41,7 +50,7 @@ def layout(title: str, body: str, path: str = "/", description: str = "") -> str
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(page_title)}</title><meta name="description" content="{esc(desc)}">
 <meta property="og:title" content="{esc(page_title)}"><meta property="og:description" content="{esc(desc)}">
-<link rel="icon" href="/static/brand/mark.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/static/brand/apple-touch-icon.png"><meta property="og:image" content="{esc(c["url"])}/static/brand/profile-800.png"><meta property="og:url" content="{esc(c["url"])}{esc(path)}"><link rel="canonical" href="{esc(c["url"])}{esc(path)}"><link rel="stylesheet" href="/static/site.css">
+<link rel="icon" href="/static/brand/mark.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/static/brand/apple-touch-icon.png"><meta property="og:image" content="{esc(c["url"])}/static/brand/profile-800.png"><meta property="og:url" content="{esc(c["url"])}{esc(path)}"><link rel="canonical" href="{esc(c["url"])}{esc(path)}"><link rel="stylesheet" href="/static/site.css?v={ASSET_V["site.css"]}">
 </head><body>
 <header class="site-head"><div class="wrap">
   <a class="logo" href="/" aria-label="{esc(c["name"])}, home"><picture><source srcset="/static/brand/lockup-reversed.svg" media="(prefers-color-scheme: dark)"><img src="/static/brand/lockup.svg" alt="{esc(c["name"])}" width="262" height="64"></picture></a>
@@ -139,7 +148,7 @@ def home() -> str:
 
 <section class="explainer-section"><div class="wrap">
   {sec_head("In under 30 seconds", "What we do", "Your systems come together in your data hub, so they work as one. Then we build reports, tools and AI on top.")}
-  <link rel="stylesheet" href="/static/explainer.css">
+  <link rel="stylesheet" href="/static/explainer.css?v={ASSET_V["explainer.css"]}">
   {EXPLAINER}
 </div></section>
 
