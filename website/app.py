@@ -213,7 +213,7 @@ def thanks(n: str = ""):
 
 @app.get("/robots.txt", response_class=PlainTextResponse)
 def robots():
-    return "User-agent: *\nAllow: /\n"
+    return "User-agent: *\nDisallow: /demo\nAllow: /\n"   # demos are shared on request
 
 
 @app.get("/healthz", response_class=PlainTextResponse)

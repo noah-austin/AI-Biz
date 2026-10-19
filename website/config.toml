@@ -6,7 +6,8 @@ owner = "Noah Austin"
 owner_title = "Founder"
 email = "hello@sanfordoperations.com"        # Google Workspace address
 city = "Based in Texas, working across the US"
-demo_url = "/demo"   # the demo picker; each industry's demo is listed below
+demo_url = "/contact?interest=demo"   # live demos are shared on request, not linked from the site
+# The live demos, one fictional company per industry. Not linked from the site: share /demo/<slug> after a call.
 
 # The live demos, one fictional company per industry. Each card signs the visitor in as a guest.
 [[demos]]

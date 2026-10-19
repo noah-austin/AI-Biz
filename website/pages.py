@@ -40,7 +40,7 @@ def esc(v) -> str:
 NAV = [("/", "Home"), ("/what-we-build", "What we build"), ("/about", "About"), ("/contact", "Contact")]
 
 
-def layout(title: str, body: str, path: str = "/", description: str = "") -> str:
+def layout(title: str, body: str, path: str = "/", description: str = "", noindex: bool = False) -> str:
     c = cfg()
     nav = "".join(f'<a href="{href}"{" aria-current=page" if href == path else ""}>{esc(label)}</a>' for href, label in NAV)
     desc = description or (f"{c['name']} brings a company's data together in one place, then builds the dashboards, "
@@ -48,7 +48,7 @@ def layout(title: str, body: str, path: str = "/", description: str = "") -> str
     page_title = f"{title} | {c['name']}" if title != c["name"] else c["name"]
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{esc(page_title)}</title><meta name="description" content="{esc(desc)}">
+<title>{esc(page_title)}</title><meta name="description" content="{esc(desc)}">{'<meta name="robots" content="noindex">' if noindex else ''}
 <meta property="og:title" content="{esc(page_title)}"><meta property="og:description" content="{esc(desc)}">
 <link rel="icon" href="/static/brand/mark.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/static/brand/apple-touch-icon.png"><meta property="og:image" content="{esc(c["url"])}/static/brand/profile-800.png"><meta property="og:url" content="{esc(c["url"])}{esc(path)}"><link rel="canonical" href="{esc(c["url"])}{esc(path)}"><link rel="stylesheet" href="/static/site.css?v={ASSET_V["site.css"]}">
 </head><body>
@@ -62,7 +62,7 @@ def layout(title: str, body: str, path: str = "/", description: str = "") -> str
   <div class="foot-grid">
     <div class="foot-brand"><a class="logo" href="/" aria-label="{esc(c["name"])}, home"><picture><source srcset="/static/brand/lockup-reversed.svg" media="(prefers-color-scheme: dark)"><img src="/static/brand/lockup.svg" alt="{esc(c["name"])}" width="262" height="64"></picture></a>
       <p>{esc(c["tagline"])}</p></div>
-    <div><h4>Company</h4><a href="/what-we-build">What we build</a><a href="/about">About</a><a href="{esc(c["demo_url"])}">Live demo</a></div>
+    <div><h4>Company</h4><a href="/what-we-build">What we build</a><a href="/about">About</a><a href="{esc(c["demo_url"])}">Request a demo</a></div>
     <div><h4>Get in touch</h4><a href="/contact">Book a call</a><a href="mailto:{esc(c["email"])}">{esc(c["email"])}</a><span>{esc(c["city"])}</span></div>
   </div>
   <div class="foot-bottom"><span>© {date.today().year} {esc(c["name"])}</span><a href="/privacy">Privacy</a></div>
@@ -78,7 +78,7 @@ def sec_head(eyebrow: str, title: str, lead: str = "", center: bool = True) -> s
 def cta_row(primary=("Book a call", "/contact?interest=call")) -> str:
     c = cfg()
     return (f'<div class="cta-row"><a class="btn" href="{primary[1]}">{esc(primary[0])}</a>'
-            f'<a class="btn ghost" href="{esc(c["demo_url"])}">See a live demo →</a></div>')
+            f'<a class="btn ghost" href="{esc(c["demo_url"])}">Request a live demo →</a></div>')
 
 
 FAQ = [
@@ -177,9 +177,10 @@ def home() -> str:
 <section class="band"><div class="wrap demo-split">
   <div class="demo-copy">
     <p class="eyebrow">See it working</p>
-    <h2>Explore a company like yours</h2>
-    <p class="lead">Live demos for different industries, each a fictional company with realistic data: the scorecard, sales, operations, people and the AI agents. No sign-up needed.</p>
-    <a class="btn" href="{esc(c["demo_url"])}">Pick a demo →</a>
+    <h2>See it working on a company like yours</h2>
+    <p class="lead">We keep live demos for different industries, each a fictional company with realistic data. Ask for a
+    walkthrough and we'll show you the one closest to your business, and what it would look like on yours.</p>
+    <a class="btn" href="{esc(c["demo_url"])}">Request a live demo →</a>
   </div>
   <div class="demo-shot">{v.demo_shot("home", "The demo hub's home page: bookings, win rate, pipeline, billing and cash, with a bookings-by-month chart.")}
   <p class="fine">Shown in the demo company's colors. Your hub uses yours.</p></div>
@@ -221,7 +222,8 @@ def demos() -> str:
   <p class="fine center" style="margin-top:28px">Don't see your industry? The hub is built around your systems, whatever you do.
   <a href="/contact?interest=demo">Tell us about yours</a> and we'll show you what it would look like.</p>
 </div></section>"""
-    return layout("Live demos", body, "/demo", "Live demos of the Sanford Operations hub for different industries, with realistic fictional data.")
+    return layout("Live demos", body, "/demo", "Live demos of the Sanford Operations hub for different industries, with realistic fictional data.",
+                  noindex=True)
 
 
 def demo_view(slug: str) -> str | None:
@@ -242,7 +244,7 @@ def demo_view(slug: str) -> str | None:
   <iframe class="demo-frame" src="{esc(d["url"])}" title="Live demo: {esc(d["company"])}" loading="eager"
           referrerpolicy="strict-origin-when-cross-origin"></iframe>
 </div></section>"""
-    return layout(f'{d["industry"]} demo', body, "/demo",
+    return layout(f'{d["industry"]} demo', body, "/demo", noindex=True, description=
                   f'A live demo of the Sanford Operations hub for {d["industry"].lower()}: {d["company"]}, a fictional company.')
 
 
@@ -337,7 +339,7 @@ def what_we_build() -> str:
   <p class="eyebrow">Now taking a small number of founding clients</p>
   <h2>Let's talk about your company</h2>
   <p class="lead">A short conversation, then a custom proposal with a fixed quote.</p>
-  <div class="cta-row center"><a class="btn" href="/contact?interest=call">Book a call</a><a class="btn ghost light" href="{esc(cfg()["demo_url"])}">See a live demo →</a></div>
+  <div class="cta-row center"><a class="btn" href="/contact?interest=call">Book a call</a><a class="btn ghost light" href="{esc(cfg()["demo_url"])}">Request a live demo →</a></div>
 </div></section>"""
     return layout("What we build", body, "/what-we-build",
                   "All your company's data in one place, with reports, tools, AI and AI agents built on top. Custom to your business.")
@@ -377,7 +379,7 @@ def about() -> str:
   <p class="eyebrow">Now taking a small number of founding clients</p>
   <h2>Let's talk about your company</h2>
   <p class="lead">A short conversation, then a custom proposal with a fixed quote.</p>
-  <div class="cta-row center"><a class="btn" href="/contact?interest=call">Talk to us</a><a class="btn ghost light" href="{esc(c["demo_url"])}">See a live demo →</a></div>
+  <div class="cta-row center"><a class="btn" href="/contact?interest=call">Talk to us</a><a class="btn ghost light" href="{esc(c["demo_url"])}">Request a live demo →</a></div>
 </div></section>"""
     return layout("About", body, "/about")
 
@@ -424,7 +426,7 @@ def contact(token: str, values: dict | None = None, errors: dict | None = None) 
     <h3>What happens next</h3>
     <ol><li>We read your note and reply within one business day.</li><li>We have a conversation about how your company runs and where your data lives.</li>
     <li>If there's a fit, we send you a custom proposal.</li></ol>
-    <h3>Want to look first?</h3><p><a href="{esc(c["demo_url"])}">Explore the live demo →</a></p>
+    <h3>Want to see it first?</h3><p>Pick "A walkthrough of the demo" above and we'll show you a live hub for a company like yours.</p>
   </aside>
 </div></section>"""
     return layout("Contact", body, "/contact")
@@ -434,7 +436,7 @@ def thanks(name: str) -> str:
     body = f"""<section class="hero slim"><div class="wrap narrow">
 <h1>Thanks, {esc(name.split()[0] if name else "")}.</h1>
 <p class="lead">Your note is in. We'll reply within one business day.</p>
-<p>In the meantime, you can <a href="{esc(cfg()["demo_url"])}">explore the live demo</a> or read about
+<p>In the meantime, you can read about
 <a href="/what-we-build">what we build</a>.</p></div></section>"""
     return layout("Thanks", body, "/contact")
 
