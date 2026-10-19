@@ -4,7 +4,7 @@
 
 1. **Islands.** Seven systems (CRM, accounting, inventory, ERP, field service, HR & payroll, spreadsheets), each its own building on its own island, each with its own data circling it.
 2. **Bring it together.** Brass channels reach from every island to the centre, and a foundation stamped with the seal rises out of the water. The data flows in.
-3. **Build on it.** A tower goes up on the foundation, floor by floor, each floor signed with its name: reports, tools, alerts, Ask AI, AI agents. A dome caps it.
+3. **Build on it.** A tower rises from the foundation, floor by floor, each floor signed with its name: reports, tools, alerts, Ask AI, AI agents. A dome tops it off.
 4. **Put to work.** AI agents fly from the top of the tower out to every island and back, and each trip leaves a small finished job ("Reminder drafted", "Reorder flagged"...). The light warms towards evening so the lit tower glows.
 
 Rebuild after a change (needs Playwright, Chromium and ffmpeg):
