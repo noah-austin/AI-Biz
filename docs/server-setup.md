@@ -41,7 +41,7 @@ If Squarespace already has a record for `@` or `www` that isn't Google's email (
 
 **3. Paste this block** (it runs as the administrator):
 ```bash
-apt update && apt -y upgrade && apt -y install tmux git gh ufw unattended-upgrades
+apt update && apt -y upgrade && apt -y install tmux git ufw unattended-upgrades
 ufw allow OpenSSH && ufw allow 80 && ufw allow 443 && ufw --force enable
 adduser --disabled-password --gecos "" noah && usermod -aG sudo noah
 echo "noah ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/noah && chmod 440 /etc/sudoers.d/noah
@@ -55,14 +55,17 @@ exec bash
 claude --version
 ```
 
-**5. Connect GitHub** so the server can get our code:
+**5. Connect GitHub** with a key that opens only this one repository (not your whole GitHub account):
 ```bash
-gh auth login
+ssh-keygen -t ed25519 -N "" -C "biz-server" -f ~/.ssh/id_ed25519
+ssh-keyscan github.com >> ~/.ssh/known_hosts
+cat ~/.ssh/id_ed25519.pub
 ```
-Choose **GitHub.com → HTTPS → Login with a web browser**. It shows a code; open github.com/login/device on your phone and enter it. Then:
+Copy the line it prints (it starts `ssh-ed25519`; it's the public half, safe to share). On github.com open the repository → **Settings → Deploy keys → Add deploy key**: title `biz-server`, paste the line, tick **Allow write access** (so the server can push its notes), then **Add key**. Then:
 ```bash
-gh repo clone noah-austin/AI-Biz ~/AI-Biz -- -b claude/new-business-brainstorm-vt7nkx && cd ~/AI-Biz
+git clone -b claude/new-business-brainstorm-vt7nkx git@github.com:noah-austin/AI-Biz.git ~/AI-Biz && cd ~/AI-Biz
 ```
+To cut the server off from the code later, delete the key on that same page.
 
 **6. Sign in to Claude:** run `claude`, type `/login`, and choose your Claude account (Pro/Max). Press `c` to copy the link, open it on your phone, sign in, and paste back the code it shows. Type `/exit` when done.
 
