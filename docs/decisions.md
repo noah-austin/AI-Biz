@@ -137,6 +137,14 @@
 | Name for the centre | "Your data hub" (was "One place"), with "every system, together" | Matches the demo's "Bluestem Hub"; a client's own becomes "[Company] Hub". |
 | Explainer | 24-second animation on the home page (live CSS, no video player) and as an MP4 for LinkedIn | Story: data split across systems → brought together → works as one → we build on it (not reconciliation). Source in `website/brand/animation/`; the site version is generated into `website/static/explainer.css`. Numbers on screen are illustrative. |
 
+## 2026-10-19: our server
+| Topic | Decision | Notes |
+|---|---|---|
+| Server | DigitalOcean droplet, Ubuntu 24.04, 4 GB / 2 CPUs, weekly backups | Runs the company hub, the Bluestem demo and the website. Demo and our own data only, never client data. |
+| DNS | A records for `@`, `www`, `hub`, `demo` point at the droplet; DMARC added; Squarespace parking records removed | Email records (MX, SPF, DKIM) untouched. |
+| Access | Browser console with a strong password (no SSH key); GitHub connected with `gh auth login` | Claude Code runs on the server under Noah's subscription, reached through Remote Control ("Biz server"). A one-repo deploy key was offered and declined for now. |
+| Other videos | 3D explainer ("The foundation", 29 s) and a 60 s demo walkthrough | In `website/brand/animation3d/` and `website/brand/demo-video/`; where they go is still to decide. |
+
 ## Open questions
 - Texas sales tax treatment of the retainer and hosting: ask a CPA.
 - Hosting price for hosted clients (at cost, or a set monthly fee).
