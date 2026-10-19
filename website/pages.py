@@ -12,7 +12,6 @@ from pathlib import Path
 from . import visuals as v
 
 HERE = Path(__file__).parent
-EXPLAINER = (HERE / "explainer.html").read_text()  # built by website/brand/animation/build.py
 
 
 @lru_cache
@@ -30,7 +29,8 @@ def _version(name: str) -> str:
     return hashlib.sha256((HERE / "static" / name).read_bytes()).hexdigest()[:10]
 
 
-ASSET_V = {name: _version(name) for name in ("site.css", "explainer.css")}
+VIDEO = [f"video/explainer-{cut}{end}" for cut in ("wide", "tall") for end in (".mp4", ".jpg", "-end.jpg")]
+ASSET_V = {name: _version(name) for name in ("site.css", *VIDEO)}
 
 
 def esc(v) -> str:
@@ -75,10 +75,22 @@ def sec_head(eyebrow: str, title: str, lead: str = "", center: bool = True) -> s
             f'<h2>{esc(title)}</h2>{f"<p class=lead>{esc(lead)}</p>" if lead else ""}</header>')
 
 
-def cta_row(primary=("Book a call", "/contact?interest=call")) -> str:
-    c = cfg()
+def explainer() -> str:
+    """The explainer video (website/brand/animation/): a tall cut on phones, a wide one elsewhere; a still for reduced motion."""
+    u = lambda name: f"/static/{name}?v={ASSET_V[name]}"
+    return f"""<div class="explainer">
+    <video class="explainer-video" autoplay muted loop playsinline preload="auto" poster="{u("video/explainer-wide.jpg")}"
+      aria-label="Animation: a company's scattered systems come together in one data hub, then reports, tools, AI and AI agents are built on top.">
+      <source src="{u("video/explainer-tall.mp4")}" type="video/mp4" media="(max-width: 640px)">
+      <source src="{u("video/explainer-wide.mp4")}" type="video/mp4"></video>
+    <picture class="explainer-still"><source srcset="{u("video/explainer-tall-end.jpg")}" media="(max-width: 640px)">
+      <img src="{u("video/explainer-wide-end.jpg")}" alt="Your data in one place. Numbers everyone trusts, put to work." loading="lazy"></picture>
+  </div>"""
+
+
+def cta_row(primary=("Book a call", "/contact?interest=call"), secondary=("What we build →", "/what-we-build")) -> str:
     return (f'<div class="cta-row"><a class="btn" href="{primary[1]}">{esc(primary[0])}</a>'
-            f'<a class="btn ghost" href="/what-we-build">What we build →</a></div>')
+            f'<a class="btn ghost" href="{secondary[1]}">{esc(secondary[0])}</a></div>')
 
 
 FAQ = [
@@ -148,8 +160,7 @@ def home() -> str:
 
 <section class="explainer-section"><div class="wrap">
   {sec_head("In under 30 seconds", "What we do", "Your systems come together in your data hub, so they work as one. Then we build reports, tools and AI on top.")}
-  <link rel="stylesheet" href="/static/explainer.css?v={ASSET_V["explainer.css"]}">
-  {EXPLAINER}
+  {explainer()}
 </div></section>
 
 <section class="band"><div class="wrap">
@@ -250,7 +261,7 @@ def what_we_build() -> str:
   <p class="eyebrow">What we build</p>
   <h1>Your data in one place, put to work</h1>
   <p class="lead">Every build is custom. These are the pieces we put together, on top of the systems you already use.</p>
-  {cta_row()}
+  {cta_row(secondary=("Request a live demo →", "/contact?interest=demo"))}
 </div></section>
 
 <section><div class="wrap">

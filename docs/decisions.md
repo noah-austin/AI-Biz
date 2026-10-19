@@ -135,7 +135,7 @@
 | Topic | Decision | Notes |
 |---|---|---|
 | Name for the centre | "Your data hub" (was "One place"), with "every system, together" | Matches the demo's "Bluestem Hub"; a client's own becomes "[Company] Hub". |
-| Explainer | 24-second animation on the home page (live CSS, no video player) and as an MP4 for LinkedIn | Story: data split across systems → brought together → works as one → we build on it (not reconciliation). Source in `website/brand/animation/`; the site version is generated into `website/static/explainer.css`. Numbers on screen are illustrative. |
+| Explainer | 24-second animation on the home page and as an MP4 for LinkedIn. Since 2026-10-19 the site plays MP4s: a wide cut, and a tall cut for phones (the scaled CSS version was unreadable on phones and unreliable on iPhones) | Story: data split across systems → brought together → works as one → we build on it (not reconciliation). Source in `website/brand/animation/`; both cuts render to `website/static/video/`. Numbers on screen are illustrative. |
 
 ## 2026-10-19: our server
 | Topic | Decision | Notes |

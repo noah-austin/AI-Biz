@@ -1,10 +1,12 @@
-"""Builds the Sanford Operations explainer animation.
+"""Builds the Sanford Operations explainer animation, in two cuts of the same story.
 
-stage(): the 1920x1080 animated stage (HTML + CSS keyframes on one 24 s timeline).
-Writes index.html (the artifact page) and capture.html (for rendering frames to video, local fonts).
+wide: 1920 x 1080, for desktop, LinkedIn and calls.  tall: 720 x 1080, for phones (bigger text, stacked layout).
+Each cut is HTML + CSS keyframes on one 26.5 s timeline, written to capture-<cut>.html (local fonts; open it in a
+browser to preview, or render it to video). The website plays the MP4s rendered from these; see README.md.
 """
 import base64
 from pathlib import Path
+from types import SimpleNamespace
 
 HERE = Path(__file__).parent
 REPO = Path(__file__).resolve().parents[3]
@@ -50,335 +52,265 @@ def el(cls, style, inner="", tag="div"):
     html.append(f'<{tag} class="{cls}" style="{style}">{inner}</{tag}>')
 
 
-# ------------------------------------------------------------------ captions (top left)
 CAPS = [
     (0.8, 4.8, "Your data lives in many systems.", "Each one only sees its own piece."),
     (5.3, 8.9, "We bring it all together.", "Every system, copied into one place you own."),
     (9.3, 12.8, "Now it works as one.", "See across every system at once."),
     (13.2, 19.0, "Then we build on it.", "Reports, tools, AI and AI agents."),
 ]
-for i, (a, b, l1, l2) in enumerate(CAPS):
-    c = show(a, b, 0.5, "transform:translateY(0)", "transform:translateY(14px)")
-    el(f"cap {c}", "", f'<div class="cap1">{l1}</div><div class="cap2">{l2}</div>')
-
-# ------------------------------------------------------------------ systems (left)
-SYSTEMS = [
-    # name, detail (before), detail (after), scattered dx, dy, rot, conflict
-    ("CRM", "Deals and customers", "Deals and customers", 20, 30, -4, False),
-    ("Accounting", "Invoices and payments", "Invoices and payments", 480, -120, 3, False),
-    ("ERP", "Jobs and costs", "Jobs and costs", 940, -200, 2, False),
-    ("Project tool", "Hours and tasks", "Hours and tasks", 1340, -340, -3, False),
-    ("HR & payroll", "People and payroll", "People and payroll", 220, -190, 4, False),
-    ("Spreadsheets", "Forecasts and trackers", "Forecasts and trackers", 700, -290, -2, False),
+# name, detail, scattered rotation
+SYSTEMS = [("CRM", "Deals and customers", -4), ("Accounting", "Invoices and payments", 3), ("ERP", "Jobs and costs", 2),
+           ("Project tool", "Hours and tasks", -3), ("HR & payroll", "People and payroll", 4),
+           ("Spreadsheets", "Forecasts and trackers", -2)]
+EXTRAS = [("Email and files", "Contracts and attachments", 3), ("Inventory", "Stock and orders", -3),
+          ("Support desk", "Tickets and requests", 2), ("Marketing", "Leads and campaigns", -2),
+          ("Field service", "Visits and work orders", 4)]
+# name, detail (wide), detail (tall, where it needs to be shorter)
+TOOLS = [
+    ("Weekly scorecard", "fills itself in every Monday", ""),
+    ("Forecast", "commit $4.2M · best case $6.8M", "commit $4.2M · best $6.8M"),
+    ("Alert", "Westlake deal slipped to December", "Westlake deal slipped"),
+    ("Ask AI", "“Which branch is behind on billing?”", "“Who's behind on billing?”"),
+    ("AI agents", "Daily brief ready at 6:30 AM", "Daily brief ready, 6:30 AM"),
 ]
-COL_X, COL_Y0, CW, CH, GAP = 120, 250, 360, 96, 24
-for i, (name, d1, d2, dx, dy, rot, conflict) in enumerate(SYSTEMS):
-    y = COL_Y0 + i * (CH + GAP)
-    # drift while scattered, then glide into the column at 5.4-6.6 s
-    drift = [(0, f"transform:translate({dx}px,{dy}px) rotate({rot}deg)"),
-             (1.7, f"transform:translate({dx + 10}px,{dy - 12}px) rotate({rot + 1}deg)"),
-             (3.4, f"transform:translate({dx - 8}px,{dy + 8}px) rotate({rot - 1}deg)"),
-             (5.2 + i * 0.06, f"transform:translate({dx}px,{dy}px) rotate({rot}deg)"),
-             (6.6 + i * 0.06, "transform:translate(0,0) rotate(0deg)")]
-    mv = anim(drift)
-    fade = show(0.6 + i * 0.12, 19.6, 0.6)
-    inner = f'<div class="sname">{name}</div>'
-    if d1 != d2:
-        a = show(0.1, 10.2, 0.4)
-        b = show(10.4, 19.6, 0.4)
-        inner += f'<div class="sdet {a}">{d1}</div><div class="sdet {b}">{d2}</div>'
-    else:
-        inner += f'<div class="sdet">{d1}</div>'
-    if conflict:
-        bad = show(1.8 + i * 0.25, 10.0, 0.35)
-        good = show(10.6, 19.6, 0.35)
-        inner += f'<div class="pill bad {bad}">Doesn’t match</div><div class="pill good {good}">Matches</div>'
-    html.append(f'<div class="{fade}" style="position:absolute;left:{COL_X}px;top:{y}px"><div class="card sys {mv}">{inner}</div></div>')
 
-# more systems: scattered at the start, then pulled into the hub as it appears
-EXTRAS = [("Email and files", "Contracts and attachments", 1280, 570, 3),
-          ("Inventory", "Stock and orders", 130, 810, -3),
-          ("Support desk", "Tickets and requests", 640, 830, 2),
-          ("Marketing", "Leads and campaigns", 1160, 820, -2),
-          ("Field service", "Visits and work orders", 1500, 760, 4)]
-for i, (name, det, x, y, rot) in enumerate(EXTRAS):
-    tx, ty = 960 - (x + CW / 2), 560 - (y + CH / 2)
-    t1 = 5.5 + i * 0.12
-    mv = anim([(0, f"transform:translate(0,0) rotate({rot}deg) scale(1);opacity:1"),
-               (1.8, f"transform:translate(-9px,10px) rotate({rot - 1}deg) scale(1);opacity:1"),
-               (3.5, f"transform:translate(8px,-8px) rotate({rot + 1}deg) scale(1);opacity:1"),
-               (t1, f"transform:translate(0,0) rotate({rot}deg) scale(1);opacity:1"),
-               (t1 + 1.1, f"transform:translate({tx:.0f}px,{ty:.0f}px) rotate(0deg) scale(.25);opacity:0")])
-    fade = show(0.7 + (i + 6) * 0.1, None, 0.6)
-    html.append(f'<div class="{fade}" style="position:absolute;left:{x}px;top:{y}px"><div class="card sys {mv}">'
-                f'<div class="sname">{name}</div><div class="sdet">{det}</div></div></div>')
 
-# ------------------------------------------------------------------ connectors and the hub
-HX, HY, HR = 960, 560, 150
-OUT_X = 1430
-paths_in = [f"M{COL_X + CW} {COL_Y0 + i * (CH + GAP) + CH / 2} C {COL_X + CW + 180} {COL_Y0 + i * (CH + GAP) + CH / 2}, {HX - HR - 160} {HY}, {HX - HR} {HY}" for i in range(6)]
-paths_out = [f"M{HX + HR} {HY} C {HX + HR + 160} {HY}, {OUT_X - 180} {COL_Y0 + i * (CH + GAP) + CH / 2}, {OUT_X} {COL_Y0 + i * (CH + GAP) + CH / 2}" for i in range(5)]
-svg = [f'<svg class="wires" width="1920" height="1080" viewBox="0 0 1920 1080">']
-for i, d in enumerate(paths_in):
-    k = anim([(6.9 + i * 0.12, "stroke-dashoffset:700;opacity:1"), (8.1 + i * 0.12, "stroke-dashoffset:0;opacity:1"),
-              (19.2, "stroke-dashoffset:0;opacity:1"), (19.7, "stroke-dashoffset:0;opacity:0")])
-    svg.append(f'<path class="{k}" d="{d}" pathLength="700" fill="none" stroke="{BRASS}" stroke-width="2.5" stroke-dasharray="700"/>')
-for i, d in enumerate(paths_out):
-    k = anim([(13.3 + i * 0.5, "stroke-dashoffset:700;opacity:1"), (14.1 + i * 0.5, "stroke-dashoffset:0;opacity:1"),
-              (19.2, "stroke-dashoffset:0;opacity:1"), (19.7, "stroke-dashoffset:0;opacity:0")])
-    svg.append(f'<path class="{k}" d="{d}" pathLength="700" fill="none" stroke="{OX}" stroke-width="2.5" stroke-dasharray="700"/>')
-svg.append("</svg>")
-html.append("".join(svg))
+def wide():
+    CW, CH, X0, Y0, GAP = 360, 96, 120, 250, 24
+    cards = [(X0, Y0 + i * (CH + GAP)) for i in range(6)]
+    HX, HY, HR, OUT_X = 960, 560, 150, 1430
+    tools = [(OUT_X, Y0 + i * (CH + GAP)) for i in range(5)]
+    return SimpleNamespace(
+        name="wide", W=1920, H=1080, CW=CW, CH=CH, TW=400, HX=HX, HY=HY, HR=HR, cards=cards, tools=tools,
+        scatter=[(20, 30), (480, -120), (940, -200), (1340, -340), (220, -190), (700, -290)],  # offsets from the column
+        extras=[(1280, 570), (130, 810), (640, 830), (1160, 820), (1500, 760)],
+        paths_in=[f"M{x + CW} {y + CH / 2} C {x + CW + 180} {y + CH / 2}, {HX - HR - 160} {HY}, {HX - HR} {HY}" for x, y in cards],
+        paths_out=[f"M{HX + HR} {HY} C {HX + HR + 160} {HY}, {x - 180} {y + CH / 2}, {x} {y + CH / 2}" for x, y in tools],
+        wires_behind=False,
+        customer=(HX - 245, HY - HR - 214, 490, 19.4),
+        css="""
+.cap { left:120px; top:72px; width:1300px } .cap1 { font-size:66px } .cap2 { font-size:30px }
+.sys { padding:18px 24px } .sname { font-size:27px } .sdet { left:24px; top:54px; font-size:21px }
+.hub1 { font-size:38px } .hub2 { font-size:21px }
+.rlabel { font-size:16px } .vname { font-size:30px } .vrow { font-size:19px }
+.tool { padding:18px 24px } .tname { font-size:26px } .tdet { left:24px; top:56px; font-size:18px }
+.sq { left:24px; top:58px } .sq i { width:32px; height:20px }
+.titlecard img { width:170px; height:170px } .t-eyebrow { font-size:26px } .t-title { font-size:92px }
+.endcard img { width:230px; height:230px } .end1 { font-size:76px } .end2 { font-size:34px; margin-top:40px }
+""")
 
-# data dots flowing into the hub, then out to the tools
-for i, d in enumerate(paths_in):
-    for j in range(2):
-        start = 8.3 + i * 0.13 + j * 0.7
-        pts = [(0, "offset-distance:0%;opacity:0")]
-        t = start
+
+def tall():
+    W, CW, CH = 720, 310, 84
+    cards = [(40 + (i % 2) * 330, 210 + (i // 2) * 92) for i in range(6)]
+    HX, HY, HR = 360, 625, 105
+    tools = [(40 + (i % 2) * 330, 800 + (i // 2) * 92) for i in range(4)] + [(205, 984)]
+    # scattered at the start: a loose 6 x 2 grid, systems and extras mixed
+    slots = [(25 + (k % 2) * 360 + (k * 37 % 30) - 15, 225 + (k // 2) * 138) for k in range(12)]
+    sys_slots, extra_slots = [0, 3, 4, 7, 8, 11], [1, 2, 5, 6, 9]
+    return SimpleNamespace(
+        name="tall", W=W, H=1080, CW=CW, CH=CH, TW=CW, HX=HX, HY=HY, HR=HR, cards=cards, tools=tools,
+        scatter=[(slots[s][0] - x, slots[s][1] - y) for s, (x, y) in zip(sys_slots, cards)],
+        extras=[slots[s] for s in extra_slots],
+        # wires run behind the cards: from each card's bottom edge to the top of the hub, then on to the tools
+        paths_in=[f"M{x + CW / 2} {y + CH} C {x + CW / 2} {y + CH + 110}, {HX} {HY - HR - 110}, {HX} {HY - HR}" for x, y in cards],
+        paths_out=[f"M{HX} {HY + HR} C {HX} {HY + HR + 70}, {x + CW / 2} {y - 70}, {x + CW / 2} {y}" for x, y in tools],
+        wires_behind=True,
+        customer=(80, HY + HR + 30, 560, 13.5),  # below the hub, gone before the tools arrive
+        css="""
+.cap { left:40px; top:44px; width:640px } .cap1 { font-size:46px } .cap2 { font-size:24px; margin-top:10px }
+.sys { padding:12px 18px } .sname { font-size:24px } .sdet { left:18px; top:46px; font-size:18px }
+.hub1 { font-size:25px } .hub2 { font-size:16px }
+.rlabel { font-size:14px } .vname { font-size:26px } .vrow { font-size:18px }
+.tool { padding:12px 18px } .tname { font-size:23px } .tdet { left:18px; top:46px; font-size:17px }
+.bell { right:16px; top:16px }
+.sq { left:18px; top:48px; gap:7px } .sq i { width:28px; height:18px }
+.titlecard { padding:0 50px; box-sizing:border-box; text-align:center }
+.titlecard img { width:130px; height:130px } .t-eyebrow { font-size:20px } .t-title { font-size:56px; line-height:1.12 }
+.endcard { padding:0 40px; box-sizing:border-box }
+.endcard img { width:170px; height:170px; margin-bottom:34px } .end1 { font-size:44px } .end2 { font-size:24px; margin-top:30px }
+""")
+
+
+def scene(L):
+    """Builds one cut's stage. Returns the stage HTML; its keyframes are in css."""
+    html.clear()
+    tallcut = L.name == "tall"
+
+    # captions (top left)
+    for a, b, l1, l2 in CAPS:
+        c = show(a, b, 0.5, "transform:translateY(0)", "transform:translateY(14px)")
+        el(f"cap {c}", "", f'<div class="cap1">{l1}</div><div class="cap2">{l2}</div>')
+    wire_at = len(html)
+
+    # systems: scattered, then glide into place at 5.4-6.6 s
+    for i, ((name, det, rot), (x, y), (dx, dy)) in enumerate(zip(SYSTEMS, L.cards, L.scatter)):
+        mv = anim([(0, f"transform:translate({dx}px,{dy}px) rotate({rot}deg)"),
+                   (1.7, f"transform:translate({dx + 10}px,{dy - 12}px) rotate({rot + 1}deg)"),
+                   (3.4, f"transform:translate({dx - 8}px,{dy + 8}px) rotate({rot - 1}deg)"),
+                   (5.2 + i * 0.06, f"transform:translate({dx}px,{dy}px) rotate({rot}deg)"),
+                   (6.6 + i * 0.06, "transform:translate(0,0) rotate(0deg)")])
+        fade = show(0.6 + i * 0.12, 19.6, 0.6)
+        html.append(f'<div class="{fade}" style="position:absolute;left:{x}px;top:{y}px"><div class="card sys {mv}">'
+                    f'<div class="sname">{name}</div><div class="sdet">{det}</div></div></div>')
+
+    # more systems: scattered at the start, then pulled into the hub as it appears
+    for i, ((name, det, rot), (x, y)) in enumerate(zip(EXTRAS, L.extras)):
+        tx, ty = L.HX - (x + L.CW / 2), L.HY - (y + L.CH / 2)
+        t1 = 5.5 + i * 0.12
+        mv = anim([(0, f"transform:translate(0,0) rotate({rot}deg) scale(1);opacity:1"),
+                   (1.8, f"transform:translate(-9px,10px) rotate({rot - 1}deg) scale(1);opacity:1"),
+                   (3.5, f"transform:translate(8px,-8px) rotate({rot + 1}deg) scale(1);opacity:1"),
+                   (t1, f"transform:translate(0,0) rotate({rot}deg) scale(1);opacity:1"),
+                   (t1 + 1.1, f"transform:translate({tx:.0f}px,{ty:.0f}px) rotate(0deg) scale(.25);opacity:0")])
+        fade = show(0.7 + (i + 6) * 0.1, None, 0.6)
+        html.append(f'<div class="{fade}" style="position:absolute;left:{x}px;top:{y}px"><div class="card sys {mv}">'
+                    f'<div class="sname">{name}</div><div class="sdet">{det}</div></div></div>')
+
+    # connectors and the data dots flowing along them
+    mark = len(html)
+    svg = [f'<svg class="wires" width="{L.W}" height="{L.H}" viewBox="0 0 {L.W} {L.H}">']
+    for i, d in enumerate(L.paths_in):
+        k = anim([(6.9 + i * 0.12, "stroke-dashoffset:700;opacity:1"), (8.1 + i * 0.12, "stroke-dashoffset:0;opacity:1"),
+                  (19.2, "stroke-dashoffset:0;opacity:1"), (19.7, "stroke-dashoffset:0;opacity:0")])
+        svg.append(f'<path class="{k}" d="{d}" pathLength="700" fill="none" stroke="{BRASS}" stroke-width="2.5" stroke-dasharray="700"/>')
+    for i, d in enumerate(L.paths_out):
+        k = anim([(13.3 + i * 0.5, "stroke-dashoffset:700;opacity:1"), (14.1 + i * 0.5, "stroke-dashoffset:0;opacity:1"),
+                  (19.2, "stroke-dashoffset:0;opacity:1"), (19.7, "stroke-dashoffset:0;opacity:0")])
+        svg.append(f'<path class="{k}" d="{d}" pathLength="700" fill="none" stroke="{OX}" stroke-width="2.5" stroke-dasharray="700"/>')
+    svg.append("</svg>")
+    html.append("".join(svg))
+    for i, d in enumerate(L.paths_in):
+        for j in range(2):
+            pts, t = [(0, "offset-distance:0%;opacity:0")], 8.3 + i * 0.13 + j * 0.7
+            while t + 1.2 < 19.0:
+                pts += [(t, "offset-distance:0%;opacity:0"), (t + 0.15, "offset-distance:10%;opacity:1"),
+                        (t + 1.05, "offset-distance:92%;opacity:1"), (t + 1.2, "offset-distance:100%;opacity:0")]
+                t += 1.4
+            el(f"dot {anim(pts, 'linear')}", f"offset-path:path('{d}');background:{BRASS}")
+    for i, d in enumerate(L.paths_out):
+        pts, t = [(0, "offset-distance:0%;opacity:0")], 14.3 + i * 0.5
         while t + 1.2 < 19.0:
             pts += [(t, "offset-distance:0%;opacity:0"), (t + 0.15, "offset-distance:10%;opacity:1"),
                     (t + 1.05, "offset-distance:92%;opacity:1"), (t + 1.2, "offset-distance:100%;opacity:0")]
-            t += 1.4
-        k = anim(pts, "linear")
-        el(f"dot {k}", f"offset-path:path('{d}');background:{BRASS}")
-for i, d in enumerate(paths_out):
-    start = 14.3 + i * 0.5
-    pts = [(0, "offset-distance:0%;opacity:0")]
-    t = start
-    while t + 1.2 < 19.0:
-        pts += [(t, "offset-distance:0%;opacity:0"), (t + 0.15, "offset-distance:10%;opacity:1"),
-                (t + 1.05, "offset-distance:92%;opacity:1"), (t + 1.2, "offset-distance:100%;opacity:0")]
-        t += 1.5
-    k = anim(pts, "linear")
-    el(f"dot {k}", f"offset-path:path('{d}');background:{OX}")
+            t += 1.5
+        el(f"dot {anim(pts, 'linear')}", f"offset-path:path('{d}');background:{OX}")
+    if L.wires_behind:  # stacked layout: the wires pass behind the cards
+        wires = html[mark:]
+        del html[mark:]
+        html[wire_at:wire_at] = wires
 
-hub = anim([(6.4, "transform:scale(0);opacity:0"), (7.1, "transform:scale(1.06);opacity:1"), (7.5, "transform:scale(1);opacity:1"),
-            (9.4, "transform:scale(1);opacity:1"), (9.8, "transform:scale(1.04);opacity:1"), (10.2, "transform:scale(1);opacity:1"),
-            (19.2, "transform:scale(1);opacity:1"), (19.7, "transform:scale(.9);opacity:0")])
-ring = anim([(7.4, "transform:scale(1);opacity:0"), (7.8, "transform:scale(1);opacity:.5"), (9.0, "transform:scale(1.5);opacity:0"),
-             (12.6, "transform:scale(1);opacity:0"), (13.0, "transform:scale(1);opacity:.5"), (14.4, "transform:scale(1.5);opacity:0")])
-el(f"ring {ring}", f"left:{HX - HR}px;top:{HY - HR}px")
-el(f"hub {hub}", f"left:{HX - HR}px;top:{HY - HR}px",
-   '<div class="hub1">Your data hub</div><div class="hub2">Every system,<br>together</div>')
+    # the hub
+    HX, HY, HR = L.HX, L.HY, L.HR
+    hub = anim([(6.4, "transform:scale(0);opacity:0"), (7.1, "transform:scale(1.06);opacity:1"), (7.5, "transform:scale(1);opacity:1"),
+                (9.4, "transform:scale(1);opacity:1"), (9.8, "transform:scale(1.04);opacity:1"), (10.2, "transform:scale(1);opacity:1"),
+                (19.2, "transform:scale(1);opacity:1"), (19.7, "transform:scale(.9);opacity:0")])
+    ring = anim([(7.4, "transform:scale(1);opacity:0"), (7.8, "transform:scale(1);opacity:.5"), (9.0, "transform:scale(1.5);opacity:0"),
+                 (12.6, "transform:scale(1);opacity:0"), (13.0, "transform:scale(1);opacity:.5"), (14.4, "transform:scale(1.5);opacity:0")])
+    box = f"left:{HX - HR}px;top:{HY - HR}px;width:{2 * HR}px;height:{2 * HR}px"
+    el(f"ring {ring}", box)
+    el(f"hub {hub}", box, '<div class="hub1">Your data hub</div><div class="hub2">Every system,<br>together</div>')
 
-# one customer, seen across systems at once (the payoff of having it together)
-rb = show(9.6, 19.4, 0.5, "transform:translateY(0)", "transform:translateY(16px)")
-rows = [("3 open deals · $412K", "CRM"), ("$31K unpaid, 62 days", "Accounting"), ("2 jobs in progress", "ERP")]
-rows_html = "".join(f'<div class="vrow"><span>{t}</span><em>{src}</em></div>' for t, src in rows)
-el(f"card rule {rb}", f"left:{HX - 245}px;top:{HY - HR - 214}px;width:490px",
-   '<div class="rlabel">One customer, every system</div><div class="vname">Prairie Surgical Hospital</div>' + rows_html)
+    # one customer, seen across systems at once (the payoff of having it together)
+    cx, cy, cw, c_out = L.customer
+    rb = show(9.6, c_out, 0.5, "transform:translateY(0)", "transform:translateY(16px)")
+    rows = [("3 open deals · $412K", "CRM"), ("$31K unpaid, 62 days", "Accounting"), ("2 jobs in progress", "ERP")]
+    rows_html = "".join(f'<div class="vrow"><span>{t}</span><em>{src}</em></div>' for t, src in rows)
+    el(f"card rule {rb}", f"left:{cx}px;top:{cy}px;width:{cw}px",
+       '<div class="rlabel">One customer, every system</div><div class="vname">Prairie Surgical Hospital</div>' + rows_html)
 
-# ------------------------------------------------------------------ tools (right)
-TOOLS = [
-    ("Weekly scorecard", "fills itself in every Monday"),
-    ("Forecast", "commit $4.2M · best case $6.8M"),
-    ("Alert", "Westlake deal slipped to December"),
-    ("Ask AI", "“Which branch is behind on billing?”"),
-    ("AI agents", "Daily brief ready at 6:30 AM"),
-]
-for i, (name, det) in enumerate(TOOLS):
-    y = COL_Y0 + i * (CH + GAP)
-    t0 = 13.9 + i * 0.5
-    pop = anim([(t0, "opacity:0;transform:translateX(30px) scale(.96)"), (t0 + 0.45, "opacity:1;transform:translateX(0) scale(1)"),
-                (19.3, "opacity:1;transform:translateX(0) scale(1)"), (19.8, "opacity:0;transform:translateX(0) scale(.97)")])
-    inner = f'<div class="tname">{name}</div><div class="tdet">{det}</div>'
-    if name == "Weekly scorecard":
-        sq = ""
-        for j in range(7):
-            k = anim([(t0 + 0.6 + j * 0.18, f"background:#4a4440"), (t0 + 0.8 + j * 0.18, f"background:{'#c9a46a' if j == 4 else '#3f9d6e'}")])
-            sq += f'<i class="{k}"></i>'
-        inner = f'<div class="tname">{name}</div><div class="sq">{sq}</div>'
-    if name == "Alert":
-        k = anim([(t0 + 0.5, "transform:scale(1);opacity:1"), (t0 + 0.8, "transform:scale(1.5);opacity:.4"), (t0 + 1.1, "transform:scale(1);opacity:1"),
-                  (t0 + 1.4, "transform:scale(1.5);opacity:.4"), (t0 + 1.7, "transform:scale(1);opacity:1")])
-        inner = f'<span class="bell {k}"></span>' + inner
-    if name == "Ask AI":
-        q = show(t0 + 0.2, t0 + 1.9, 0.3)
-        a = show(t0 + 2.1, None, 0.3)
-        inner = f'<div class="tname">{name}</div><div class="tdet {q}">{det}</div><div class="tdet ans {a}">Fort Worth, at 81% of last year</div>'
-    html.append(f'<div class="card tool {pop}" style="left:{OUT_X}px;top:{y}px">{inner}</div>')
+    # tools
+    for i, ((name, det, det_tall), (x, y)) in enumerate(zip(TOOLS, L.tools)):
+        det = det_tall if tallcut and det_tall else det
+        t0 = 13.9 + i * 0.5
+        pop = anim([(t0, "opacity:0;transform:translateX(30px) scale(.96)"), (t0 + 0.45, "opacity:1;transform:translateX(0) scale(1)"),
+                    (19.3, "opacity:1;transform:translateX(0) scale(1)"), (19.8, "opacity:0;transform:translateX(0) scale(.97)")])
+        inner = f'<div class="tname">{name}</div><div class="tdet">{det}</div>'
+        if name == "Weekly scorecard":
+            sq = ""
+            for j in range(7):
+                k = anim([(t0 + 0.6 + j * 0.18, "background:#4a4440"), (t0 + 0.8 + j * 0.18, f"background:{'#c9a46a' if j == 4 else '#3f9d6e'}")])
+                sq += f'<i class="{k}"></i>'
+            inner = f'<div class="tname">{name}</div><div class="sq">{sq}</div>'
+        if name == "Alert":
+            k = anim([(t0 + 0.5, "transform:scale(1);opacity:1"), (t0 + 0.8, "transform:scale(1.5);opacity:.4"), (t0 + 1.1, "transform:scale(1);opacity:1"),
+                      (t0 + 1.4, "transform:scale(1.5);opacity:.4"), (t0 + 1.7, "transform:scale(1);opacity:1")])
+            inner = f'<span class="bell {k}"></span>' + inner
+        if name == "Ask AI":
+            q = show(t0 + 0.2, t0 + 1.9, 0.3)
+            a = show(t0 + 2.1, None, 0.3)
+            ans = "Fort Worth, at 81%" if tallcut else "Fort Worth, at 81% of last year"
+            inner = f'<div class="tname">{name}</div><div class="tdet {q}">{det}</div><div class="tdet ans {a}">{ans}</div>'
+        html.append(f'<div class="card tool {pop}" style="left:{x}px;top:{y}px;width:{L.TW}px">{inner}</div>')
 
-# ------------------------------------------------------------------ end card
-seal = base64.b64encode((REPO / "website/static/brand/seal.svg").read_bytes()).decode()
-TITLE = (f'<img src="data:image/svg+xml;base64,{seal}" alt="" width="170" height="170">'
-         '<div class="t-eyebrow">Sanford Operations</div><div class="t-title">How we put your data to work</div>')
-veil = anim([(0, "opacity:1"), (OFF - 0.5, "opacity:1"), (OFF + 0.1, "opacity:0"), (19.3 + OFF, "opacity:0"), (19.9 + OFF, "opacity:1")], shift=False)
-el(f"veil {veil}", "")
-intro = anim([(0, "opacity:1;transform:translateY(0)"), (OFF - 0.55, "opacity:1;transform:translateY(0)"), (OFF - 0.05, "opacity:0;transform:translateY(-12px)"),
-              (T - 0.6, "opacity:0;transform:translateY(10px)"), (T, "opacity:1;transform:translateY(0)")], shift=False)
-endc = anim([(19.8, "opacity:0;transform:translateY(18px)"), (20.6, "opacity:1;transform:translateY(0)"),
-             (23.2, "opacity:1;transform:translateY(0)"), (23.8, "opacity:0;transform:translateY(0)")])
-el(f"endcard {endc}", "",
-   f'<img src="data:image/svg+xml;base64,{seal}" alt="Sanford Operations seal" width="230" height="230">'
-   '<div class="end1">Your data in one place.</div><div class="end1">Numbers everyone trusts, put to work.</div>'
-   '<div class="end2">sanfordoperations.com</div>')
-el(f"titlecard {intro}", "", TITLE)
+    # title card and end card
+    seal = "data:image/svg+xml;base64," + base64.b64encode((REPO / "website/static/brand/seal.svg").read_bytes()).decode()
+    veil = anim([(0, "opacity:1"), (OFF - 0.5, "opacity:1"), (OFF + 0.1, "opacity:0"), (19.3 + OFF, "opacity:0"), (19.9 + OFF, "opacity:1")], shift=False)
+    el(f"veil {veil}", "")
+    intro = anim([(0, "opacity:1;transform:translateY(0)"), (OFF - 0.55, "opacity:1;transform:translateY(0)"), (OFF - 0.05, "opacity:0;transform:translateY(-12px)"),
+                  (T - 0.6, "opacity:0;transform:translateY(10px)"), (T, "opacity:1;transform:translateY(0)")], shift=False)
+    endc = anim([(19.8, "opacity:0;transform:translateY(18px)"), (20.6, "opacity:1;transform:translateY(0)"),
+                 (23.2, "opacity:1;transform:translateY(0)"), (23.8, "opacity:0;transform:translateY(0)")])
+    el(f"endcard {endc}", "",
+       f'<img src="{seal}" alt="Sanford Operations seal">'
+       '<div class="end1">Your data in one place.</div><div class="end1">Numbers everyone trusts, put to work.</div>'
+       '<div class="end2">sanfordoperations.com</div>')
+    el(f"titlecard {intro}", "", f'<img src="{seal}" alt="">'
+       '<div class="t-eyebrow">Sanford Operations</div><div class="t-title">How we put your data to work</div>')
+    return f'<div class="stage">{"".join(html)}</div>'
 
-STAGE_CSS = f"""
-.stage {{ position:relative; width:1920px; height:1080px; overflow:hidden; background:{PA}; color:{INK};
-  font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif; transform-origin:0 0 }}
+
+def stage_css(L):
+    return f"""
+.stage {{ position:relative; width:{L.W}px; height:{L.H}px; overflow:hidden; background:{PA}; color:{INK};
+  font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif }}
 .stage > * {{ position:absolute }}
-.cap {{ left:120px; top:72px; width:1300px }}
-.cap1 {{ font-family:'Playfair Display', 'Playfair', Georgia, serif; font-weight:700; font-size:66px; line-height:1.1; color:{INK} }}
-.cap2 {{ font-size:30px; color:{INK2}; margin-top:12px }}
+.cap1 {{ font-family:'Playfair Display', 'Playfair', Georgia, serif; font-weight:700; line-height:1.1; color:{INK} }}
+.cap2 {{ color:{INK2}; margin-top:12px }}
 .card {{ border-radius:16px; box-sizing:border-box }}
-.sys {{ position:relative; width:{CW}px; height:{CH}px; background:{CARD}; border:1.5px solid {LINE}; padding:18px 24px;
+.sys {{ position:relative; width:{L.CW}px; height:{L.CH}px; background:{CARD}; border:1.5px solid {LINE};
   box-shadow:0 10px 30px rgba(42,38,34,.08) }}
-.sname {{ font-weight:600; font-size:27px }}
-.sdet {{ position:absolute; left:24px; top:54px; font-size:21px; color:{INK2}; font-variant-numeric:tabular-nums }}
-.pill {{ position:absolute; right:14px; bottom:14px; font-size:16px; font-weight:600; padding:5px 11px; border-radius:999px }}
-.pill.bad {{ background:#f6dedb; color:{BAD} }}
-.pill.good {{ background:#dcefe4; color:{GOOD} }}
+.sname {{ font-weight:600 }}
+.sdet {{ position:absolute; color:{INK2}; font-variant-numeric:tabular-nums; white-space:nowrap }}
 .wires {{ left:0; top:0 }}
 .dot {{ left:0; top:0; width:12px; height:12px; border-radius:50%; offset-rotate:0deg; opacity:0 }}
-.hub, .ring {{ width:{2 * HR}px; height:{2 * HR}px; border-radius:50% }}
+.hub, .ring {{ border-radius:50%; box-sizing:border-box }}
 .hub {{ background:{OX}; color:{PA}; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
   box-shadow:0 20px 50px rgba(107,31,42,.30); opacity:0 }}
 .ring {{ border:3px solid {OX}; opacity:0 }}
-.hub1 {{ font-family:'Playfair Display', 'Playfair', Georgia, serif; font-weight:700; font-size:38px; text-align:center }}
-.hub2 {{ font-size:21px; color:{SOFT}; text-align:center; line-height:1.3 }}
+.hub1 {{ font-family:'Playfair Display', 'Playfair', Georgia, serif; font-weight:700; text-align:center }}
+.hub2 {{ color:{SOFT}; text-align:center; line-height:1.3 }}
 .rule {{ background:{CARD}; border:1.5px solid {LINE}; padding:16px 22px; box-shadow:0 10px 30px rgba(42,38,34,.08); opacity:0 }}
-.rlabel {{ font-size:16px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:{BRASS} }}
-.vname {{ font-family:'Playfair Display', 'Playfair', Georgia, serif; font-weight:700; font-size:30px; color:{INK}; margin:4px 0 6px }}
-.vrow {{ display:flex; justify-content:space-between; align-items:center; font-size:19px; color:{INK}; padding:5px 0; border-top:1px solid {LINE} }}
+.rlabel {{ font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:{BRASS} }}
+.vname {{ font-family:'Playfair Display', 'Playfair', Georgia, serif; font-weight:700; color:{INK}; margin:4px 0 6px }}
+.vrow {{ display:flex; justify-content:space-between; align-items:center; color:{INK}; padding:5px 0; border-top:1px solid {LINE} }}
 .vrow em {{ font-style:normal; font-size:15px; font-weight:600; color:{BRASS}; background:#f1e7d6; padding:2px 9px; border-radius:999px }}
-.rnum {{ font-family:'Playfair Display', 'Playfair', Georgia, serif; font-weight:700; font-size:34px; color:{OX}; margin-top:6px }}
-.rnum span {{ font-family:'Inter', system-ui, Arial, sans-serif; font-weight:500; font-size:19px; color:{GOOD} }}
-.tool {{ width:400px; height:{CH}px; background:{INK}; color:{PA}; padding:18px 24px; opacity:0; box-shadow:0 12px 30px rgba(42,38,34,.18) }}
-.tname {{ font-weight:600; font-size:26px }}
-.tdet {{ position:absolute; left:24px; top:56px; font-size:18px; color:#d8cdbf; white-space:nowrap }}
+.tool {{ height:{L.CH}px; background:{INK}; color:{PA}; opacity:0; box-shadow:0 12px 30px rgba(42,38,34,.18) }}
+.tname {{ font-weight:600 }}
+.tdet {{ position:absolute; color:#d8cdbf; white-space:nowrap }}
 .tdet.ans {{ color:#f0d9a8; font-weight:600 }}
-.sq {{ position:absolute; left:24px; top:58px; display:flex; gap:8px }}
-.sq i {{ display:block; width:32px; height:20px; border-radius:4px; background:#4a4440 }}
+.sq {{ position:absolute; display:flex; gap:8px }}
+.sq i {{ display:block; border-radius:4px; background:#4a4440 }}
 .bell {{ position:absolute; right:22px; top:22px; width:14px; height:14px; border-radius:50%; background:#f0a35e }}
-.veil {{ left:0; top:0; width:1920px; height:1080px; background:{PA} }}
-.endcard {{ left:0; top:0; width:1920px; height:1080px; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0 }}
+.veil {{ left:0; top:0; width:{L.W}px; height:{L.H}px; background:{PA} }}
+.endcard {{ left:0; top:0; width:{L.W}px; height:{L.H}px; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0 }}
 .endcard img {{ margin-bottom:44px }}
-.titlecard {{ left:0; top:0; width:1920px; height:1080px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px }}
-.t-eyebrow {{ font-size:26px; font-weight:600; letter-spacing:.2em; text-transform:uppercase; color:{BRASS}; margin-top:14px }}
-.t-title {{ font-family:'Playfair Display', 'Playfair', Georgia, serif; font-weight:700; font-size:92px; color:{INK} }}
-.end1 {{ font-family:'Playfair Display', 'Playfair', Georgia, serif; font-weight:700; font-size:76px; line-height:1.12; color:{INK}; text-align:center }}
-.end2 {{ font-size:34px; font-weight:600; color:{OX}; margin-top:40px; letter-spacing:.02em }}
-"""
+.titlecard {{ left:0; top:0; width:{L.W}px; height:{L.H}px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px }}
+.t-eyebrow {{ font-weight:600; letter-spacing:.2em; text-transform:uppercase; color:{BRASS}; margin-top:14px }}
+.t-title {{ font-family:'Playfair Display', 'Playfair', Georgia, serif; font-weight:700; color:{INK}; text-wrap:balance }}
+.end1 {{ font-family:'Playfair Display', 'Playfair', Georgia, serif; font-weight:700; line-height:1.12; color:{INK}; text-align:center }}
+.end2 {{ font-weight:600; color:{OX}; letter-spacing:.02em }}
+""" + L.css
 
-
-def stage():
-    return f'<div class="stage" id="stage" role="img" aria-label="Animation: a company’s scattered systems are brought together into one data hub, where they work as one, and reports, tools, AI and AI agents are built on top.">{"".join(html)}</div>'
-
-
-PAGE = """<title>Sanford Explainer</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600&display=swap">
-<style>
-/* One look by choice: the brand's parchment world. The stage is a 1920x1080 film frame scaled to the column. */
-:root { --bg: #efe7d9; --ink: #2a2622; --ink-2: #4f4842; --accent: #6b1f2a; --accent-ink: #f5efe4; --line: #d9cdb9; color-scheme: light }
-body { background: var(--bg); color: var(--ink); font: 16px/1.5 'Inter', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif }
-.wrap { max-width: 1200px; margin: 0 auto; padding-block: 32px 56px;
-  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: flex; flex-direction: column; gap: 18px }
-.eyebrow { margin: 0; font-size: 12.5px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: #7a5c30 }
-h1 { margin: 0; font: 700 clamp(26px, 4.5vw, 38px)/1.15 'Playfair Display', 'Playfair', Georgia, serif; text-wrap: balance }
-.lead { margin: 0; color: var(--ink-2); max-width: 64ch }
-.frame { position: relative; width: 100%; aspect-ratio: 16 / 9; max-width: 100%; overflow: hidden; border-radius: 14px;
-  border: 1px solid var(--line); box-shadow: 0 18px 48px rgba(42,38,34,.14); background: #f5efe4 }
-.frame .stage { position: absolute; left: 0; top: 0 }
-.controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center }
-button { font: 600 14px 'Inter', system-ui, Arial, sans-serif; border-radius: 8px; padding: 9px 16px; cursor: pointer; min-height: 38px;
-  border: 1px solid var(--line); background: #fbf8f2; color: var(--ink) }
-button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent) }
-button:focus-visible { outline: 3px solid #8f6f3e; outline-offset: 2px }
-.note { margin: 0; font-size: 13.5px; color: var(--ink-2) }
-.beats { margin: 0; padding-left: 20px; color: var(--ink-2); display: flex; flex-direction: column; gap: 4px }
-@media (prefers-reduced-motion: reduce) { .stage *, .stage { animation-play-state: paused !important } }
-STAGE_CSS
-</style>
-<div class="wrap">
-  <p class="eyebrow">Sanford Operations</p>
-  <h1>What we do, in under 30 seconds</h1>
-  <p class="lead">Data from many systems comes together in your data hub, works as one, and we build on it. It loops; the video file for LinkedIn and the website is made from this same animation.</p>
-  <div class="frame" id="frame">STAGE</div>
-  <div class="controls">
-    <button type="button" class="primary" id="toggle">Pause</button>
-    <button type="button" id="replay">Play from the start</button>
-  </div>
-  <ol class="beats">
-    <li>0–3 s · Title.</li>
-    <li>3–7 s · Your data lives in many systems. Each one only sees its own piece.</li>
-    <li>7–11 s · We bring it all together.</li>
-    <li>11–15 s · Now it works as one: one customer, seen across every system.</li>
-    <li>15–21 s · Then we build on it: scorecard, forecast, alerts, Ask AI, AI agents.</li>
-    <li>21–26 s · Your data in one place. Numbers everyone trusts, put to work.</li>
-  </ol>
-</div>
-<script>
-(() => {
-  const frame = document.getElementById('frame'), stage = document.getElementById('stage');
-  const fit = () => { stage.style.transform = 'scale(' + (frame.clientWidth / 1920) + ')'; };
-  fit(); new ResizeObserver(fit).observe(frame);
-  const anims = () => stage.getAnimations({ subtree: true });
-  const btn = document.getElementById('toggle');
-  let paused = false;
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const setAll = ms => anims().forEach(a => { a.currentTime = ms; });
-  if (reduce) { setAll(23500); anims().forEach(a => a.pause()); paused = true; btn.textContent = 'Play'; }
-  btn.addEventListener('click', () => {
-    paused = !paused;
-    anims().forEach(a => paused ? a.pause() : a.play());
-    btn.textContent = paused ? 'Play' : 'Pause';
-  });
-  document.getElementById('replay').addEventListener('click', () => {
-    setAll(0); anims().forEach(a => a.play()); paused = false; btn.textContent = 'Pause';
-  });
-})();
-</script>
-"""
 
 if __name__ == "__main__":
-    st = stage()
-    allcss = STAGE_CSS + "\n".join(css)
-    (HERE / "index.html").write_text(PAGE.replace("STAGE_CSS", allcss).replace("STAGE", st))
     f = lambda p: base64.b64encode((REPO / p).read_bytes()).decode()
     fonts = (f"@font-face{{font-family:'Playfair Display';font-weight:700;src:url(data:font/woff2;base64,{f('website/static/fonts/playfair-700.woff2')})}}"
              f"@font-face{{font-family:'Inter';font-weight:100 900;src:url(data:font/woff2;base64,{f('website/static/fonts/inter-latin-var.woff2')})}}")
-    (HERE / "capture.html").write_text(f"<!doctype html><html><head><meta charset='utf-8'><style>{fonts}body{{margin:0}}{allcss}</style></head><body>{st}</body></html>")
-    print("keyframes:", _n[0], "html bytes:", len(st))
-
-
-# ------------------------------------------------------------------ website version
-# The site allows no inline styles or scripts (CSP), so every style attribute becomes a class in
-# website/static/explainer.css, and the stage scales to its box with CSS alone.
-def site():
-    import re
-    st = stage().replace(f"data:image/svg+xml;base64,{seal}", "/static/brand/seal.svg")
-    rules = []
-
-    def cls_style(m):
-        n = len(rules)
-        rules.append(m.group(3))
-        return f'{m.group(1)}{m.group(2)} s{n}"'
-    st = re.sub(r'(<\w+ class=")([^"]*)" style="([^"]*)"', cls_style, st)
-    st = re.sub(r'class="([^"]*)"', lambda m: 'class="' + re.sub(r"\bk(\d+)\b", r"exk\1", m.group(1)) + '"', st)
-    assert "style=" not in st, "inline style left"
-
-    def prefix(block):
-        return re.sub(r"(^|\})\s*([^{}@][^{}]*)\{",
-                      lambda m: m.group(1) + ",".join(".explainer " + s.strip() for s in m.group(2).split(",")) + "{", block)
-    kf = "\n".join(css)
-    kf = re.sub(r"@keyframes k(\d+)", r"@keyframes exk\1", kf)
-    kf = re.sub(r"\.k(\d+)\{animation:k(\d+) ", r".explainer .exk\1{animation:exk\2 ", kf)
-    out = ["/* Generated by website/brand/animation/build.py. Do not edit by hand. */",
-           ".explainer{position:relative;width:100%;aspect-ratio:16/9;container-type:inline-size;overflow:hidden;"
-           "border-radius:14px;border:1px solid var(--line);background:#f5efe4;text-align:left;line-height:normal}",
-           prefix(STAGE_CSS.strip()),
-           ".explainer .stage{position:absolute;left:0;top:0;transform-origin:0 0;transform:scale(tan(atan2(100cqw,1920px)))}",
-           kf,
-           "".join(f".explainer .s{i}{{{r}}}" for i, r in enumerate(rules) if r),
-           f"@media (prefers-reduced-motion: reduce){{.explainer *{{animation-delay:-{21 + OFF}s!important;animation-play-state:paused!important}}}}"]
-    (REPO / "website/static/explainer.css").write_text("\n".join(out) + "\n")
-    (REPO / "website/explainer.html").write_text(f'<div class="explainer">{st}</div>\n')
-    print("site: wrote website/static/explainer.css and website/explainer.html")
-
-
-site()
+    for L in (wide(), tall()):
+        css.clear()
+        st = scene(L)
+        (HERE / f"capture-{L.name}.html").write_text(
+            f"<!doctype html><html><head><meta charset='utf-8'><title>Explainer ({L.name})</title>"
+            f"<style>{fonts}body{{margin:0}}{stage_css(L)}{''.join(css)}</style></head><body>{st}</body></html>")
+        print(f"{L.name}: {L.W}x{L.H}, {len(css) // 2} keyframes")

@@ -1,13 +1,22 @@
 # Explainer animation
 
-`sanford-explainer.mp4`: 26.5 seconds (a 2.5-second title card, then 24 seconds), 1920 × 1080, silent, loops. For LinkedIn, the website and calls. `poster.png` is the end card; the first frame is the title card.
+Two cuts of the same 26.5-second story (a 2.5-second title card, then 24 seconds), silent, looping:
 
-Rebuild after a change:
+- `website/static/video/explainer-wide.mp4`: 1920 × 1080, for desktop, LinkedIn and calls.
+- `website/static/video/explainer-tall.mp4`: 720 × 1080 drawn at 1.5× (1080 × 1620), for phones: stacked layout, bigger text.
+
+The home page plays the tall cut on screens up to 640px wide and the wide cut elsewhere, and shows a still of the end card
+to visitors who ask for reduced motion. `poster.png` is the end card for social posts.
+
+Rebuild after a change (the beats and timings are in `build.py`: `CAPS`, `SYSTEMS`, `TOOLS`; the numbers on screen are illustrative):
 
 ```bash
-python website/brand/animation/build.py          # writes index.html (viewer page) and capture.html here
-node website/brand/animation/frames.js "$PWD/website/brand/animation/capture.html" /tmp/frames fps 30   # needs Playwright
-ffmpeg -framerate 30 -i /tmp/frames/f%04d.png -c:v libx264 -crf 18 -pix_fmt yuv420p -movflags +faststart website/brand/animation/sanford-explainer.mp4
+cd website/brand/animation
+python build.py                                   # writes capture-wide.html and capture-tall.html (open them to preview)
+for c in wide tall; do
+  python frames.py capture-$c.html /tmp/frames-$c fps 30          # needs Playwright
+  ffmpeg -y -framerate 30 -i /tmp/frames-$c/f%04d.png -c:v libx264 -preset slow -crf 22 -pix_fmt yuv420p -movflags +faststart ../../static/video/explainer-$c.mp4
+  ffmpeg -y -i /tmp/frames-$c/f0010.png -q:v 4 ../../static/video/explainer-$c.jpg        # poster: the title card
+  ffmpeg -y -i /tmp/frames-$c/f0735.png -q:v 4 ../../static/video/explainer-$c-end.jpg    # reduced-motion still: the end card
+done
 ```
-
-The beats and their timings are in `build.py` (`CAPS`, `SYSTEMS`, `TOOLS`). The numbers on screen are illustrative.

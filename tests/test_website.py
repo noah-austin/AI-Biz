@@ -126,3 +126,11 @@ def test_home_hides_the_demo(site):
     html = client.get("/").text
     assert 'href="/demo"' not in html and "/contact?interest=demo" in html          # demo is by request only
     assert "Disallow: /demo" in client.get("/robots.txt").text
+
+
+def test_home_plays_the_explainer_with_a_phone_cut(site):
+    client, _ = site
+    html = client.get("/").text
+    assert 'media="(max-width: 640px)"' in html and "explainer-tall.mp4" in html and "explainer-wide.mp4" in html
+    for name in ("explainer-tall.mp4", "explainer-wide.mp4", "explainer-wide-end.jpg"):
+        assert client.get(f"/static/video/{name}", headers={"Range": "bytes=0-9"}).status_code == 206   # iPhones need ranges
