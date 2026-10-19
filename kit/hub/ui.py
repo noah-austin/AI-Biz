@@ -28,6 +28,7 @@ NAV = [  # path, label, admin only, group (pages in a group share one menu item 
     ("/winloss", "Win / loss", False, "Sales", "analytics"),
     ("/forecast", "Forecast", False, "Sales", "analytics"),
     ("/receivables", "Receivables", False, None, "analytics"),
+    ("/projects", "Projects", False, "Operations", "projects"),
     ("/orders", "Orders", False, "Operations", "orders"),
     ("/jobs", "Field service", False, "Operations", "field_service"),
     ("/inventory", "Inventory", False, "Operations", "inventory"),
@@ -213,8 +214,10 @@ def page(request, title: str, body: str, active: str = "", subtitle: str = "", w
             if group in groups_done:
                 continue
             groups_done.add(group)
-            here = any(n[1] == active for n in items if n[3] == group)
-            nav.append(f'<a href="{path}"{" aria-current=page" if here else ""}>{esc(group)}</a>')
+            members = [n for n in items if n[3] == group]
+            here = any(n[1] == active for n in members)
+            name = group if len(members) > 1 else label   # a group of one is just that page
+            nav.append(f'<a href="{path}"{" aria-current=page" if here else ""}>{esc(name)}</a>')
             continue
         cur = ' aria-current="page"' if active == label else ""
         nav.append(f'<a href="{path}"{cur}>{esc(label)}</a>')

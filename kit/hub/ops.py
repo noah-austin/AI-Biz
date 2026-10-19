@@ -257,13 +257,11 @@ def people_page(request):
     {ui.how(metrics.HOW["overtime"])}</section>
   <section class="card"><div class="card-head"><h2>Who works where</h2><span class="muted">Today</span></div>{hc_bars}</section>
 </div>
-<div class="cols even">
-  <section class="card" id="certs"><div class="card-head"><h2>Licenses to renew</h2><span class="muted">Expired or expiring in 30 days</span></div>
-    {_table(["Person", "License", "Expires", ""], crows, "Everything is current.", (2,))}
-    {ui.how(metrics.HOW["certs"])}</section>
-  <section class="card" id="roles"><div class="card-head"><h2>Open roles</h2><span class="muted">{len(roles)} open</span></div>
-    {_table(["Role", "Branch", "Why", "Opened", "Open for", "Applicants"], rrows, "No open roles.", (3, 4, 5))}</section>
-</div>"""
+<section class="card" id="certs"><div class="card-head"><h2>Licenses to renew</h2><span class="muted">Expired or expiring in 30 days</span></div>
+  {_table(["Person", "License", "Expires", ""], crows, "Everything is current.", (2,))}
+  {ui.how(metrics.HOW["certs"])}</section>
+<section class="card" id="roles"><div class="card-head"><h2>Open roles</h2><span class="muted">{len(roles)} open</span></div>
+  {_table(["Role", "Branch", "Why", "Opened", "Open for", "Applicants"], rrows, "No open roles.", (3, 4, 5))}</section>"""
     return ui.page(request, "People", body, "People", subtitle="From HR and payroll. Pay rates and personal details are never shown here.")
 
 
@@ -280,6 +278,10 @@ SOURCE_FIELDS = {
     "po": [("number", "PO number"), ("vendor", "Vendor"), ("kind", "Type"), ("status", "Status"), ("ordered_date", "Ordered"),
            ("expected_date", "Expected"), ("received_date", "Received"), ("amount", "Amount"), ("billed_amount", "Billed by vendor"),
            ("deal_id", "For deal"), ("id", "Record ID")],
+    "project": [("number", "Project number"), ("name", "Project"), ("customer", "Client"), ("billing_type", "Billing"),
+                ("status", "Status"), ("contract_value", "Contract value"), ("budget_hours", "Budget hours"),
+                ("percent_complete", "Percent complete (PM)"), ("start_date", "Start"), ("end_date", "End"), ("pm", "Project manager"),
+                ("deal_id", "CRM deal"), ("id", "Record ID")],
     "order": [("number", "Order number"), ("customer", "Customer"), ("channel", "Channel"), ("status", "Status"),
               ("order_date", "Ordered"), ("requested_date", "Customer wants it by"), ("first_ship_date", "First shipment"),
               ("last_ship_date", "Last shipment"), ("rep", "Sales rep"), ("invoice_number", "Invoice number"), ("id", "Record ID")],
@@ -325,6 +327,17 @@ def demo_record(system: str, obj: str, rec_id: str, scope):
         rel = "<h3>Lines</h3><ul class=\"list\">" + "".join(
             f'<li>{esc(x["description"])}<span class="amt">{ui.num(x["qty"])} × {money(x["unit_price"])}</span></li>' for x in lines) + "</ul>"
         return r, "Purchasing", "po", rel
+    if (system, obj) == ("projects", "project"):
+        r = db.one("""SELECT p.*, a.name AS customer, e.name AS pm FROM psa.projects p LEFT JOIN crm.accounts a ON a.id = p.account_id
+                      LEFT JOIN hr.employees e ON e.id = p.pm_id WHERE p.id = %(i)s""", {"i": rec_id})
+        if not r or not ok(r["branch_code"]):
+            return None
+        team = db.query("""SELECT e.name, e.title, sum(t.hours) AS hours FROM psa.time_entries t JOIN hr.employees e ON e.id = t.employee_id
+                           WHERE t.project_id = %(i)s GROUP BY 1, 2 ORDER BY 3 DESC""", {"i": rec_id})
+        rel = "<h3>Time by person</h3><ul class=\"list\">" + "".join(
+            f'<li>{esc(x["name"])} <span class="muted">{esc(x["title"])}</span><span class="amt">{float(x["hours"]):,.1f} hrs</span></li>'
+            for x in team) + "</ul>"
+        return r, "Projects and time", "project", rel
     if (system, obj) == ("orders", "order"):
         r = db.one("""SELECT o.*, a.name AS customer, u.name AS rep FROM ord.orders o LEFT JOIN crm.accounts a ON a.id = o.account_id
                       LEFT JOIN crm.users u ON u.id = o.rep_id WHERE o.id = %(i)s""", {"i": rec_id})
@@ -417,3 +430,74 @@ def orders_page(request):
   {_table(["Order", "Customer", "Item", "Branch", "Qty open", "Value", "Ordered"], brows, "Nothing on backorder.", (4, 5, 6))}
   {ui.how(metrics.HOW["backorders"])}</section>"""
     return ui.page(request, "Orders", body, "Orders", subtitle="Sales orders and shipping, from the ERP, last 30 days unless noted")
+
+
+# ---------------------------------------------------------------- projects and time
+
+def projects_page(request):
+    scope, t = _scope(request), metrics.today()
+    first, last = metrics._weeks_back(t, 4)
+    pfirst, plast = metrics._weeks_back(t - dt.timedelta(weeks=4), 4)
+    u, up = metrics.time_summary(first, last, scope), metrics.time_summary(pfirst, plast, scope)
+    s = metrics.projects_summary(t, scope)
+    tiles = "".join([
+        ui.tile("Billable utilization", pct(u["billable_util"], 0), ui.points_delta(u["billable_util"], up["billable_util"], "vs the 4 weeks before"),
+                "#util", metrics.HOW["billable_util"]),
+        ui.tile("Realization", pct(s["realization"], 0), f'{s["completed"]} projects completed in 12 months', "#realization",
+                metrics.HOW["realization"]),
+        ui.tile("Unbilled work in progress", money(s["unbilled_wip"], True),
+                f'<span class="delta bad">{money(s["unbilled_over_60"], True)} over 60 days</span>' if s["unbilled_over_60"] else "all recent",
+                "#wip", metrics.HOW["unbilled_wip"]),
+        ui.tile("Backlog", money(s["backlog"], True), f'{s["active"]} active projects', None, metrics.HOW["backlog"]),
+        ui.tile("Projects over pace", ui.num(s["at_risk"]), "fixed fees burning budget ahead of progress", "#risk", metrics.HOW["budget_used"]),
+    ])
+    by_office = metrics.utilization_by("branch", first, last, scope)
+    office_bars = _pct_bars([dict(r, branch=r["key"]) for r in by_office], "billable_util",
+                            lambda r: f'{float(r["billable"]):,.0f} of {float(r["recorded"]):,.0f} hrs', "Billable utilization by office")
+    weekly = metrics.utilization_by_week(t, 52, scope)
+    weeks = sorted({w["week"] for w in weekly})
+    offices = sorted({w["branch"] for w in weekly})
+    trend = ui.chart("util-trend", {"type": "line", "format": "pct", "labels": [ui.short_date(w) for w in weeks], "suggestedMax": 100,
+                                    "datasets": [{"label": o, "data": [next((100 * float(x["util"]) for x in weekly if x["branch"] == o and x["week"] == w
+                                                                             and x["util"] is not None), None) for w in weeks],
+                                                  "color": f"--series-{i + 1}", "points": False} for i, o in enumerate(offices[:3])]},
+                     height=230, label="Billable utilization by week for each office")
+    legend = "".join(f'<span><i style="background:var(--series-{i + 1})"></i>{esc(o)}</span>' for i, o in enumerate(offices[:3]))
+    by_role = metrics.utilization_by("title", first, last, scope)
+    role_bars = _pct_bars([dict(r, branch=r["key"]) for r in by_role], "billable_util", lambda r: "", "Billable utilization by role")
+    by_pm = [r for r in metrics.projects_by("pm", t, scope) if r["key"] != "(none)"]
+    pm_bars = ui.hbars([{"label": r["key"], "value": max(0, (r["realization"] or 0) * 100), "shown": pct(r["realization"], 0),
+                         "sub": f'{r["projects"]} projects · margin {pct(r["project_margin"], 0)}'}
+                        for r in sorted(by_pm, key=lambda r: r["realization"] or 0)], label="Realization by project manager", top=110)
+    by_seg = metrics.projects_by("segment", t, scope)
+    seg_bars = ui.hbars([{"label": r["key"], "value": max(0, (r["realization"] or 0) * 100), "shown": pct(r["realization"], 0),
+                          "sub": money(r["billed"], True)} for r in sorted(by_seg, key=lambda r: r["realization"] or 0)],
+                        label="Realization by client type", top=110)
+    risk = metrics.projects_at_risk(scope)
+    rrows = [f'<tr><td class="wrap">{ui.source_link("psa_project", r["id"], r["name"])}<div class="meta">{esc(r["number"])} · {esc(r["pm_name"] or "")}</div></td>'
+             f'<td>{esc(r["branch"])}</td><td class="n"><span class="cellbar"><i style="width:{min(100, float(r["budget_used"]) * 100 / 1.5):.0f}%"></i></span>'
+             f'<span>{float(r["budget_used"]):.0%}</span></td><td class="n">{float(r["percent_complete"]):.0f}%</td>'
+             f'<td class="n">{money(r["contract_value"])}</td></tr>' for r in risk]
+    wip = metrics.unbilled_projects(t, scope)
+    wrows = [f'<tr><td class="wrap">{ui.source_link("psa_project", w["id"], w["name"])}<div class="meta">{esc(w["pm_name"] or "")}</div></td>'
+             f'<td>{esc(w["branch"])}</td><td class="n">{money(w["unbilled_value"])}</td><td class="n">{ui.date(w["oldest_unbilled"])}</td>'
+             f'<td class="n">{w["days"]} days</td></tr>' for w in wip]
+    body = f"""<div class="tiles">{tiles}</div>
+<div class="cols even" id="util">
+  <section class="card"><div class="card-head"><h2>Billable utilization by office</h2><span class="muted">Last 4 weeks · target 75%</span></div>
+    {office_bars}{ui.how(metrics.HOW["billable_util"])}</section>
+  <section class="card"><div class="card-head"><h2>Utilization, last 12 months</h2><div class="legend">{legend}</div></div>{trend}</section>
+</div>
+<div class="cols even" id="realization">
+  <section class="card"><div class="card-head"><h2>Realization by project manager</h2><span class="muted">Projects completed in 12 months</span></div>
+    {pm_bars}{ui.how(metrics.HOW["realization"] + " " + metrics.HOW["project_margin"])}</section>
+  <section class="card"><div class="card-head"><h2>Realization by client type</h2><span class="muted">Where hours get written down</span></div>
+    {seg_bars}<div style="margin-top:14px"><h3 style="font-size:14px">Utilization by role, last 4 weeks</h3>{role_bars}</div></section>
+</div>
+<section class="card" id="risk"><div class="card-head"><h2>Fixed-fee projects burning ahead of progress</h2><span class="muted">Budget used vs percent complete</span></div>
+  {_table(["Project", "Office", "Budget used", "Complete", "Fee"], rrows, "Every fixed-fee project is on pace.", (2, 3, 4))}
+  {ui.how(metrics.HOW["budget_used"])}</section>
+<section class="card" id="wip"><div class="card-head"><h2>Unbilled hourly work</h2><span class="muted">From before this month, oldest first</span></div>
+  {_table(["Project", "Office", "Unbilled", "Since", "Age"], wrows, "All hourly work is billed.", (2, 3, 4))}
+  {ui.how(metrics.HOW["unbilled_wip"])}</section>"""
+    return ui.page(request, "Projects", body, "Projects", subtitle="Projects, budgets and time, from the project and time system")

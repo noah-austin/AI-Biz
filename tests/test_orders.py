@@ -15,6 +15,7 @@ DIST = Path(__file__).resolve().parent.parent / "clients" / "demo_distribution"
 
 def _load_generator():
     sys.path.insert(0, str(DIST))
+    sys.modules.pop("company_profile", None)   # another demo's profile may already be loaded under the same name
     try:
         spec = importlib.util.spec_from_file_location("dist_generate", DIST / "generate.py")
         mod = importlib.util.module_from_spec(spec)
@@ -22,6 +23,7 @@ def _load_generator():
         return mod
     finally:
         sys.path.remove(str(DIST))
+        sys.modules.pop("company_profile", None)
 
 
 @pytest.fixture(scope="module")

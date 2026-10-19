@@ -9,7 +9,8 @@ Generalised from Bluestem's operations generator. The profile's PEOPLE dict says
     short: (branch, [seat numbers]) - planted: these frontline seats were vacated recently and not yet refilled
     growth: [(branch, date)] - new frontline seats opened on these dates
     certs: [(name, years valid or None, department or title it applies to)], license: the cert name that's a legal must
-    overtime: {"base": hours, "frontline": hours, "summer": hours, "short_factor": hours per missing share, "branch": {code: extra}}
+    overtime: {"base": hours, "frontline": hours, "summer": hours, "short_factor": hours per missing share,
+               "branch": {code: extra for frontline}, "branch_all": {code: extra for everyone else paid hourly}}
 Sales staff come from the CRM's users, so names match across systems.
 """
 import datetime as dt
@@ -166,7 +167,7 @@ def build_timesheets(p, R, employees, as_of, start):
                 is_front = e["Department"] == P["frontline"]
                 busy = O.get("summer", 2.0) if week.month in O.get("busy_months", (6, 7, 8)) else 0
                 mean = (O.get("frontline", 2.5) + busy + O.get("short_factor", 26) * short + O.get("branch", {}).get(code, 0)
-                        if is_front else O.get("base", 0.8))
+                        if is_front else O.get("base", 0.8) + O.get("branch_all", {}).get(code, 0))
                 ot = max(0.0, r.gauss(mean, 2.2))
                 pto = 8 * r.choice([0] * 14 + [1, 1, 2, 3, 5])
                 hired = dt.date.fromisoformat(e["HireDate"])
@@ -177,7 +178,8 @@ def build_timesheets(p, R, employees, as_of, start):
                             "RegularHours": round(max(0.0, 8 * min(5, days) - pto), 1), "OvertimeHours": round(ot if days >= 4 else 0, 1),
                             "PtoHours": float(pto) if days == 5 else 0.0, "Approved": week < last_monday or r.random() < 0.8})
         week += dt.timedelta(days=7)
-    missing = [e["Id"] for e in front if e["PayType"] == "Hourly" and active_on(e, last_monday)][5::23][:2]   # planted
+    hourly = [e for e in front if e["PayType"] == "Hourly"] or [e for e in employees if e["PayType"] == "Hourly"]
+    missing = [e["Id"] for e in hourly if active_on(e, last_monday)][5::23][:2]   # planted
     return [t for t in out if not (t["WeekStart"] == last_monday.isoformat() and t["EmployeeId"] in missing)]
 
 

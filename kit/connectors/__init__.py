@@ -9,4 +9,5 @@ REGISTRY = {
     "demo_inventory": demo.DemoInventory,
     "demo_purchasing": demo.DemoPurchasing,
     "demo_orders": demo.DemoOrders,
+    "demo_projects": demo.DemoProjects,
 }

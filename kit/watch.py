@@ -100,6 +100,18 @@ def ops_alerts(t: dt.date, scope, since: dt.date) -> list[dict]:
             out.append({"date": j["arrived_date"], "severity": "warning", "kind": "Emergency call late",
                         "title": f'{j["account_name"]}: reached after {float(j["response_hours"]):.1f} hours',
                         "detail": f'{j["branch"]} · job {j["number"]} · the promise is 4 hours', "amount": None, "job_id": j["id"]})
+    if "projects" in apps:
+        week = t - dt.timedelta(days=t.weekday() + 7)
+        for b in metrics.utilization_by("branch", week, week + dt.timedelta(days=6), scope):
+            if b["recorded"] >= 200 and (b["billable_util"] or 0) < r.get("util_min", 0.65):
+                out.append({"date": week + dt.timedelta(days=6), "severity": "warning", "kind": "Utilization low",
+                            "title": f'{b["key"]}: only {b["billable_util"]:.0%} of hours were billable last week',
+                            "detail": f'week of {week:%b %-d} · target 75%', "amount": None})
+        for pr in metrics.projects_at_risk(scope):
+            if float(pr["budget_used"] or 0) > 1:
+                out.append({"date": t, "severity": "warning", "kind": "Project over budget",
+                            "title": f'{pr["name"]}: {float(pr["budget_used"]):.0%} of budget hours used at {float(pr["percent_complete"]):.0f}% complete',
+                            "detail": f'{pr["branch"]} · {pr["pm_name"]}', "amount": None, "project_id": pr["id"]})
     if "orders" in apps:
         week = t - dt.timedelta(days=t.weekday() + 7)
         for b in metrics.orders_by("branch", week, week + dt.timedelta(days=6), scope):
@@ -219,6 +231,28 @@ def daily_brief(t: dt.date, scope=None) -> list[dict]:
 def ops_brief(t: dt.date, scope=None) -> list[dict]:
     """Morning-brief lines from the operations systems this install has switched on."""
     apps, lines = get_settings().apps, []
+    if "projects" in apps:
+        first, last = metrics._weeks_back(t, 4)
+        offices = [b for b in metrics.utilization_by("branch", first, last, scope) if b["recorded"] >= 400]
+        low = min(offices, key=lambda b: b["billable_util"] or 1, default=None)
+        if low and (low["billable_util"] or 1) < 0.68:
+            lines.append({"text": f'{low["key"]} billed only {low["billable_util"]:.0%} of its hours over the last four weeks, against '
+                                  f'a 75% target: its people have room for more work.', "link": "/projects"})
+        risk = metrics.projects_at_risk(scope)
+        if risk:
+            lines.append({"text": f'{len(risk)} fixed-fee project{"s are" if len(risk) != 1 else " is"} burning budget faster than '
+                                  f'{"they progress" if len(risk) != 1 else "it progresses"}.', "link": "/projects#risk"})
+        pms = [r for r in metrics.projects_by("pm", t, scope) if r["projects"] >= 5 and r["realization"] is not None]
+        worst = min(pms, key=lambda r: r["realization"], default=None)
+        if worst and worst["realization"] < 0.85:
+            lines.append({"text": f'{worst["key"]}\'s projects billed {worst["realization"]:.0%} of the hours they took over the last year '
+                                  f'(the firm averages {metrics.projects_summary(t, scope)["realization"]:.0%}): fixed fees running over.',
+                          "link": "/projects#realization"})
+        stale = [u for u in metrics.unbilled_projects(t, scope) if (u["days"] or 0) > 60]
+        if stale:
+            top = stale[0]
+            lines.append({"text": f'{top["name"]} has {metrics_money(top["unbilled_value"])} of time not billed since '
+                                  f'{top["oldest_unbilled"]:%B %-d}.', "link": "/projects#wip"})
     if "orders" in apps:
         month = metrics.orders_by("branch", t - dt.timedelta(days=29), t, scope)
         worst = min((b for b in month if b["lines"] >= 100), key=lambda b: b["fill_rate"] or 1, default=None)

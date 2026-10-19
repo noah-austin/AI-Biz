@@ -196,6 +196,11 @@ def _changes_card(ch, t):
 def _across_the_business(t, scope) -> str:
     """One tile per operations area this install has, each opening its page."""
     apps, tiles = get_settings().apps, []
+    if "projects" in apps:
+        first, last = metrics._weeks_back(t, 4)
+        u = metrics.time_summary(first, last, scope)
+        ps = metrics.projects_summary(t, scope)
+        tiles.append(ui.tile("Billable utilization", pct(u["billable_util"], 0), f'backlog {money(ps["backlog"], True)} · last 4 weeks', "/projects"))
     if "orders" in apps:
         o = metrics.orders_summary(t - dt.timedelta(days=29), t, scope)
         tiles.append(ui.tile("Fill rate", pct(o["fill_rate"], 1), f'margin {pct(o["gross_margin"], 1)} · last 30 days', "/orders"))
@@ -642,6 +647,7 @@ CHECK_SHORT = {"placeholder_close": "Placeholder close date", "duplicates": "Pos
                "missing_margin": "No margin entered", "lost_no_reason": "No loss reason", "won_not_billed": "Won, not billed",
                "unlinked_customer": "Unlinked customer", "unmapped_branch": "Unknown branch",
                "order_not_invoiced": "Order not invoiced", "below_cost": "Sold below cost",
+               "time_not_billed": "Time not billed", "over_budget": "Over budget",
                "job_not_invoiced": "Job not invoiced", "job_left_tech": "Job on a leaver", "expired_license_booked": "Expired license",
                "missing_timesheet": "Missing timesheet", "no_manager": "No manager", "negative_stock": "Negative stock",
                "item_no_cost": "Part with no cost", "po_not_billed": "No vendor bill", "duplicate_vendor": "Duplicate vendor"}
@@ -654,7 +660,8 @@ def cleanup_page(request):
     short = {"placeholder_close": "Placeholder", "duplicates": "Duplicates", "stale_open": "Stale open",
              "missing_margin": "No margin", "lost_no_reason": "No loss reason", "won_not_billed": "Not billed",
              "unlinked_customer": "Unlinked", "unmapped_branch": "Unknown branch", "job_not_invoiced": "Not invoiced",
-             "order_not_invoiced": "Order not billed", "below_cost": "Below cost",
+             "order_not_invoiced": "Order not billed", "below_cost": "Below cost", "time_not_billed": "Not billed",
+             "over_budget": "Over budget",
              "job_left_tech": "On a leaver", "expired_license_booked": "Expired license", "missing_timesheet": "Timesheet",
              "no_manager": "No manager", "negative_stock": "Negative stock", "item_no_cost": "No cost", "po_not_billed": "No bill",
              "duplicate_vendor": "Dup. vendor"}
@@ -792,7 +799,7 @@ FIELD_LABELS = {
 def _fmt_field(key, v):
     if v is None or v == "":
         return '<span class="muted">(blank)</span>'
-    if key in ("amount", "amount_paid", "billable_amount", "billed_amount", "standard_cost"):
+    if key in ("amount", "amount_paid", "billable_amount", "billed_amount", "standard_cost", "contract_value"):
         return money(v)
     if isinstance(v, bool):
         return "Yes" if v else "No"

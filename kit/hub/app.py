@@ -185,6 +185,8 @@ if "analytics" in APPS:
         return Response(pages.deals_csv(request), media_type="text/csv",
                         headers={"Content-Disposition": 'attachment; filename="deals.csv"'})
 
+if "projects" in APPS:
+    app.get("/projects", response_class=HTMLResponse)(_html(ops.projects_page))
 if "orders" in APPS:
     app.get("/orders", response_class=HTMLResponse)(_html(ops.orders_page))
 if "field_service" in APPS:

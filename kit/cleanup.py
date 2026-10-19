@@ -22,7 +22,7 @@ class Check:
     app: str = "analytics"   # only run for installs with this app (and so this system) switched on
 
 
-SYSTEMS = {"crm": "CRM", "accounting": "Accounting", "orders": "Orders (ERP)", "fieldservice": "Field service", "inventory": "Inventory",
+SYSTEMS = {"crm": "CRM", "accounting": "Accounting", "orders": "Orders (ERP)", "projects": "Projects and time", "fieldservice": "Field service", "inventory": "Inventory",
            "purchasing": "Purchasing", "hr": "HR and payroll"}
 
 
@@ -89,6 +89,23 @@ CHECKS = [
           """SELECT id, name AS label, 'Branch code ' || coalesce(branch_code, '(blank)') AS detail, amount, branch_code,
                     branch, owner_name
              FROM rpt.deals WHERE region = 'Unmapped' AND %(scope)s IS NULL ORDER BY amount DESC NULLS LAST"""),
+    Check("time_not_billed", "Hourly project with time not billed for 60+ days",
+          "Work done but not invoiced is cash the firm is lending its client, and it gets harder to collect the older it is.",
+          "Bill the time, or write down what won't be billed, with the project manager's say-so.", "projects", "psa_project",
+          f"""SELECT id, 'Project ' || number || ' · ' || name AS label,
+                     'Unbilled since ' || to_char(oldest_unbilled, 'Mon FMDD, YYYY') AS detail, unbilled_value AS amount,
+                     branch_code, branch, coalesce(pm_name, 'Billing') AS owner_name
+              FROM rpt.projects WHERE billing_type = 'Time & materials' AND unbilled_value > 0
+                AND oldest_unbilled < core.local_today() - 60 {_s()} ORDER BY unbilled_value DESC""", "projects"),
+    Check("over_budget", "Fixed-fee project past its budget hours",
+          "Every hour from here is unpaid. If the scope grew, it needs a change order.",
+          "Raise a change order with the client, or agree a recovery plan with the project manager.", "projects", "psa_project",
+          f"""SELECT id, 'Project ' || number || ' · ' || name AS label,
+                     round(budget_used * 100) || '%% of budget hours used, ' || round(percent_complete) || '%% complete' AS detail,
+                     (hours - budget_hours) * (standard_value / nullif(hours, 0)) AS amount, branch_code, branch,
+                     coalesce(pm_name, 'Projects') AS owner_name
+              FROM rpt.projects WHERE status = 'Active' AND billing_type = 'Fixed fee' AND budget_used > 1 {_s()}
+              ORDER BY budget_used DESC""", "projects"),
     Check("order_not_invoiced", "Order shipped but not invoiced after 5 days",
           "Goods are gone but the bill never went out.",
           "Invoice the order, or record why it isn't billable.", "orders", "ord_order",

@@ -186,3 +186,21 @@ class DemoOrders(Connector):
                    "qty_first_shipment": "QtyFirstShipment", "qty_shipped": "QtyShipped", "unit_price": "UnitPrice",
                    "unit_cost": "UnitCost"}, o),
         ]
+
+
+class DemoProjects(Connector):
+    source = "demo projects and time (PSA)"
+
+    def objects(self):
+        o = self.options
+        return [
+            _spec("psa.projects", "projects/projects.json",
+                  {"id": "Id", "number": "ProjectNumber", "name": "Name", "account_id": "AccountId", "deal_id": "DealId",
+                   "branch_code": "OfficeCode", "pm_id": "ProjectManagerId", "billing_type": "BillingType",
+                   "contract_value": "ContractValue", "budget_hours": "BudgetHours", "start_date": "StartDate",
+                   "end_date": "EndDate", "status": "Status", "percent_complete": "PercentComplete"}, o),
+            _spec("psa.time_entries", "projects/time_entries.json",
+                  {"id": "Id", "employee_id": "EmployeeId", "project_id": "ProjectId", "week_ending": "WeekEnding",
+                   "hours": "Hours", "billable": "Billable", "bill_rate": "BillRate", "cost_rate": "CostRate",
+                   "invoice_number": "InvoiceNumber"}, o),
+        ]

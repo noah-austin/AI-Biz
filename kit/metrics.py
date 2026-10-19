@@ -216,6 +216,7 @@ SCORECARD = [  # key, label, format, higher_is_better, how, app it needs
     ("emergency_on_time", "Emergency calls reached in 4 hours", "pct", True, "emergency_on_time", "field_service"),
     ("first_time_fix", "First-time fix", "pct", True, "first_time_fix", "field_service"),
     ("overtime_pct", "Overtime, % of hours worked", "pct", False, "overtime", "people"),
+    ("billable_util", "Billable utilization", "pct", True, "billable_util", "projects"),
     ("fill_rate", "Fill rate (lines complete first time)", "pct", True, "fill_rate", "orders"),
     ("on_time_ship", "Orders shipped on time", "pct", True, "on_time_ship", "orders"),
     ("gross_margin", "Gross margin on orders", "pct", True, "gross_margin", "orders"),
@@ -284,6 +285,11 @@ def scorecard(t: dt.date, weeks=13, scope=None) -> dict:
             SELECT week_start AS w, sum(overtime_hours) AS ot, sum(worked_hours) AS worked FROM rpt.timesheets
             WHERE week_start BETWEEN %(first)s AND %(t)s {_scope(scope)} GROUP BY 1""", p)}
         series["overtime_pct"] = {w: 100 * float(r["ot"] or 0) / float(r["worked"]) for w, r in ot.items() if r["worked"]}
+    if "projects" in apps:
+        te = {r["w"]: r for r in db.query(f"""
+            SELECT date_trunc('week', week_ending)::date AS w, sum(hours) FILTER (WHERE billable) AS b, sum(hours) AS n
+            FROM rpt.time_entries WHERE week_ending BETWEEN %(first)s AND %(t)s {_scope(scope)} GROUP BY 1""", p)}
+        series["billable_util"] = {w: 100 * float(r["b"] or 0) / float(r["n"]) for w, r in te.items() if r["n"]}
     if "orders" in apps:
         ol = {r["w"]: r for r in db.query(f"""
             SELECT {wk.format(col='order_date')} AS w, count(*) AS lines, count(*) FILTER (WHERE filled_first_time) AS filled,
@@ -779,3 +785,96 @@ def backorders(scope=None, limit=25) -> list[dict]:
                                qty_ordered - qty_shipped AS qty_open, backorder_value, order_date
                         FROM rpt.order_lines WHERE backorder_value > 0 {_scope(scope)}
                         ORDER BY backorder_value DESC LIMIT {int(limit)}""", {"scope": scope})
+
+
+# ---------- projects and time (professional services) ----------
+
+HOW.update({
+    "billable_util": "Billable hours ÷ all hours recorded (billable and internal, not time off), for people who record time "
+                     "to projects, by week ending.",
+    "realization": "For projects completed in the last 12 months: amount billed ÷ standard value of the hours spent (hours × "
+                   "standard rates). Below 100% means hours were written down, or a fixed fee was outrun.",
+    "unbilled_wip": "Billable hours on hourly projects not yet on an invoice, at standard rates, as of today.",
+    "backlog": "For projects not finished yet: contract value minus what's been billed so far.",
+    "budget_used": "Hours to date ÷ budget hours, against the project manager's percent complete. Flagged when the budget "
+                   "used is more than 20 points ahead of the progress: it's heading over.",
+    "project_margin": "For projects completed in the last 12 months: (billed − cost of the hours) ÷ billed.",
+})
+
+
+def time_summary(start, end, scope=None) -> dict:
+    r = db.one(f"""SELECT coalesce(sum(hours) FILTER (WHERE billable), 0) AS billable, coalesce(sum(hours), 0) AS recorded,
+                          coalesce(sum(standard_value) FILTER (WHERE billable), 0) AS standard_value
+                   FROM rpt.time_entries WHERE week_ending BETWEEN %(s)s AND %(e)s {_scope(scope)}""",
+               {"s": start, "e": end, "scope": scope})
+    out = {k: float(v) for k, v in r.items()}
+    out["billable_util"] = _ratio(out["billable"], out["recorded"])
+    return out
+
+
+def utilization_by(dim: str, start, end, scope=None) -> list[dict]:
+    cols = {"branch": "branch", "title": "title", "person": "employee_name"}
+    if dim not in cols:
+        raise ValueError("unsupported dimension")
+    rows = db.query(f"""SELECT {cols[dim]} AS key, max(branch) AS branch, coalesce(sum(hours) FILTER (WHERE billable), 0) AS billable,
+                               coalesce(sum(hours), 0) AS recorded
+                        FROM rpt.time_entries WHERE week_ending BETWEEN %(s)s AND %(e)s {_scope(scope)} GROUP BY 1 ORDER BY 1""",
+                    {"s": start, "e": end, "scope": scope})
+    for r in rows:
+        r["billable_util"] = _ratio(r["billable"], r["recorded"])
+    return rows
+
+
+def utilization_by_week(t: dt.date, weeks=26, scope=None) -> list[dict]:
+    first, last = _weeks_back(t, weeks)
+    return db.query(f"""SELECT branch, date_trunc('week', week_ending)::date AS week,
+                               sum(hours) FILTER (WHERE billable) / nullif(sum(hours), 0) AS util
+                        FROM rpt.time_entries WHERE week_ending BETWEEN %(f)s AND %(l)s {_scope(scope)}
+                        GROUP BY 1, 2 ORDER BY 2""", {"f": first, "l": last, "scope": scope})
+
+
+def projects_summary(t: dt.date, scope=None) -> dict:
+    p = {"t": t, "scope": scope}
+    done = db.one(f"""SELECT coalesce(sum(billed), 0) AS billed, coalesce(sum(standard_value), 0) AS std, coalesce(sum(cost), 0) AS cost,
+                             count(*) AS n
+                      FROM rpt.projects WHERE status = 'Completed' AND end_date BETWEEN %(t)s - 364 AND %(t)s {_scope(scope)}""", p)
+    live = db.one(f"""SELECT count(*) FILTER (WHERE status = 'Active') AS active,
+                             coalesce(sum(greatest(contract_value - billed, 0)) FILTER (WHERE status IN ('Active', 'Not started')), 0) AS backlog,
+                             count(*) FILTER (WHERE status = 'Active' AND billing_type = 'Fixed fee'
+                                              AND budget_used * 100 > percent_complete + 20) AS at_risk
+                      FROM rpt.projects WHERE true {_scope(scope)}""", p)
+    wip = db.one(f"""SELECT coalesce(sum(standard_value), 0) AS v,
+                            coalesce(sum(standard_value) FILTER (WHERE week_ending < %(t)s - 60), 0) AS old
+                     FROM rpt.time_entries WHERE billable AND invoice_number IS NULL AND billing_type = 'Time & materials'
+                       AND week_ending < date_trunc('month', %(t)s::date) {_scope(scope)}""", p)
+    return {"realization": _ratio(done["billed"], done["std"]), "project_margin": _ratio(float(done["billed"]) - float(done["cost"]), done["billed"]),
+            "completed": done["n"], "active": live["active"], "backlog": float(live["backlog"]), "at_risk": live["at_risk"],
+            "unbilled_wip": float(wip["v"]), "unbilled_over_60": float(wip["old"])}
+
+
+def projects_by(dim: str, t: dt.date, scope=None) -> list[dict]:
+    """Realization and margin on projects completed in the last 12 months, by project manager, segment or office."""
+    cols = {"pm": "pm_name", "segment": "segment", "branch": "branch", "billing_type": "billing_type"}
+    rows = db.query(f"""SELECT coalesce({cols[dim]}, '(none)') AS key, count(*) AS projects, sum(billed) AS billed,
+                               sum(standard_value) AS std, sum(cost) AS cost
+                        FROM rpt.projects WHERE status = 'Completed' AND end_date BETWEEN %(t)s - 364 AND %(t)s {_scope(scope)}
+                        GROUP BY 1 ORDER BY 3 DESC""", {"t": t, "scope": scope})
+    for r in rows:
+        r["realization"] = _ratio(r["billed"], r["std"])
+        r["project_margin"] = _ratio(float(r["billed"] or 0) - float(r["cost"] or 0), r["billed"])
+    return rows
+
+
+def projects_at_risk(scope=None) -> list[dict]:
+    return db.query(f"""SELECT id, number, name, branch, pm_name, contract_value, budget_hours, hours, budget_used, percent_complete
+                        FROM rpt.projects WHERE status = 'Active' AND billing_type = 'Fixed fee'
+                          AND budget_used * 100 > percent_complete + 20 {_scope(scope)}
+                        ORDER BY budget_used * 100 - percent_complete DESC""", {"scope": scope})
+
+
+def unbilled_projects(t: dt.date, scope=None) -> list[dict]:
+    return db.query(f"""SELECT id, number, name, account_name, branch, pm_name, unbilled_value, oldest_unbilled,
+                               %(t)s - oldest_unbilled AS days
+                        FROM rpt.projects WHERE billing_type = 'Time & materials' AND unbilled_value > 0
+                          AND oldest_unbilled < date_trunc('month', %(t)s::date) {_scope(scope)}
+                        ORDER BY oldest_unbilled, unbilled_value DESC""", {"t": t, "scope": scope})
