@@ -40,7 +40,9 @@ def guest_tour(request) -> str:
     steps = [("/scorecard", "Scorecard", "The weekly numbers, filled in automatically. Green means the goal was hit."),
              ("#", "Click any number", "Every tile, bar and row opens the records behind it, down to the deal."),
              ("/agent-work", "AI agents", "This morning's brief, payment reminders waiting for approval, and prep for the next big meeting."),
-             (None, "Ask AI", "Ask a question in plain English, like \u201cWhich branch is behind on billing?\u201d")]
+             (None, "Ask AI", "Ask a question in plain English, like \u201cWhich branch is behind on billing?\u201d")
+             if ui.chat_available(user) else
+             ("/forecast", "Forecast", "Change a deal's call and watch the quarter's totals move. It replaces the forecast spreadsheet.")]
     items = ""
     for href, t, d in steps:
         if href is None:
@@ -104,7 +106,7 @@ def home(request):
         datasets.append({"label": "Goal pace", "data": [goal * m / 12 for m in range(1, 13)], "color": "--axis",
                          "type": "line", "points": False, "dash": True})
     cumulative = ui.chart("bk-cum", {"type": "line", "format": "money", "labels": months, "datasets": datasets},
-                          height=220, label="Cumulative bookings against goal")
+                          height=236, label="Cumulative bookings against goal")
     goal_line = ""
     if goal:
         pace = goal * (t.timetuple().tm_yday / (366 if calendar.isleap(t.year) else 365))
@@ -114,9 +116,10 @@ def home(request):
 
     changes = _changes_card(metrics.recent_changes(t, 7, scope), t)
     issues = cleanup.run_checks(scope, limit=0)
-    issue_items = "".join(
-        f'<li><a href="/cleanup#{c["check"].key}">{esc(c["check"].title)}</a><span class="amt">{c["count"]}</span></li>'
-        for c in sorted(issues, key=lambda c: -c["count"]) if c["count"])
+    issue_bars = ui.hbars([{"label": CHECK_SHORT.get(c["check"].key, c["check"].title), "title": c["check"].title, "value": c["count"], "shown": f'{c["count"]:,}',
+                            "sub": money(c["amount"], True), "link": f'/cleanup#{c["check"].key}'}
+                           for c in sorted(issues, key=lambda c: -c["count"]) if c["count"]], label="Records to fix by check")
+    stages = _stage_bars(t, scope)
     fresh = metrics.freshness()
     if fresh and fresh.get("latest"):
         local = fresh["latest"].astimezone(ZoneInfo(get_settings().tz))
@@ -138,21 +141,21 @@ def home(request):
     body = f"""
 <div class="tiles">{tiles}</div>
 {insights_html}
-<div class="cols">
-  <div>
-    <section class="card"><div class="card-head"><h2>Bookings by month</h2>
-      <div class="legend"><span><i style="background:var(--series-1)"></i>{t.year}</span><span><i style="background:var(--series-ly)"></i>{t.year - 1}</span></div></div>
-      {monthly}{ui.how(metrics.HOW["bookings"] + " Click a month to see its deals.")}</section>
-    <section class="card"><div class="card-head"><h2>{"Progress to goal" if goal else "Bookings so far this year"}</h2>
-      <div class="legend"><span><i style="background:var(--series-1)"></i>Cumulative bookings</span>{'<span><i style="background:var(--axis)"></i>Goal pace</span>' if goal else ''}</div></div>
-      {cumulative}{goal_line}</section>
-  </div>
-  <div>
-    {changes}
-    <section class="card"><div class="card-head"><h2>Data checks</h2><a href="/cleanup">See all</a></div>
-      <ul class="list">{issue_items or '<li>Nothing flagged.</li>'}</ul></section>
-    <p class="muted" style="font-size:13px">{esc(fresh_txt)}. Today is {ui.date(t)} ({esc(get_settings().tz)}).</p>
-  </div>
+<div class="cols even">
+  <section class="card"><div class="card-head"><h2>Bookings by month</h2>
+    <div class="legend"><span><i style="background:var(--series-1)"></i>{t.year}</span><span><i style="background:var(--series-ly)"></i>{t.year - 1}</span></div></div>
+    {monthly}{ui.how(metrics.HOW["bookings"] + " Click a month to see its deals.")}</section>
+  <section class="card"><div class="card-head"><h2>{"Progress to goal" if goal else "Bookings so far this year"}</h2>
+    <div class="legend"><span><i style="background:var(--series-1)"></i>Cumulative bookings</span>{'<span><i style="background:var(--axis)"></i>Goal pace</span>' if goal else ''}</div></div>
+    {cumulative}{goal_line}</section>
+</div>
+{changes}
+<div class="cols even">
+  <section class="card"><div class="card-head"><h2>Open pipeline by stage</h2><a href="/deals?status=open">See the deals</a></div>
+    {stages}</section>
+  <section class="card"><div class="card-head"><h2>Records to fix</h2><a href="/cleanup">See all</a></div>
+    {issue_bars if issues and any(c["count"] for c in issues) else '<p>Nothing flagged.</p>'}
+    <p class="muted" style="font-size:13px;margin:10px 0 0">{esc(fresh_txt)}. Today is {ui.date(t)} ({esc(get_settings().tz)}).</p></section>
 </div>"""
     body = guest_tour(request) + body
     return ui.page(request, "Where we stand", body, "Home",
@@ -161,24 +164,43 @@ def home(request):
 
 def _changes_card(ch, t):
     def group(title, rows, total, extra=lambda r: "", see_all=None):
-        if not rows:
-            return f'<div class="change-group"><h3><span>{esc(title)}</span><span class="muted">none</span></h3></div>'
         items = "".join(
             f'<li><div>{ui.source_link("crm_deal", r["id"], r["name"])}<div class="meta">{esc(r.get("branch") or "")}{extra(r)}</div></div>'
             f'<span class="amt">{money(r["amount"], True)}</span></li>' for r in rows[:3])
         more = ""
         if len(rows) > 3:
-            more = (f'<li class="meta"><a href="{esc(see_all)}">and {len(rows) - 3} more</a></li>' if see_all
-                    else f'<li class="meta">and {len(rows) - 3} more</li>')
-        return (f'<div class="change-group"><h3><span>{esc(title)} ({len(rows)})</span><span class="amt">{money(total, True)}</span></h3>'
-                f'<ul class="list">{items}{more}</ul></div>')
-    slip = lambda r: f' · close {ui.short_date(r["old_close"])} → {ui.short_date(r["new_close"])}'
+            more = (f'<a class="more" href="{esc(see_all)}">and {len(rows) - 3} more →</a>' if see_all
+                    else f'<span class="more muted">and {len(rows) - 3} more</span>')
+        return (f'<div class="change-card"><div class="ch-head"><strong>{esc(title)}</strong><span>{len(rows)} deal{"" if len(rows) == 1 else "s"}</span></div>'
+                f'<div class="ch-total">{money(total, True) if rows else "—"}</div>'
+                f'<ul class="list">{items or "<li class=meta>None this week.</li>"}</ul>{more}</div>')
+    slip = lambda r: f' · {ui.short_date(r["old_close"])} → {ui.short_date(r["new_close"])}'
     return f"""<section class="card"><div class="card-head"><h2>Last 7 days</h2><span class="muted">since {ui.short_date(ch["since"])}</span></div>
+      <div class="changes">
       {group("Won", ch["won"], ch["totals"]["won"], see_all=metrics.deals_link(status="won", close_from=ch["since"], close_to=t))}
       {group("Lost", ch["lost"], ch["totals"]["lost"], see_all=metrics.deals_link(status="lost", close_from=ch["since"], close_to=t))}
-      {group("Pushed to a later month", ch["slipped"], ch["totals"]["slipped"], slip)}
+      {group("Pushed later", ch["slipped"], ch["totals"]["slipped"], slip)}
       {group("New deals", ch["created"], ch["totals"]["created"], see_all=metrics.deals_link(status="all", created_from=ch["since"], created_to=t, sort="created"))}
+      </div>
       {ui.how("Won and lost are by close date, the same rule as bookings. 'Pushed to a later month' comes from the CRM's change history, which we keep even where the CRM drops it.")}</section>"""
+
+
+def _stage_bars(t, scope) -> str:
+    """Open pipeline by stage, the same split as the Pipeline page: deals past their close date are counted apart."""
+    rows = db.query(f"""SELECT CASE WHEN close_date < %(t)s THEN 'Past due' ELSE stage END AS stage,
+                               count(*) AS n, sum(amount) AS amount, sum(weighted_amount) AS weighted
+                        FROM rpt.deals WHERE is_open {metrics._scope(scope)} GROUP BY 1""", {"t": t, "scope": scope})
+    by = {r["stage"]: r for r in rows}
+    items = []
+    for name in STAGE_ORDER + ["Past due"]:
+        r = by.get(name)
+        if not r:
+            continue
+        link = ("/deals?" + urlencode({"status": "open", "close_to": (t - dt.timedelta(days=1)).isoformat()}) if name == "Past due"
+                else "/deals?" + urlencode({"status": "open", "stage": name, "close_from": t.isoformat()}))
+        items.append({"label": name, "value": r["amount"], "shown": money(r["amount"], True), "link": link,
+                      "sub": f'{r["n"]} deals · {money(r["weighted"], True)} wtd', "dim": name == "Past due"})
+    return ui.hbars(items, label="Open pipeline by stage") if items else "<p>No open deals.</p>"
 
 
 # ---------------------------------------------------------------- scorecard
@@ -450,7 +472,7 @@ def winloss(request):
                     f'<span class="w">{c["closed_count"]} closed</span></td>')
         r = c["rate_dollars"] or 0
         i = min(len(steps) - 1, int(r * len(steps) / 0.8))
-        ink = "#fff" if i >= 3 else "#0b0b0b"
+        ink = f"var(--on-seq-{i + 1})"
         best = " best" if (av, bv) in best_keys else ""
         return (f'<td class="cell{best}" style="background:var({steps[i]});color:{ink}" title="{esc(title)}">'
                 + (f'<a href="{esc(link)}" style="color:inherit">' if link else "")
@@ -466,8 +488,9 @@ def winloss(request):
     reasons = db.query(f"""SELECT coalesce(loss_reason, '(not entered)') AS reason, count(*) AS n, sum(amount) AS amount
                            FROM rpt.deals WHERE is_lost AND close_date BETWEEN %(s)s AND %(t)s {metrics._scope(scope)}
                            GROUP BY 1 ORDER BY 3 DESC""", {"s": start, "t": t, "scope": scope})
-    reason_rows = "".join(f'<tr><td>{esc(r["reason"])}</td><td class="n">{r["n"]}</td><td class="n">{money(r["amount"])}</td></tr>'
-                          for r in reasons)
+    reason_bars = ui.hbars([{"label": r["reason"], "value": r["amount"], "shown": money(r["amount"], True),
+                             "sub": f'{r["n"]} deals', "dim": r["reason"] == "(not entered)"} for r in reasons],
+                           label="Lost dollars by loss reason")
 
     body = f"""
 <form class="filters" method="get"><label>Period<select name="months" onchange="this.form.submit()">{month_opts}</select></label>
@@ -491,9 +514,9 @@ def winloss(request):
           "best slices: the most dollars won among slices with at least 5 closed deals and a close rate above the overall "
           f"{pct(grid['overall_rate'], 0)}. Slices with fewer than 5 deals are marked 'few' because their rates aren't reliable.")}
 </section>
-<section class="card"><h2>Why we lose</h2>
-  <div class="scroll"><table class="data"><thead><tr><th>Loss reason</th><th class="n">Deals</th><th class="n">Amount</th></tr></thead>
-  <tbody>{reason_rows or '<tr><td colspan="3">No lost deals in this period.</td></tr>'}</tbody></table></div></section>"""
+<section class="card"><div class="card-head"><h2>Why we lose</h2><span class="muted">Lost dollars by the reason given</span></div>
+  {reason_bars if reasons else '<p>No lost deals in this period.</p>'}
+  {ui.how("Grey is lost deals with no reason entered in the CRM: worth fixing, because they hide the real pattern.") if any(r["reason"] == "(not entered)" for r in reasons) else ""}</section>"""
     return ui.page(request, "Win / loss", body, "Win / loss",
                    subtitle=f"Deals closed {ui.date(start)} to {ui.date(t)}")
 
@@ -525,14 +548,16 @@ def receivables(request):
                          FROM rpt.invoices WHERE is_open {metrics._scope(scope)}
                          GROUP BY 1, 2 HAVING sum(balance) FILTER (WHERE days_past_due > 0) > 0
                          ORDER BY over_60 DESC NULLS LAST, balance DESC LIMIT 25""", {"scope": scope})
+    top60 = max([float(c["over_60"] or 0) for c in custs] or [0]) or 1
     rows = "".join(f'<tr><td>{ui.source_link("accounting_customer", c["customer_id"], c["customer_name"])}</td>'
-                   f'<td class="n">{money(c["balance"])}</td><td class="n">{money(c["over_60"] or 0)}</td>'
+                   f'<td class="n">{money(c["balance"])}</td>'
+                   f'<td class="n"><span class="cellbar"><i style="width:{100 * float(c["over_60"] or 0) / top60:.0f}%"></i></span><span>{money(c["over_60"] or 0)}</span></td>'
                    f'<td class="n">{c["oldest"] or 0} days</td><td class="n"><a href="{esc(metrics.invoices_link(status="open", customer=c["customer_id"]))}">{c["n"]}</a></td></tr>'
                    for c in custs)
     body = f"""<div class="tiles">{tiles}</div>
 <div>
 <section class="card"><h2>Unpaid balance by days past due</h2>{aging}{ui.how(metrics.HOW["ar"] + " Click a bar to see the invoices.")}</section>
-<section class="card"><h2>Who to call first</h2>
+<section class="card"><div class="card-head"><h2>Who to call first</h2><span class="muted">Most money over 60 days late first</span></div>
 <div class="scroll"><table class="data"><thead><tr><th>Customer</th><th class="n">Unpaid</th><th class="n">Over 60 days</th><th class="n">Oldest</th><th class="n">Invoices</th></tr></thead>
 <tbody>{rows or '<tr><td colspan="5">Nothing overdue.</td></tr>'}</tbody></table></div></section></div>"""
     return ui.page(request, "Receivables", body, "Receivables", subtitle=f"As of {ui.date(t)}, from accounting")
@@ -581,22 +606,42 @@ def invoices(request):
 
 # ---------------------------------------------------------------- clean-up
 
+CHECK_SHORT = {"placeholder_close": "Placeholder close date", "duplicates": "Possible duplicates", "stale_open": "Stale open deals",
+               "missing_margin": "No margin entered", "lost_no_reason": "No loss reason", "won_not_billed": "Won, not billed",
+               "unlinked_customer": "Unlinked customer", "unmapped_branch": "Unknown branch"}
+
+
 def cleanup_page(request):
     scope = scope_of(request)
     results = cleanup.run_checks(scope)
     total = sum(r["count"] for r in results)
-    short = {"placeholder_close": "Placeholder date", "duplicates": "Duplicates", "stale_open": "Stale open",
+    short = {"placeholder_close": "Placeholder", "duplicates": "Duplicates", "stale_open": "Stale open",
              "missing_margin": "No margin", "lost_no_reason": "No loss reason", "won_not_billed": "Not billed",
-             "unlinked_customer": "Unlinked customer", "unmapped_branch": "Unknown branch"}
+             "unlinked_customer": "Unlinked", "unmapped_branch": "Unknown branch"}
     active = [r["check"] for r in results if r["count"]]
+    branches = cleanup.by_branch(results)
+    top = max([b["checks"].get(c.key, 0) or 0 for b in branches for c in active] or [0]) or 1
+    steps = ["--seq-1", "--seq-2", "--seq-3", "--seq-4", "--seq-5"]
+
+    def heat(v):
+        if not v:
+            return '<td class="n heat"><span class=muted>·</span></td>'
+        i = min(len(steps) - 1, int(len(steps) * v / (top + 1)))
+        return f'<td class="n heat" style="background:var({steps[i]});color:var(--on-{steps[i][2:]})">{v}</td>'
     branch_rows = "".join(
         f'<tr><th class="sticky" scope="row">{esc(b["branch"])}</th><td class="n"><strong>{b["count"]}</strong></td>'
-        + "".join(f'<td class="n">{b["checks"].get(c.key, 0) or "<span class=muted>·</span>"}</td>' for c in active) + "</tr>"
-        for b in cleanup.by_branch(results))
-    summary = (f'<section class="card"><h2>Where they are</h2><div class="scroll"><table class="data">'
+        + "".join(heat(b["checks"].get(c.key, 0)) for c in active) + "</tr>"
+        for b in branches)
+    by_check = ui.hbars([{"label": CHECK_SHORT.get(r["check"].key, r["check"].title), "title": r["check"].title, "value": r["count"], "shown": f'{r["count"]:,}',
+                          "sub": money(r["amount"], True), "link": f'#{r["check"].key}'}
+                         for r in sorted(results, key=lambda r: -r["count"]) if r["count"]], label="Records to fix by check")
+    summary = (f'<div><section class="card"><div class="card-head"><h2>What needs fixing</h2>'
+               f'<span class="muted">Records, and the dollars on them</span></div>{by_check}</section>'
+               f'<section class="card"><div class="card-head"><h2>Where they are</h2><span class="muted">Darker means more to fix</span></div>'
+               f'<div class="scroll"><table class="data">'
                f'<thead><tr><th class="sticky">Branch</th><th class="n">Total</th>'
                + "".join(f'<th class="n"><a href="#{c.key}">{esc(short.get(c.key, c.key))}</a></th>' for c in active)
-               + f'</tr></thead><tbody>{branch_rows}</tbody></table></div></section>') if total else ""
+               + f'</tr></thead><tbody>{branch_rows}</tbody></table></div></section></div>') if total else ""
     blocks = []
     for r in results:
         c = r["check"]

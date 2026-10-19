@@ -125,6 +125,32 @@ def status_pill(status: str) -> str:
     return f'<span class="pill {cls}"><span aria-hidden="true">{icon}</span> {esc(label)}</span>'
 
 
+def chat_available(user) -> bool:
+    """Show "Ask AI" when it's switched on for this hub and has its key; admins also see it without a key, to set it up."""
+    if not user or not get_settings().client.get("ai", {}).get("chat", True):
+        return False
+    from ..ai import usage
+    return usage.is_configured("chat") or user.get("role") == "admin"
+
+
+def hbars(items: list[dict], label="Bar chart") -> str:
+    """Horizontal bars that read at a glance. Each item: label, value (sizes the bar), shown (the text),
+    and optionally sub, link, title and dim (a grey bar, for gaps like "not entered")."""
+    top = max([float(i["value"] or 0) for i in items] or [0]) or 1
+    rows = []
+    for i in items:
+        width = max(0.0, 100 * float(i["value"] or 0) / top)
+        inner = (f'<span class="hbar-label">{esc(i["label"])}</span>'
+                 f'<span class="hbar-track"><i style="width:{width:.1f}%"></i></span>'
+                 f'<span class="hbar-val">{i["shown"]}</span>'
+                 f'<span class="hbar-sub">{i.get("sub") or ""}</span>')
+        cls = "hbar" + (" dim" if i.get("dim") else "")
+        title = f' title="{esc(i["title"])}"' if i.get("title") else ""
+        rows.append(f'<a class="{cls}" href="{esc(i["link"])}"{title}>{inner}</a>' if i.get("link")
+                    else f'<div class="{cls}"{title}>{inner}</div>')
+    return f'<div class="hbars" role="list" aria-label="{esc(label)}">{"".join(rows)}</div>'
+
+
 def chart(canvas_id: str, config: dict, height=260, label="Chart") -> str:
     """A Chart.js chart. Colors are filled in by hub.js from the theme tokens."""
     payload = json.dumps(config, default=str).replace("</", "<\\/")  # never let data close the <script>
@@ -183,7 +209,7 @@ def page(request, title: str, body: str, active: str = "", subtitle: str = "", w
                 + (f' <span>Built by <a href="{esc(client.get("demo_by_url", "#"))}">{esc(by)}</a>.</span>' if by else "")
                 + (f' <a class="demo-cta" href="{esc(cta)}">See it on your own data: book a call →</a>' if cta else "")
                 + "</div>")
-    chat_on = client.get("ai", {}).get("chat", True)
+    chat_on = chat_available(user)
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(title)} · {esc(client.get("short_name", "Hub"))}</title>

@@ -88,6 +88,13 @@
           tr.classList.toggle("omitted", v === "omit");
         });
         commitEl.textContent = fmt(booked + c); bestEl.textContent = fmt(booked + c + b);
+        const bar = document.querySelector("[data-fbar]"), total = bar ? parseFloat(bar.dataset.total) || 0 : 0;
+        if (bar && total) {
+          bar.querySelector('[data-seg="commit"]').style.width = (100 * c / total) + "%";
+          bar.querySelector('[data-seg="best"]').style.width = (100 * b / total) + "%";
+          document.querySelector('[data-leg="commit"]').textContent = fmt(c);
+          document.querySelector('[data-leg="best"]').textContent = fmt(b);
+        }
       };
       fc.addEventListener("change", e => { if (e.target.matches("[data-call]")) sum(); });
       sum();
