@@ -111,7 +111,7 @@ SECURE_COOKIES=$secure
 BACKUP_DIR=$BACKUP_ROOT/$name
 KEEP_DAYS=14
 # OFFSITE_CMD=aws s3 cp {} s3://your-bucket/$name/   (or rclone; {} is the backup file)
-# API keys: sudo -u $RUN_USER env HUB_ENV_FILE=$envf $PY -m kit.manage set-secret ANTHROPIC_API_KEY_CHAT
+# API keys: cd $REPO && sudo -u $RUN_USER env HUB_ENV_FILE=$envf $PY -m kit.manage set-secret ANTHROPIC_API_KEY_CHAT
 # Alerts: ALERT_NTFY_URL=https://ntfy.sh/<long-random-topic>
 EOF
     chown "$RUN_USER:$RUN_USER" "$envf"; chmod 600 "$envf"; umask 022
@@ -184,7 +184,7 @@ EOF
 
   say "Done: $name"
   echo "Create your sign-in (you'll type the password, hidden):"
-  echo "  sudo -u $RUN_USER env HUB_ENV_FILE=$envf $PY -m kit.manage create-user you@example.com \"Your Name\" --admin"
+  echo "  cd $REPO && sudo -u $RUN_USER env HUB_ENV_FILE=$envf $PY -m kit.manage create-user you@example.com \"Your Name\" --admin"
   [ -n "$host" ] && echo "Then open https://$host"
   true
 }
