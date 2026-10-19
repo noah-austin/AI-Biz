@@ -95,11 +95,43 @@ def hub_diagram() -> str:
                  f'<text class="d-hub-sub" x="{hub_x}" y="{hub_y + 40}" text-anchor="middle">every system</text>')
     parts.append(f'<text class="d-col" x="{pill_w / 2}" y="12" text-anchor="middle">YOUR SYSTEMS</text>'
                  f'<text class="d-col" x="{w - pill_w / 2}" y="12" text-anchor="middle">PUT TO WORK</text></svg>')
-    chips = lambda items, cls="": "".join(f'<span class="chip {cls}">{icon(i)}{l}</span>' for i, l in items)
-    mobile = (f'<div class="hub-stack" aria-hidden="true"><div class="chips">{chips(SOURCES)}</div>'
-              f'<div class="stack-arrow"></div><div class="stack-hub">{icon("db")}<strong>Your data hub</strong><span>every system</span></div>'
-              f'<div class="stack-arrow"></div><div class="chips">{chips(OUTPUTS, "out")}</div></div>')
-    return f'<div class="hero-visual">{"".join(parts)}{mobile}</div>'
+    return f'<div class="hero-visual">{"".join(parts).replace("hub-diagram", "hub-diagram wide", 1)}{_hub_diagram_tall()}</div>'
+
+
+def _hub_diagram_tall() -> str:
+    """The same hero graphic for phones: systems above, the hub in the middle, what it powers below. The wires run
+    behind the pills, from each one to the hub and from the hub to each output."""
+    w, pill_w, pill_h = 360, 168, 40
+    hub_x, hub_y, hub_r = 180, 268, 58
+    src = [(4 + (i % 2) * 184, 24 + (i // 2) * 50) for i in range(len(SOURCES))]
+    out = [(4 + (i % 2) * 184, 392 + (i // 2) * 50) for i in range(4)] + [(96, 492)]
+    parts = [f'<svg class="hub-diagram tall" viewBox="0 0 {w} 540" aria-hidden="true">']
+    for i, (x, y) in enumerate(src):                                 # wires in, to the top of the hub
+        cx, ey = x + pill_w / 2, hub_y - hub_r + 3
+        ex = hub_x + (1 if i % 2 else -1) * (6 + (2 - i // 2) * 10)   # left pills enter left of centre, top rows outermost
+        d = f"M{cx} {y + pill_h / 2} C {cx} {y + 110}, {ex} {ey - 70}, {ex} {ey}"
+        parts.append(f'<path class="d-wire" d="{d}"/><path class="d-flow d{i}" d="{d}"/>')
+    for i, (x, y) in enumerate(out):                                 # wires out, from the bottom of the hub
+        cx, sy = x + pill_w / 2, hub_y + hub_r - 3
+        sx = hub_x + (0 if i == 4 else (1 if i % 2 else -1) * (8 + i // 2 * 10))
+        d = f"M{sx} {sy} C {sx} {sy + 60}, {cx} {y - 60}, {cx} {y + pill_h / 2}"
+        parts.append(f'<path class="d-wire out" d="{d}"/><path class="d-flow out d{i}" d="{d}"/>')
+    for (ic, label), (x, y) in zip(SOURCES, src):
+        parts.append(f'<rect class="d-pill" x="{x}" y="{y}" width="{pill_w}" height="{pill_h}" rx="20"/>'
+                     + _svg_icon(ic, x + 14, y + 10) + f'<text class="d-label" x="{x + 44}" y="{y + 25.5}">{label}</text>')
+    for (ic, label), (x, y) in zip(OUTPUTS, out):
+        parts.append(f'<rect class="d-pill out" x="{x}" y="{y}" width="{pill_w}" height="{pill_h}" rx="20"/>'
+                     + _svg_icon(ic, x + 14, y + 10, cls="d-ico out") + f'<text class="d-label" x="{x + 44}" y="{y + 25.5}">{label}</text>')
+    parts.append(f'<circle class="d-halo tall" cx="{hub_x}" cy="{hub_y}" r="{hub_r + 13}"/>'
+                 f'<circle class="d-hub" cx="{hub_x}" cy="{hub_y}" r="{hub_r}"/>'
+                 + _svg_icon("db", hub_x - 15, hub_y - 31, 30, "d-ico hub")
+                 + f'<text class="d-hub-label" x="{hub_x}" y="{hub_y + 18}" text-anchor="middle">Your data hub</text>'
+                 f'<text class="d-hub-sub" x="{hub_x}" y="{hub_y + 35}" text-anchor="middle">every system</text>'
+                 f'<text class="d-col" x="{w / 2}" y="12" text-anchor="middle">YOUR SYSTEMS</text>'
+                 f'<rect class="d-tag" x="{w / 2 - 50}" y="{hub_y + hub_r + 24}" width="100" height="18" rx="9"/>'
+                 f'<text class="d-col" x="{w / 2}" y="{hub_y + hub_r + 37}" text-anchor="middle">PUT TO WORK</text></svg>')
+    return "".join(parts)
+
 
 
 def _window(title: str, body: str, cls: str = "") -> str:
