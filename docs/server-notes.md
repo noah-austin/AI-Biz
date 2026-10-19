@@ -14,7 +14,16 @@ How our own server is set up (from `docs/server-setup.md`, Part 2). No secrets h
 |---|---|---|---|---|
 | Company hub | https://hub.sanfordoperations.com | 8001 | `hub-company` | `hub_company` |
 | Bluestem demo | https://demo.sanfordoperations.com | 8002 | `hub-demo` | `hub_demo` |
+| Distribution demo (Bramblewood) | https://distribution.demo.sanfordoperations.com | 8003 | `hub-distribution` | `hub_distribution` |
 | Website | https://sanfordoperations.com (www redirects) | 8000 | `hub-website` | writes enquiries into `hub_company` |
+
+Demos: the website's "See a live demo" goes to https://sanfordoperations.com/demo, a picker listing each industry's demo
+(`[[demos]]` in `website/config.toml`). Each demo is its own install from `clients/demo_<industry>/`, at
+`<industry>.demo.sanfordoperations.com` (a wildcard DNS record `*.demo` points every such address here; Caddy gets each
+certificate on first use). Bluestem stays at demo.sanfordoperations.com. To add one: build it in `~/AI-Biz-dev`, bring it
+across, then `sudo ops/install.sh add <name> clients/demo_<name> <next port> <name>.demo.sanfordoperations.com`, set its
+`ALERT_NTFY_URL`, and add its card to `website/config.toml`. Development databases for demos (`hub_dev_*`, env files
+`~/AI-Biz-dev/*.env`) are for building only.
 
 - PostgreSQL listens on localhost only. Caddy serves HTTPS and renews certificates itself (`/etc/caddy/sites/*.caddy`).
 - Settings per install: `/etc/hub/NAME.env` (owner-only). The website's database login can only add enquiries.
