@@ -40,34 +40,50 @@ def esc(v) -> str:
 NAV = [("/", "Home"), ("/what-we-build", "What we build"), ("/about", "About"), ("/contact", "Contact")]
 
 
-def layout(title: str, body: str, path: str = "/", description: str = "", noindex: bool = False) -> str:
+def layout(title: str, body: str, path: str = "/", description: str = "", noindex: bool = False, extra_head: str = "") -> str:
     c = cfg()
     nav = "".join(f'<a href="{href}"{" aria-current=page" if href == path else ""}>{esc(label)}</a>' for href, label in NAV)
-    desc = description or (f"{c['name']} brings a company's data together in one place, then builds the dashboards, "
-                           "tools and AI agents it makes possible. For small and mid-size companies in any industry.")
-    page_title = f"{title} | {c['name']}" if title != c["name"] else c["name"]
+    desc = description or (f"{c['name']} brings a company's data together in one place, then builds the reports, "
+                           "tools and AI agents it makes possible.")
+    page_title = f"{title} | {c['name']}" if title != c["name"] else f"{c['name']} | Your data in one place, put to work"
+    canonical = "" if noindex else f'<link rel="canonical" href="{esc(c["url"])}{esc(path)}">'
+    fonts = "".join(f'<link rel="preload" href="/static/fonts/{f}" as="font" type="font/woff2" crossorigin>'
+                    for f in ("inter-latin-var.woff2", "playfair-700.woff2"))
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(page_title)}</title><meta name="description" content="{esc(desc)}">{'<meta name="robots" content="noindex">' if noindex else ''}
 <meta property="og:title" content="{esc(page_title)}"><meta property="og:description" content="{esc(desc)}">
-<link rel="icon" href="/static/brand/mark.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/static/brand/apple-touch-icon.png"><meta property="og:type" content="website"><meta property="og:site_name" content="{esc(c["name"])}"><meta property="og:image" content="{esc(c["url"])}/static/brand/og-card.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="{esc(c["name"])}: {esc(c["tagline"])}"><meta name="twitter:card" content="summary_large_image"><meta property="og:url" content="{esc(c["url"])}{esc(path)}"><link rel="canonical" href="{esc(c["url"])}{esc(path)}"><link rel="stylesheet" href="/static/site.css?v={ASSET_V["site.css"]}">
+<link rel="icon" href="/static/brand/mark.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/static/brand/apple-touch-icon.png"><meta property="og:type" content="website"><meta property="og:site_name" content="{esc(c["name"])}"><meta property="og:image" content="{esc(c["url"])}/static/brand/og-card.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="{esc(c["name"])}: {esc(c["tagline"])}"><meta name="twitter:card" content="summary_large_image"><meta property="og:url" content="{esc(c["url"])}{esc(path)}">{canonical}{fonts}{extra_head}<link rel="stylesheet" href="/static/site.css?v={ASSET_V["site.css"]}">
 </head><body>
+<a class="skip" href="#main">Skip to content</a>
 <header class="site-head"><div class="wrap">
   <a class="logo" href="/" aria-label="{esc(c["name"])}, home"><picture><source srcset="/static/brand/lockup-reversed.svg" media="(prefers-color-scheme: dark)"><img src="/static/brand/lockup.svg" alt="{esc(c["name"])}" width="262" height="64"></picture></a>
   <nav aria-label="Main">{nav}</nav>
   <a class="btn small" href="/contact?interest=call">Book a call</a>
 </div></header>
-<main>{body}</main>
+<main id="main">{body}</main>
 <footer class="site-foot"><div class="wrap">
   <div class="foot-grid">
     <div class="foot-brand"><a class="logo" href="/" aria-label="{esc(c["name"])}, home"><picture><source srcset="/static/brand/lockup-reversed.svg" media="(prefers-color-scheme: dark)"><img src="/static/brand/lockup.svg" alt="{esc(c["name"])}" width="262" height="64"></picture></a>
       <p>{esc(c["tagline"])}</p></div>
-    <div><h4>Company</h4><a href="/what-we-build">What we build</a><a href="/about">About</a><a href="{esc(c["demo_url"])}">Request a live demo</a></div>
-    <div><h4>Get in touch</h4><a href="/contact">Book a call</a><a href="mailto:{esc(c["email"])}">{esc(c["email"])}</a><span>{esc(c["city"])}</span></div>
+    <div><p class="foot-h">Company</p><a href="/what-we-build">What we build</a><a href="/about">About</a><a href="{esc(c["demo_url"])}">Request a live demo</a></div>
+    <div><p class="foot-h">Get in touch</p><a href="/contact">Book a call</a><a href="mailto:{esc(c["email"])}">{esc(c["email"])}</a><span>{esc(c["city"])}</span></div>
   </div>
   <div class="foot-bottom"><span>© {date.today().year} {esc(c["name"])}</span><a href="/privacy">Privacy</a></div>
 </div></footer>
 </body></html>"""
+
+
+def _org_jsonld() -> str:
+    """Who we are, for search engines. A JSON data block, which the no-scripts policy allows (it never runs)."""
+    import json
+    c = cfg()
+    data = {"@context": "https://schema.org", "@type": "ProfessionalService", "name": c["name"], "url": c["url"],
+            "email": c["email"], "logo": f'{c["url"]}/static/brand/mark-512.png', "image": f'{c["url"]}/static/brand/og-card.jpg',
+            "slogan": c["tagline"], "founder": {"@type": "Person", "name": c["owner"]},
+            "areaServed": "US", "address": {"@type": "PostalAddress", "addressRegion": "TX", "addressCountry": "US"},
+            "description": "Brings a company's data together in one place, then builds the reports, tools and AI agents it makes possible."}
+    return '<script type="application/ld+json">' + json.dumps(data).replace("<", "\\u003c") + "</script>"
 
 
 def sec_head(eyebrow: str, title: str, lead: str = "", center: bool = True) -> str:
@@ -82,7 +98,7 @@ def explainer() -> str:
              "then reports, tools, AI and AI agents are built on top.")
     # Two videos rather than <source media>, which iPhone Safari ignores; CSS shows the one that fits the screen.
     videos = "".join(
-        f'<video class="explainer-video {cut}" autoplay muted loop playsinline preload="auto" poster="{u(f"video/explainer-{cut}.jpg")}" '
+        f'<video class="explainer-video {cut}" autoplay muted loop playsinline controls preload="auto" poster="{u(f"video/explainer-{cut}.jpg")}" '
         f'aria-label="{label}"><source src="{u(f"video/explainer-{cut}.mp4")}" type="video/mp4"></video>' for cut in ("wide", "tall"))
     return f"""<div class="explainer">
     {videos}
@@ -204,7 +220,7 @@ def home() -> str:
   <p class="lead">Tell us how your company runs and where your data lives. If there's a fit, you'll get a custom proposal.</p>
   <div class="cta-row center"><a class="btn" href="/contact?interest=call">Book a call</a><a class="btn ghost light" href="/what-we-build">What we build →</a></div>
 </div></section>"""
-    return layout(c["name"], body, "/")
+    return layout(c["name"], body, "/", extra_head=_org_jsonld())
 
 
 def demos() -> str:
@@ -221,7 +237,7 @@ def demos() -> str:
   Every number opens the records behind it.</p>
 </div></section>
 <section><div class="wrap"><div class="demo-grid">{cards}</div>
-  <p class="fine center" style="margin-top:28px">Don't see your industry? The hub is built around your systems, whatever you do.
+  <p class="fine center spaced">Don't see your industry? The hub is built around your systems, whatever you do.
   <a href="/contact?interest=demo">Tell us about yours</a> and we'll show you what it would look like.</p>
 </div></section>"""
     return layout("Live demos", body, "/demo", "Live demos of the Sanford Operations hub for different industries, with realistic fictional data.",
@@ -399,8 +415,10 @@ def contact(token: str, values: dict | None = None, errors: dict | None = None) 
     def err(k):
         return f'<span class="field-err" id="err-{k}">{esc(e[k])}</span>' if k in e else ""
 
+    first = next((k for k in ("name", "email", "message") if k in e), None)
+
     def inv(k):
-        return f' aria-invalid="true" aria-describedby="err-{k}"' if k in e else ""
+        return (f' aria-invalid="true" aria-describedby="err-{k}"' + (" autofocus" if k == first else "")) if k in e else ""
 
     def sel(options, chosen):
         return "".join(f'<option value="{esc(val)}"{" selected" if val == chosen else ""}>{esc(label)}</option>'
@@ -428,11 +446,11 @@ def contact(token: str, values: dict | None = None, errors: dict | None = None) 
     <div class="wide"><button class="btn" type="submit">Send</button></div>
   </form>
   <aside class="contact-side">
-    <h3>Prefer email?</h3><p><a href="mailto:{esc(c["email"])}">{esc(c["email"])}</a></p>
-    <h3>What happens next</h3>
+    <h2>Prefer email?</h2><p><a href="mailto:{esc(c["email"])}">{esc(c["email"])}</a></p>
+    <h2>What happens next</h2>
     <ol><li>We read your note and reply within one business day.</li><li>We have a conversation about how your company runs and where your data lives.</li>
     <li>If there's a fit, we send you a custom proposal.</li></ol>
-    <h3>Want to see it first?</h3><p>Choose "A walkthrough of the demo" in the form and we'll show you a live hub for a company like yours.</p>
+    <h2>Want to see it first?</h2><p>Choose "A walkthrough of the demo" in the form and we'll show you a live hub for a company like yours.</p>
   </aside>
 </div></section>"""
     return layout("Contact", body, "/contact", "Tell us how your company runs and where your data lives. We reply within one business day.")
@@ -440,7 +458,7 @@ def contact(token: str, values: dict | None = None, errors: dict | None = None) 
 
 def thanks(name: str) -> str:
     body = f"""<section class="hero slim"><div class="wrap narrow">
-<h1>{f"Thanks, {esc(name.split()[0])}." if name.strip() else "Thanks."}</h1>
+<h1>{f"Thanks, {esc(name.split()[0][:40])}." if name.strip() else "Thanks."}</h1>
 <p class="lead">Your note is in. We'll reply within one business day.</p>
 <p>In the meantime, you can read about
 <a href="/what-we-build">what we build</a>.</p></div></section>"""

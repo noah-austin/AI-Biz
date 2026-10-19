@@ -105,7 +105,8 @@ def _hub_diagram_tall() -> str:
     hub_x, hub_y, hub_r = 180, 268, 58
     src = [(4 + (i % 2) * 184, 24 + (i // 2) * 50) for i in range(len(SOURCES))]
     out = [(4 + (i % 2) * 184, 392 + (i // 2) * 50) for i in range(4)] + [(96, 492)]
-    parts = [f'<svg class="hub-diagram tall" viewBox="0 0 {w} 540" aria-hidden="true">']
+    parts = [f'<svg class="hub-diagram tall" viewBox="0 0 {w} 540" role="img" aria-label="Your systems (CRM, accounting, ERP, projects, '
+             'HR, spreadsheets) flow into your data hub, which powers a scorecard, dashboards, alerts, Ask AI and AI agents.">']
     for i, (x, y) in enumerate(src):                                 # wires in, to the top of the hub
         cx, ey = x + pill_w / 2, hub_y - hub_r + 3
         ex = hub_x + (1 if i % 2 else -1) * (6 + (2 - i // 2) * 10)   # left pills enter left of centre, top rows outermost
@@ -201,7 +202,7 @@ def mock_scorecard() -> str:
     for name, vals, goal, fmt in rows:
         cells = "".join(f'<td class="{"hit" if v >= goal else "miss"}">{fmt.format(v)}</td>' for v in vals)
         body += f"<tr><th>{name}</th>{cells}</tr>"
-    return _window("Weekly scorecard", f'<table class="mini-score"><thead><tr><th></th>{head}</tr></thead><tbody>{body}</tbody></table>'
+    return _window("Weekly scorecard", f'<table class="mini-score"><thead><tr><td></td>{head}</tr></thead><tbody>{body}</tbody></table>'
                    '<p class="mock-foot">Green: goal hit. Fills itself in every hour.</p>')
 
 

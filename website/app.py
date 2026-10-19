@@ -17,7 +17,7 @@ from pathlib import Path
 
 import psycopg2
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from starlette.concurrency import run_in_threadpool
@@ -59,11 +59,17 @@ _lock = threading.Lock()
 
 @app.middleware("http")
 async def headers(request: Request, call_next):
+    head = request.method == "HEAD"  # uptime monitors and link checkers ask with HEAD: answer as for GET, without the body
+    if head:
+        request.scope["method"] = "GET"
     response = await call_next(request)
     for k, v in HEADERS.items():
         response.headers.setdefault(k, v)
     if request.url.path.startswith("/static/"):
-        response.headers.setdefault("Cache-Control", "public, max-age=86400")
+        versioned = "v=" in request.url.query  # links carry a fingerprint of the file, so a changed file gets a new URL
+        response.headers.setdefault("Cache-Control", "public, max-age=31536000, immutable" if versioned else "public, max-age=86400")
+    if head:
+        return Response(status_code=response.status_code, headers=dict(response.headers))
     return response
 
 
@@ -186,8 +192,9 @@ async def contact_send(request: Request):
     except (BadSignature, SignatureExpired, KeyError, TypeError):
         return HTMLResponse(pages.contact(form_token(), dict(form), {"_form": "This form expired. Please press Send again."}),
                             status_code=400)
-    if time.time() - started < MIN_SECONDS:
-        return RedirectResponse("/thanks", status_code=303)  # faster than a person can type: treat as a bot
+    if time.time() - started < MIN_SECONDS:  # faster than most people type; autofill can do it, so ask rather than drop it
+        return HTMLResponse(pages.contact(form_token(), dict(form), {"_form": "That was quick. Please press Send once more."}),
+                            status_code=400)
     data, errors = validate(form)
     if errors:
         return HTMLResponse(pages.contact(form_token(), data, errors), status_code=400)
@@ -213,7 +220,15 @@ def thanks(n: str = ""):
 
 @app.get("/robots.txt", response_class=PlainTextResponse)
 def robots():
-    return "User-agent: *\nDisallow: /demo\nAllow: /\n"   # demos are shared on request
+    return f"User-agent: *\nDisallow: /demo\nAllow: /\nSitemap: {pages.cfg()['url']}/sitemap.xml\n"   # demos are shared on request
+
+
+@app.get("/sitemap.xml")
+def sitemap():
+    base = pages.cfg()["url"]
+    urls = "".join(f"<url><loc>{base}{p}</loc></url>" for p in ("/", "/what-we-build", "/about", "/contact", "/privacy"))
+    return Response('<?xml version="1.0" encoding="UTF-8"?>\n'
+                    f'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>\n', media_type="application/xml")
 
 
 @app.get("/healthz", response_class=PlainTextResponse)

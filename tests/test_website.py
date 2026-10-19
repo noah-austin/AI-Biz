@@ -66,9 +66,9 @@ def test_bots_are_dropped_quietly(site, monkeypatch):
     before = count("bot@site-test.example")
     r1 = post(client, site_app, email="bot@site-test.example", website="spam.example")       # honeypot filled in
     fast = {"token": token(site_app, age=0), "name": "Fast Bot", "email": "bot@site-test.example"}
-    r2 = client.post("/contact", data=fast, follow_redirects=False)                          # sent too quickly
+    r2 = client.post("/contact", data=fast, follow_redirects=False)                          # sent too quickly: asked to resend
     r3 = client.post("/contact", data={**fast, "token": "forged"}, follow_redirects=False)  # bad token
-    assert r1.status_code == 303 and r2.status_code == 303 and r3.status_code == 400
+    assert r1.status_code == 303 and r2.status_code == 400 and "Send once more" in r2.text and r3.status_code == 400
     assert count("bot@site-test.example") == before
 
 
@@ -134,3 +134,23 @@ def test_home_plays_the_explainer_with_a_phone_cut(site):
     assert 'class="explainer-video tall"' in html and 'class="explainer-video wide"' in html   # two videos: iPhones ignore <source media>
     for name in ("explainer-tall.mp4", "explainer-wide.mp4", "explainer-wide-end.jpg"):
         assert client.get(f"/static/video/{name}", headers={"Range": "bytes=0-9"}).status_code == 206   # iPhones need ranges
+
+
+def test_search_engines_and_monitors(site):
+    client, _ = site
+    assert "Sitemap:" in client.get("/robots.txt").text
+    sm = client.get("/sitemap.xml")
+    assert sm.status_code == 200 and "/what-we-build</loc>" in sm.text and "/demo" not in sm.text
+    head = client.head("/")
+    assert head.status_code == 200 and head.text == ""                                  # uptime checks use HEAD
+    html = client.get("/").text
+    assert 'application/ld+json' in html and 'og-card.jpg' in html
+    nf = client.get("/nope").text
+    assert 'name="robots" content="noindex"' in nf and 'rel="canonical"' not in nf
+    assert "Thanks." in client.get("/thanks").text                                          # no name: no stray comma
+
+
+def test_form_errors_point_at_their_fields(site):
+    client, site_app = site
+    r = post(client, site_app, email="not-an-email")
+    assert r.status_code == 400 and 'aria-invalid="true" aria-describedby="err-email" autofocus' in r.text
