@@ -10,6 +10,7 @@ from pathlib import Path
 
 
 from . import visuals as v
+from .how import how_it_works
 
 HERE = Path(__file__).parent
 EXPLAINER = (HERE / "explainer.html").read_text()  # built by website/brand/animation/build.py
@@ -78,7 +79,7 @@ def sec_head(eyebrow: str, title: str, lead: str = "", center: bool = True) -> s
 def cta_row(primary=("Book a call", "/contact?interest=call")) -> str:
     c = cfg()
     return (f'<div class="cta-row"><a class="btn" href="{primary[1]}">{esc(primary[0])}</a>'
-            f'<a class="btn ghost" href="{esc(c["demo_url"])}">Request a live demo →</a></div>')
+            f'<a class="btn ghost" href="/#how-it-works">See how it works ↓</a></div>')
 
 
 FAQ = [
@@ -174,17 +175,7 @@ def home() -> str:
   <ol class="flow-steps">{step_html}</ol>
 </div></section>
 
-<section class="band"><div class="wrap demo-split">
-  <div class="demo-copy">
-    <p class="eyebrow">See it working</p>
-    <h2>See it working on a company like yours</h2>
-    <p class="lead">We keep live demos for different industries, each a fictional company with realistic data. Ask for a
-    walkthrough and we'll show you the one closest to your business, and what it would look like on yours.</p>
-    <a class="btn" href="{esc(c["demo_url"])}">Request a live demo →</a>
-  </div>
-  <div class="demo-shot">{v.demo_shot("home", "The demo hub's home page: bookings, win rate, pipeline, billing and cash, with a bookings-by-month chart.")}
-  <p class="fine">Shown in the demo company's colors. Your hub uses yours.</p></div>
-</div></section>
+{how_it_works()}
 
 <section><div class="wrap">
   {sec_head("Why us", "Why work with us")}
