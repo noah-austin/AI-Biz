@@ -43,7 +43,7 @@ def test_pages_render_with_security_headers(site):
 def test_home_graphics_and_images_are_served(site):
     client, _ = site
     html = client.get("/").text
-    assert 'class="hub-diagram"' in html and "style=" not in html  # the policy blocks inline styles
+    assert 'class="hub-diagram wide"' in html and 'class="hub-diagram tall"' in html and "style=" not in html  # the policy blocks inline styles
     assert html.count('class="faq"') == 7 and 'rel="canonical"' in html
     import re
     for src in set(re.findall(r'(?:src|srcset)="(/static/[^"]+)"', html)):
