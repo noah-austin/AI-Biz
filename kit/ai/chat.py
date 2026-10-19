@@ -38,6 +38,8 @@ def start(user: dict, question: str, conversation_id: str | None, page: str = ""
         raise ValueError("Type a question first.")
     if len(question) > 2000:
         raise ValueError("That question is too long. Keep it under 2,000 characters.")
+    if not get_settings().client.get("ai", {}).get("chat", True):
+        raise usage.CapReached("The AI chat is switched off for this hub.")
     if not usage.is_configured("chat"):
         raise usage.CapReached("The AI assistant isn't switched on yet. An admin needs to add its API key.")
     usage.check_caps("chat", user["id"])

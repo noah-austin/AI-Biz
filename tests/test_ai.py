@@ -166,3 +166,20 @@ def test_sql_tool_is_read_only():
     with pytest.raises(tools.ToolError):
         tools.run_sql("select * from core.app_users")
     assert tools.run_sql("select count(*) as n from rpt.deals")["rows"][0]["n"] > 0
+
+
+def test_chat_can_be_switched_off(monkeypatch):
+    from kit.ai import chat
+    from kit.config import get_settings
+    from kit.hub import ui
+    from kit.ai import usage
+    client = get_settings().client
+    monkeypatch.setitem(client, "ai", {**client.get("ai", {}), "chat": False})
+    with pytest.raises(usage.CapReached, match="switched off"):
+        chat.start({"id": 1, "name": "Noah"}, "How are we doing?", None)
+    from types import SimpleNamespace
+    request = SimpleNamespace(state=SimpleNamespace(user={"id": 1, "name": "Noah", "role": "admin", "email": "n@x.com", "branches": None}),
+                              cookies={}, url=SimpleNamespace(path="/"))
+    assert ui.ASK_BUTTON not in ui.page(request, "Home", "<p>hi</p>")
+    monkeypatch.setitem(client, "ai", {**client.get("ai", {}), "chat": True})
+    assert ui.ASK_BUTTON in ui.page(request, "Home", "<p>hi</p>")

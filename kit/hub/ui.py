@@ -183,6 +183,7 @@ def page(request, title: str, body: str, active: str = "", subtitle: str = "", w
                 + (f' <span>Built by <a href="{esc(client.get("demo_by_url", "#"))}">{esc(by)}</a>.</span>' if by else "")
                 + (f' <a class="demo-cta" href="{esc(cta)}">See it on your own data: book a call →</a>' if cta else "")
                 + "</div>")
+    chat_on = client.get("ai", {}).get("chat", True)
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(title)} · {esc(client.get("short_name", "Hub"))}</title>
@@ -192,13 +193,13 @@ def page(request, title: str, body: str, active: str = "", subtitle: str = "", w
 {demo}{alert_bar}
 <header class="top"><div class="bar">
   <a class="brand" href="/"><span class="mark" aria-hidden="true"></span>{esc(client.get("short_name", "Hub"))} <span class="muted">Hub</span></a>
-  <nav>{"".join(nav)}</nav>{ASK_BUTTON if user else ""}{who}
+  <nav>{"".join(nav)}</nav>{ASK_BUTTON if user and chat_on else ""}{who}
 </div></header>
 <main class="{'wide' if wide else ''}">
 <div class="page-head"><h1>{esc(title)}</h1>{f'<p class="subtitle">{subtitle}</p>' if subtitle else ''}</div>
 {body}
 </main>
-{ASK_PANEL if user else ""}
+{ASK_PANEL if user and chat_on else ""}
 </body></html>"""
 
 

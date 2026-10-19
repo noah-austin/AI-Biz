@@ -443,7 +443,7 @@ def _ai_guard(request: Request):
 @app.get("/ai/status")
 def ai_status(request: Request):
     user = request.state.user
-    return {"enabled": ai_usage.is_configured("chat"), "admin": user["role"] == "admin",
+    return {"enabled": ai_usage.is_configured("chat") and settings.client.get("ai", {}).get("chat", True), "admin": user["role"] == "admin",
             "suggestions": chat.suggestions(user)}
 
 
