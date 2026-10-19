@@ -99,3 +99,23 @@ def test_hub_turns_an_enquiry_into_a_prospect():
 def test_demo_guest_cannot_use_a_password():
     from kit.hub.auth import authenticate
     assert authenticate("guest@demo.invalid", "") is None
+
+
+def test_demo_pages_show_the_live_demo_inside_the_site(site):
+    client, _ = site
+    r = client.get("/demo/distribution")
+    assert r.status_code == 200 and '<iframe class="demo-frame" src="https://distribution.demo.sanfordoperations.com/guest"' in r.text
+    assert "frame-src" in r.headers["content-security-policy"] and "https://distribution.demo.sanfordoperations.com" in r.headers["content-security-policy"]
+    assert "frame-ancestors 'none'" in r.headers["content-security-policy"]          # nobody may frame the website itself
+    assert client.get("/demo/not-an-industry").status_code == 404
+    assert 'href="/demo/construction"' in client.get("/demo").text                   # the picker stays on the site
+
+
+def test_only_demo_hubs_can_be_framed_and_only_by_the_website(monkeypatch):
+    from kit.hub import app as hub_app
+    monkeypatch.setattr(hub_app, "EMBED_FROM", [])
+    h = hub_app.security_headers()
+    assert h["X-Frame-Options"] == "DENY" and "frame-ancestors 'none'" in h["Content-Security-Policy"]
+    monkeypatch.setattr(hub_app, "EMBED_FROM", ["https://sanfordoperations.com"])
+    h = hub_app.security_headers()
+    assert "X-Frame-Options" not in h and "frame-ancestors https://sanfordoperations.com;" in h["Content-Security-Policy"]

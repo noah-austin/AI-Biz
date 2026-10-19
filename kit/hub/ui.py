@@ -251,9 +251,9 @@ def page(request, title: str, body: str, active: str = "", subtitle: str = "", w
         by, cta = client.get("demo_by"), client.get("demo_cta_url")
         demo = ('<div class="demo-banner"><span>Demo company with made-up data: '
                 f'{esc(client.get("company", "this company"))} is fictional.</span>'
-                + (f' <span>Built by <a href="{esc(client.get("demo_by_url", "#"))}">{esc(by)}</a>.</span>' if by else "")
-                + (f' <span>· <a href="{esc(client["demo_more_url"])}">Other industries</a> ·</span>' if client.get("demo_more_url") else "")
-                + (f' <a class="demo-cta" href="{esc(cta)}">See it on your own data: book a call →</a>' if cta else "")
+                + (f' <span>Built by <a href="{esc(client.get("demo_by_url", "#"))}" target="_top">{esc(by)}</a>.</span>' if by else "")
+                + (f' <span>· <a href="{esc(client["demo_more_url"])}" target="_top">Other industries</a> ·</span>' if client.get("demo_more_url") else "")
+                + (f' <a class="demo-cta" href="{esc(cta)}" target="_top">See it on your own data: book a call →</a>' if cta else "")
                 + "</div>")
     chat_on = chat_available(user)
     return f"""<!doctype html>

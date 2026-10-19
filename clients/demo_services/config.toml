@@ -9,6 +9,7 @@ demo_by = "Sanford Operations"
 demo_by_url = "https://sanfordoperations.com"
 demo_cta_url = "https://sanfordoperations.com/contact?interest=demo"
 demo_more_url = "https://sanfordoperations.com/demo"
+embed_from = ["https://sanfordoperations.com"]   # the website shows this demo inside its pages
 demo_intro = "A fictional engineering and consulting firm: four Texas offices, about 100 people, two years of projects and time."
 fiscal_year_start_month = 1
 apps = ["analytics", "projects", "people"]

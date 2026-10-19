@@ -39,9 +39,16 @@ PER_IP_PER_HOUR = 5
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 
+def _demo_origins() -> str:
+    """The demo hubs this site shows inside its pages (from [[demos]] in config.toml)."""
+    from urllib.parse import urlsplit
+    origins = {f"https://{urlsplit(d['url']).hostname}" for d in pages.cfg().get("demos", []) if d.get("url", "").startswith("https://")}
+    return " ".join(sorted(origins)) or "'none'"
+
+
 HEADERS = {
     "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'none'; "
-                               "frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+                               f"frame-src {_demo_origins()}; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
     "X-Content-Type-Options": "nosniff", "X-Frame-Options": "DENY", "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
     "Strict-Transport-Security": "max-age=31536000",
@@ -141,6 +148,12 @@ def home():
 @app.get("/demo", response_class=HTMLResponse)
 def demos():
     return pages.demos()
+
+
+@app.get("/demo/{slug}", response_class=HTMLResponse)
+def demo_view(slug: str):
+    page = pages.demo_view(slug)
+    return HTMLResponse(page) if page else HTMLResponse(pages.not_found(), status_code=404)
 
 
 @app.get("/what-we-build", response_class=HTMLResponse)

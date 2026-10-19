@@ -5,6 +5,7 @@
 It listens on localhost only; nginx with HTTPS sits in front on a real server.
 """
 import logging
+import re
 from pathlib import Path
 
 from fastapi import FastAPI, Form, Request
@@ -23,6 +24,20 @@ app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 
 PUBLIC = ("/login", "/static/", "/healthz", "/auth/google/", "/guest")
+# Sites allowed to show this hub inside their pages (demos shown on our website). Everyone else is refused.
+EMBED_FROM = [o for o in settings.client.get("embed_from", []) if re.fullmatch(r"https://[a-z0-9.-]+", o)]
+
+
+def security_headers() -> dict:
+    h = dict(auth.SECURITY_HEADERS)
+    if EMBED_FROM:
+        h.pop("X-Frame-Options")   # it can't name an allowed site; the policy below does
+        h["Content-Security-Policy"] = h["Content-Security-Policy"].replace("frame-ancestors 'none'",
+                                                                            "frame-ancestors " + " ".join(EMBED_FROM))
+    return h
+
+
+SECURITY = security_headers()
 
 
 @app.middleware("http")
@@ -39,7 +54,7 @@ async def gatekeeper(request: Request, call_next):
             return PlainTextResponse("Sign in first.", status_code=401)
         request.state.user = user
     response = await call_next(request)
-    for k, v in auth.SECURITY_HEADERS.items():
+    for k, v in SECURITY.items():
         response.headers.setdefault(k, v)
     if settings.secure_cookies:
         response.headers.setdefault("Strict-Transport-Security", "max-age=31536000")

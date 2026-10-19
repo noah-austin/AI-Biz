@@ -157,8 +157,10 @@ def test_security_headers_and_pages(client):
     for path in ["/", "/scorecard", "/deals?status=open", "/winloss", "/receivables", "/invoices", "/cleanup", "/health"]:
         r = c.get(path)
         assert r.status_code == 200, path
-    assert "frame-ancestors 'none'" in r.headers["content-security-policy"]
-    assert r.headers["x-frame-options"] == "DENY"
+    csp = r.headers["content-security-policy"]
+    # Nobody may show the hub inside their page, except our own website for demo installs (embed_from in config.toml).
+    assert ("frame-ancestors 'none'" in csp and r.headers["x-frame-options"] == "DENY") or \
+           ("frame-ancestors https://sanfordoperations.com;" in csp)
 
 
 def test_branch_user_sees_only_their_branch(client):

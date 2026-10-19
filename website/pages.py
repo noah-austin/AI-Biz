@@ -208,7 +208,7 @@ def demos() -> str:
     """Pick a demo: one fictional company per industry, each a click away from signing in as a guest."""
     c = cfg()
     cards = "".join(
-        f'<a class="demo-card" href="{esc(d["url"])}">{v.icon(d.get("icon", "chart"))}'
+        f'<a class="demo-card" href="/demo/{esc(d["slug"])}">{v.icon(d.get("icon", "chart"))}'
         f'<p class="eyebrow">{esc(d["industry"])}</p><h3>{esc(d["company"])}</h3><p>{esc(d["blurb"])}</p>'
         f'<ul>{"".join(f"<li>{esc(s)}</li>" for s in d.get("shows", []))}</ul>'
         f'<span class="demo-go">Open this demo →</span></a>' for d in c.get("demos", []))
@@ -222,6 +222,28 @@ def demos() -> str:
   <a href="/contact?interest=demo">Tell us about yours</a> and we'll show you what it would look like.</p>
 </div></section>"""
     return layout("Live demos", body, "/demo", "Live demos of the Sanford Operations hub for different industries, with realistic fictional data.")
+
+
+def demo_view(slug: str) -> str | None:
+    """One demo, shown inside the website: industry tabs, the live hub, and a way to book a call."""
+    c = cfg()
+    demos = c.get("demos", [])
+    d = next((x for x in demos if x["slug"] == slug), None)
+    if not d:
+        return None
+    tabs = "".join(f'<a href="/demo/{esc(x["slug"])}"{" aria-current=page" if x is d else ""}>{esc(x["industry"])}</a>' for x in demos)
+    body = f"""<section class="demo-stage"><div class="wrap wide">
+  <nav class="demo-tabs" aria-label="Demo industries">{tabs}</nav>
+  <div class="demo-bar">
+    <div><h1>{esc(d["company"])}</h1><p>{esc(d["blurb"])} A fictional company with made-up data: click anything.</p></div>
+    <div class="demo-bar-actions"><a class="btn small" href="/contact?interest=demo">See it on your data</a>
+      <a class="demo-full" href="{esc(d["url"])}" target="_blank" rel="noopener">Full screen ↗</a></div>
+  </div>
+  <iframe class="demo-frame" src="{esc(d["url"])}" title="Live demo: {esc(d["company"])}" loading="eager"
+          referrerpolicy="strict-origin-when-cross-origin"></iframe>
+</div></section>"""
+    return layout(f'{d["industry"]} demo', body, "/demo",
+                  f'A live demo of the Sanford Operations hub for {d["industry"].lower()}: {d["company"]}, a fictional company.')
 
 
 def what_we_build() -> str:

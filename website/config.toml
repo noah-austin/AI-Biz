@@ -10,6 +10,7 @@ demo_url = "/demo"   # the demo picker; each industry's demo is listed below
 
 # The live demos, one fictional company per industry. Each card signs the visitor in as a guest.
 [[demos]]
+slug = "facility-services"
 industry = "Facility services"
 company = "Bluestem Facility Services"
 icon = "clipboard"
@@ -18,6 +19,7 @@ blurb = "HVAC and building services across six Texas branches: sales, field serv
 shows = ["Emergency calls answered on time", "First-time fix by branch", "Parts to reorder", "Licenses about to lapse"]
 
 [[demos]]
+slug = "distribution"
 industry = "Distribution"
 company = "Bramblewood Industrial Supply"
 icon = "truck"
@@ -26,6 +28,7 @@ blurb = "An industrial supply distributor: orders and shipping, margin by produc
 shows = ["Fill rate and on-time shipping", "Margin slipping on a product line", "Backorders and stock-outs", "Who discounts too much"]
 
 [[demos]]
+slug = "professional-services"
 industry = "Professional services"
 company = "Kestrel Ridge Engineering"
 icon = "doc"
@@ -34,6 +37,7 @@ blurb = "An engineering and consulting firm: utilization, realization, project b
 shows = ["Billable utilization by office", "Projects burning budget too fast", "Hours written down by client type", "Time nobody has billed"]
 
 [[demos]]
+slug = "construction"
 industry = "Construction"
 company = "Mesquite Ridge Constructors"
 icon = "blocks"
@@ -42,6 +46,7 @@ blurb = "A commercial general contractor: the work-in-progress report every morn
 shows = ["Margin fade by project manager", "Over- and under-billed jobs", "Change orders stuck with owners", "A job about to lose money"]
 
 [[demos]]
+slug = "manufacturing"
 industry = "Manufacturing"
 company = "Cottonwood Precision Manufacturing"
 icon = "factory"

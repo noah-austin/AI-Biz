@@ -11,6 +11,7 @@ demo_by = "Sanford Operations"
 demo_by_url = "https://sanfordoperations.com"
 demo_cta_url = "https://sanfordoperations.com/contact?interest=demo"
 demo_more_url = "https://sanfordoperations.com/demo"
+embed_from = ["https://sanfordoperations.com"]   # the website shows this demo inside its pages
 # Which parts of the hub this install shows. The operations pages need their systems connected (see [[sources]]).
 apps = ["analytics", "field_service", "inventory", "purchasing", "people"]
 fiscal_year_start_month = 1
