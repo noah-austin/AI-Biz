@@ -21,6 +21,7 @@ How our own server is set up (from `docs/server-setup.md`, Part 2). No secrets h
 - Scheduled jobs: `/etc/cron.d/hub-company`, `/etc/cron.d/hub-demo` (alerts every 15 min, nightly backup 07:30 UTC, weekly restore test Sunday 09:00 UTC; the demo also regenerates and syncs its data, the hub runs agents).
 - Logs: `/var/log/hub/` (rotated weekly). Service logs: `journalctl -u hub-NAME`.
 - Backups: `/var/backups/hub/NAME/`, kept 14 days.
+- Alerts: a private ntfy topic (in each env file as `ALERT_NTFY_URL`) on Noah's phone, for problems and new website enquiries. Tested 2026-10-19.
 
 ## Everyday commands
 - What's running: `ops/install.sh list`
@@ -32,7 +33,7 @@ How our own server is set up (from `docs/server-setup.md`, Part 2). No secrets h
 2. If something's wrong: `git revert <bad commit>`, push, and run `update` again.
 
 ## Still to do
-- API keys and the ntfy alert topic (`kit.manage set-secret`), then `kit.alerts test` and a test enquiry from the website's contact form.
+- API keys (`kit.manage set-secret`): `ANTHROPIC_API_KEY_CHAT` and `ANTHROPIC_API_KEY_AGENTS` on the hub, `ANTHROPIC_API_KEY_CHAT` on the demo.
 - Off-site backups: a DigitalOcean Spaces bucket, then `OFFSITE_CMD` in each env file.
 - External uptime monitor on each `/healthz`, emailing Noah.
 - Google sign-in, once the OAuth client exists.
