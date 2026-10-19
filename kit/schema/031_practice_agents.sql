@@ -41,3 +41,11 @@ CREATE TABLE IF NOT EXISTS practice.agent_items (
     decided_at timestamptz
 );
 CREATE INDEX IF NOT EXISTS agent_items_status ON practice.agent_items (status, created_at);
+
+-- Settings the assistant can change by chat (e.g. the ideal client). They override [agents] in config.toml.
+CREATE TABLE IF NOT EXISTS practice.settings (
+    key text PRIMARY KEY,
+    value jsonb NOT NULL,
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    updated_by text NOT NULL DEFAULT 'noah'
+);

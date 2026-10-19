@@ -25,8 +25,11 @@ RULES = """Rules you always follow:
 
 
 def settings() -> dict:
+    """[agents] from config.toml, overridden by anything changed by chat (practice.settings)."""
     s = {"monthly_cap_usd": 60, "prospects_per_run": 10, "ideal_client": "Small and mid-size US companies."}
-    return {**s, **get_settings().client.get("agents", {})}
+    s.update(get_settings().client.get("agents", {}))
+    s.update({r["key"]: r["value"] for r in db.query("SELECT key, value FROM practice.settings")})
+    return s
 
 
 def _post_ideas() -> str:
@@ -58,6 +61,21 @@ def run_in_background(agent_key: str, job_key: str) -> int:
     return run_id
 
 
+def brief(agent_key: str, job_key: str) -> tuple[str, str]:
+    """The standing instructions (who the agent is, the rules, the ideal client, the goal) and the job's task."""
+    agent = BY_KEY[agent_key]
+    job = agent.job(job_key)
+    s = settings()
+    tz = get_settings().tz
+    now = dt.datetime.now(ZoneInfo(tz))
+    o = pm.overview()
+    system = (f"{agent.persona}\n\n{RULES}\n\nThe ideal client:\n{s['ideal_client']}\n\n"
+              f"Goal: ${o['goal_amount']:,.0f} revenue between {o['goal_start']} and {o['goal_end']}.")
+    task = job.instructions.format(prospects_per_run=s["prospects_per_run"], post_ideas=_post_ideas())
+    return system, (f"[Today is {now:%A, %B %-d, %Y}, {now:%-I:%M %p} {tz}.]\n\nJob: {job.name}\n\n{task}\n\n"
+                    "When you're done, reply with a two-sentence summary of what you did.")
+
+
 def run(agent_key: str, job_key: str, client=None, run_id: int | None = None) -> int:
     agent = BY_KEY[agent_key]
     job = agent.job(job_key)
@@ -67,16 +85,9 @@ def run(agent_key: str, job_key: str, client=None, run_id: int | None = None) ->
         if client is None and not usage.is_configured("agents"):
             raise usage.CapReached("No API key for the agents (ANTHROPIC_API_KEY_AGENTS).")
         client = client or _client()
-        s, ai = settings(), usage.ai_settings()
-        tz = get_settings().tz
-        now = dt.datetime.now(ZoneInfo(tz))
-        o = pm.overview()
-        system = (f"{agent.persona}\n\n{RULES}\n\nThe ideal client:\n{s['ideal_client']}\n\n"
-                  f"Goal: ${o['goal_amount']:,.0f} revenue between {o['goal_start']} and {o['goal_end']}.")
-        task = job.instructions.format(prospects_per_run=s["prospects_per_run"], post_ideas=_post_ideas())
-        messages = [{"role": "user", "content": f"[Today is {now:%A, %B %-d, %Y}, {now:%-I:%M %p} {tz}.]\n\n"
-                                                f"Job: {job.name}\n\n{task}\n\nWhen you're done, reply with a "
-                                                f"two-sentence summary of what you did."}]
+        ai = usage.ai_settings()
+        system, task = brief(agent_key, job_key)
+        messages = [{"role": "user", "content": task}]
         tool_defs = list(tools.ALL_TOOLS)
         if job.web:
             tool_defs += [{"type": "web_search_20260209", "name": "web_search", "max_uses": job.max_searches},

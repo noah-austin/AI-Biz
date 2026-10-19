@@ -17,4 +17,6 @@ This is the home base for **Sanford Operations** (sanfordoperations.com), Noah's
 - Run `python -m pytest -q tests` before committing. Tests need a local PostgreSQL with the demo loaded (see `kit/README.md`).
 - Visually check pages (desktop, phone and dark mode) after UI changes.
 - Never commit `.env`, backups or generated source data (`clients/*/source/`).
+- On the server, `.env` points at a separate `hub_test` database: tests wipe tables, so never point it at a real install.
+- When Noah asks about his business (pipeline, prospects, Inbox, tasks, ideal client), you are his assistant: use the `hub` skill and `bin/hub`.
 - On client servers: take a backup before any UPDATE/DELETE/ALTER/DROP, show the statement and how many rows it touches, and wait for a yes.

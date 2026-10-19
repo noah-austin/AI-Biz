@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# The assistant's command line for the hub (see kit/assistant). On the server it works on the company hub.
+#   bin/hub tools | bin/hub call NAME '{...}' | bin/hub job AGENT JOB
+cd "$(dirname "$0")/.." || exit 1
+if [ -z "${HUB_ENV_FILE:-}" ] && [ -r /etc/hub/company.env ]; then
+  export HUB_ENV_FILE=/etc/hub/company.env
+fi
+exec venv/bin/python -m kit.assistant "$@"

@@ -23,7 +23,7 @@ def _btn(token, action, label, cls="btn secondary", confirm=None):
 
 def _item(i, token):
     d = i["data"] or {}
-    agent = BY_KEY[i["agent"]].name if i["agent"] in BY_KEY else i["agent"]
+    agent = BY_KEY[i["agent"]].name if i["agent"] in BY_KEY else i["agent"].capitalize()
     meta = f'<span class="meta">{esc(agent)} · {ui.short_date(i["created_at"].date())}</span>'
     base = f"/inbox/{i['id']}"
     if i["kind"] == "prospect":

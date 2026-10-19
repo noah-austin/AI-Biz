@@ -23,6 +23,14 @@ How our own server is set up (from `docs/server-setup.md`, Part 2). No secrets h
 - Backups: `/var/backups/hub/NAME/`, kept 14 days.
 - Alerts: a private ntfy topic (in each env file as `ALERT_NTFY_URL`) on Noah's phone, for problems and new website enquiries. Tested 2026-10-19.
 
+## The assistant
+- Claude Code on this server (Noah's subscription) is the business assistant. It works on the company hub through
+  `bin/hub` (see `.claude/skills/hub/SKILL.md`): reads anything, proposes into the Inbox, and makes changes only after
+  Noah confirms. The ideal client is stored in the hub (`practice.settings`) and changed by chat.
+- Scheduled agent jobs still use the API runner (`kit.agents tick`) and do nothing until `ANTHROPIC_API_KEY_AGENTS` is set.
+- Tests: `.env` in the repo points at a separate `hub_test` database (demo data). Tests wipe tables there; never point
+  `.env` at a real install.
+
 ## Everyday commands
 - What's running: `ops/install.sh list`
 - Health: `curl -s http://127.0.0.1:8001/healthz` (8002 for the demo)
