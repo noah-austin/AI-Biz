@@ -3,7 +3,8 @@
 How our own server is set up (from `docs/server-setup.md`, Part 2). No secrets here: they live in `/etc/hub/*.env` on the server only.
 
 ## The machine
-- DigitalOcean droplet, Ubuntu 24.04, 4 GB / 2 CPUs, weekly DigitalOcean backups.- User `noah` (passwordless sudo). Code in `/home/noah/AI-Biz`, Python in `venv/`.
+- DigitalOcean droplet, Ubuntu 24.04, 4 GB / 2 CPUs, weekly DigitalOcean backups.
+- User `noah` (passwordless sudo). Code in `/home/noah/AI-Biz`, Python in `venv/`.
 - Firewall: only SSH (22), 80 and 443 open. Automatic security updates on.
 - Claude Code runs as `noah` with Remote Control, named **Biz server**. It starts at boot and restarts if it exits: user service `claude-remote` (`~/.config/systemd/user/claude-remote.service`, lingering on). Reboot-tested 2026-10-19. Logs: `journalctl --user -u claude-remote`.
 
@@ -31,7 +32,6 @@ How our own server is set up (from `docs/server-setup.md`, Part 2). No secrets h
 2. If something's wrong: `git revert <bad commit>`, push, and run `update` again.
 
 ## Still to do
-- Admin logins for Noah on the hub and the demo (he types the password).
 - API keys and the ntfy alert topic (`kit.manage set-secret`), then `kit.alerts test` and a test enquiry from the website's contact form.
 - Off-site backups: a DigitalOcean Spaces bucket, then `OFFSITE_CMD` in each env file.
 - External uptime monitor on each `/healthz`, emailing Noah.
