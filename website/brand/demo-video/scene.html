@@ -1,0 +1,248 @@
+<div id="film" class="film">
+  <div id="stage"></div>
+</div>
+<script>
+(() => {
+const T = 60;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const smooth = x => { x = clamp(x); return x * x * (3 - 2 * x); };
+const ease = x => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const out = x => { x = clamp(x); return 1 - Math.pow(1 - x, 3); };
+const seg = (t, a, b) => smooth((t - a) / (b - a));
+const segE = (t, a, b) => ease((t - a) / (b - a));
+const segO = (t, a, b) => out((t - a) / (b - a));
+const fade = (t, a, b, c, d) => Math.min(seg(t, a, b), 1 - seg(t, c, d));
+const lerp = (a, b, k) => a + (b - a) * k;
+const typed = (s, t, a, b) => s.slice(0, Math.round(s.length * clamp((t - a) / (b - a))));
+
+const stage = document.getElementById('stage');
+function h(tag, cls, parent = stage, html = '') { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e; }
+const css = (e, o, tf) => { e.style.opacity = o; if (tf !== undefined) e.style.transform = tf; e.style.visibility = o > 0.002 ? 'visible' : 'hidden'; };
+
+// ---------------------------------------------------------------- captions (top left, all through)
+const CAPS = [
+  [3.4, 7.2, 'Your data lives in many systems.', 'Each one sees only its own piece.'],
+  [7.6, 11.2, 'We bring it all together.', 'Every system flows into your data hub, a database you own.'],
+  [11.6, 15.0, 'Then we build on it.', 'Here’s what that looks like, for a demo company.'],
+  [15.4, 22.6, 'One home page for the whole business.', 'The numbers that matter, updated every hour.'],
+  [23.0, 30.2, 'The weekly scorecard fills itself in.', 'Green means the goal was hit. Nobody types it up.'],
+  [30.6, 38.2, 'Ask questions in plain English.', 'Answers come straight from your own data.'],
+  [38.6, 44.6, 'Alerts reach the right person.', 'When something needs attention, the right leader hears about it.'],
+  [45.0, 53.6, 'AI agents do the daily legwork.', 'They prepare the work. A person approves anything that goes out.'],
+];
+const caps = CAPS.map(([a, b, l1, l2]) => ({ a, b, e: h('div', 'cap', stage, `<div class="cap1">${l1}</div><div class="cap2">${l2}</div>`) }));
+
+// ---------------------------------------------------------------- act 1: systems and the hub
+const SYS = [['CRM', 'Deals and customers', 150, 300, -4], ['Accounting', 'Invoices and payments', 620, 250, 3], ['ERP', 'Jobs and costs', 1120, 300, -2],
+  ['Inventory', 'Stock and orders', 1500, 430, 4], ['Field service', 'Visits and work orders', 230, 640, 3], ['HR & payroll', 'People and payroll', 760, 760, -3],
+  ['Spreadsheets', 'Forecasts and trackers', 1330, 740, 2]];
+const HX = 960, HY = 600;
+const sys = SYS.map(([n, d, x, y, r], i) => { const e = h('div', 'sys', stage, `<div class="sname">${n}</div><div class="sdet">${d}</div>`); e.style.left = x + 'px'; e.style.top = y + 'px'; return { e, x, y, r, i }; });
+const hub = h('div', 'hub', stage, `<div class="hubdisc"><img src="SEAL_REV" alt="" width="190" height="190"></div><div class="hubt1">Your data hub</div><div class="hubt2">every system, in one place</div>`);
+const ring = h('div', 'hubring', stage);
+const hubTxt = [...hub.querySelectorAll('.hubt1, .hubt2')];
+
+// ---------------------------------------------------------------- act 2: the browser window with the demo hub
+const WX = 140, WY = 196, WW = 1640, WH = 850;
+const win = h('div', 'win', stage);
+win.innerHTML = `<div class="chrome"><i></i><i></i><i></i><div class="url">demo.sanfordoperations.com</div></div>
+<div class="nav"><div class="logo"><b></b>Bluestem <span>Hub</span></div>
+ <div class="tabs"><span data-p="home">Home</span><span data-p="score">Scorecard</span><span>Pipeline</span><span>Receivables</span><span data-p="alerts">Alerts</span><span data-p="agents">AI agents</span></div>
+ <div class="ask">✦ Ask AI</div></div>
+<div class="body" id="body"></div>
+<div class="note">Bluestem Facility Services is a fictional demo company with made-up data.</div>`;
+const body = win.querySelector('#body');
+const tabs = [...win.querySelectorAll('.tabs span')];
+const askBtn = win.querySelector('.ask');
+const note = win.querySelector('.note');
+
+// --- home
+const home = h('div', 'page', body);
+home.innerHTML = `<div class="ptitle">Where we stand</div><div class="psub">Year to date, compared with the same dates last year</div>`;
+const TILES = [['Bookings this year', 20.0, v => '$' + v.toFixed(1) + 'M', '▲ 5.6% vs last year', 'up'], ['Win rate (by $)', 34.5, v => v.toFixed(1) + '%', '▲ 0.4 pts vs last year', 'up'],
+  ['Open pipeline', 18.9, v => '$' + v.toFixed(1) + 'M', '207 deals closing this year', ''], ['Billed this year', 18.9, v => '$' + v.toFixed(1) + 'M', '▼ 4.3% vs last year', 'down'],
+  ['Cash collected', 18.2, v => '$' + v.toFixed(1) + 'M', '▼ 2.4% vs last year', 'down'], ['Over 60 days late', 454, v => '$' + Math.round(v) + 'K', 'of $3.3M unpaid', '']];
+const tilesRow = h('div', 'tiles', home);
+const tiles = TILES.map(([l, v, f, d, c]) => { const e = h('div', 'tile card', tilesRow, `<div class="tl">${l}</div><div class="tv"></div><div class="td ${c}">${d}</div>`); return { e, v, f, num: e.querySelector('.tv') }; });
+const grid2 = h('div', 'grid2', home);
+const chart = h('div', 'card chart', grid2, `<div class="ch"><b>Bookings by month</b><span class="lg"><i class="b26"></i>2026 <i class="b25"></i>2025</span></div><div class="bars"></div>`);
+const B26 = [0.85, 1.7, 1.6, 1.9, 2.7, 2.15, 1.5, 3.0, 3.3, 1.25], B25 = [1.9, 0.8, 2.05, 1.0, 1.8, 2.35, 4.05, 1.65, 2.2, 1.85, 2.5, 2.35];
+const MON = 'JFMAMJJASOND'.split('');
+const barsEl = chart.querySelector('.bars'); const bars = [];
+MON.forEach((m, i) => { const g = h('div', 'bg', barsEl, `<div class="pair"></div><div class="mo">${m}</div>`); const pair = g.querySelector('.pair');
+  [[B26[i], 'b26'], [B25[i], 'b25']].forEach(([v, c], k) => { if (v === undefined) { h('div', 'bar none', pair); return; } const b = h('div', 'bar ' + c, pair); b.dataset.v = v; bars.push({ b, v, i, k }); }); });
+const last7 = h('div', 'card last7', grid2, `<div class="ch"><b>Last 7 days</b><span class="muted">since Oct 12</span></div>`);
+const L7 = [['Won (17)', '$316K', 1], ['Prairie Surgical Hospital - Air handler retrofit', '$85K', 0, 'Dallas'], ['Permian Logistics - Full facility maintenance', '$67K', 0, 'Fort Worth'],
+  ['Lone Star Packaging - Preventive maintenance', '$61K', 0, 'Dallas'], ['Lost (15)', '$910K', 1], ['Cypress Bend Prep School - Rooftop unit replacement', '$192K', 0, 'Dallas']];
+const l7 = L7.map(([a, b, head, sub]) => h('div', head ? 'l7 head' : 'l7', last7, `<div><div class="${head ? '' : 'lnk'}">${a}</div>${sub ? `<div class="muted sm">${sub}</div>` : ''}</div><div class="amt">${b}</div>`));
+
+// --- scorecard
+const score = h('div', 'page', body);
+score.innerHTML = `<div class="ptitle">Weekly scorecard</div><div class="psub">Fills itself in from the CRM and accounting every hour.</div>`;
+const WEEKS = ['Aug 17', 'Aug 24', 'Aug 31', 'Sep 7', 'Sep 14', 'Sep 21', 'Sep 28', 'Oct 5'];
+const ROWS = [['New deals created', '≥ 25', [32, 31, 28, 31, 31, 31, 26, 30], v => v, (v) => v >= 25],
+  ['New pipeline created', '≥ $1.3M', [1.6, 3.5, 2.4, 1.3, 1.4, 1.2, 1.2, 1.5], v => '$' + v.toFixed(1) + 'M', v => v >= 1.3],
+  ['Bookings (won)', '≥ $500K', [824, 486, 970, 717, 761, 561, 668, 664], v => v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'M' : '$' + v + 'K', v => v >= 500],
+  ['Win rate by $, 90 days', '≥ 36.0%', [32.4, 31.9, 31.3, 32.9, 33.7, 33.0, 35.6, 36.1], v => v.toFixed(1) + '%', v => v >= 36],
+  ['Billed, past 31 days', '≥ $1.9M', [1.7, 1.8, 2.1, 2.1, 2.3, 2.5, 2.4, 2.3], v => '$' + v.toFixed(1) + 'M', v => v >= 1.9],
+  ['Cash collected', '≥ $450K', [637, 632, 304, 398, 417, 494, 306, 532], v => '$' + v + 'K', v => v >= 450],
+  ['Over 60 days late', '≤ $400K', [385, 383, 425, 419, 399, 396, 492, 458], v => '$' + v + 'K', v => v <= 400]];
+const table = h('div', 'card sc', score);
+const hdr = h('div', 'scrow schead', table, `<div class="scm">Measure</div>${WEEKS.map(w => `<div class="scc">${w}</div>`).join('')}<div class="scg">On goal</div>`);
+const cells = [], goals = [];
+ROWS.forEach(([m, g, vals, f, ok]) => { const r = h('div', 'scrow', table, `<div class="scm">${m}<div class="muted sm">Goal ${g}</div></div>`);
+  vals.forEach((v, j) => { const c = h('div', 'scc', r); const good = ok(v); c.innerHTML = `<span class="pillc ${good ? 'ok' : 'no'}">${good ? '' : '✕ '}${f(v)}</span>`; cells.push({ c, j }); });
+  const n = vals.filter(ok).length; goals.push(h('div', 'scg', r, `<b>${n}</b> of 8`)); });
+
+// --- ask AI panel (over the scorecard)
+const dim = h('div', 'dim', body);
+const panel = h('div', 'panel', win, `<div class="ph"><b>✦ Ask AI</b><span class="muted">Answers from Bluestem’s data</span></div>
+ <div class="qbox"><span class="q"></span><span class="caret"></span></div><div class="send">Ask</div>
+ <div class="you"></div><div class="think"><i></i><i></i><i></i></div><div class="ans"></div>
+ <div class="cmp"><div class="cr"><span>This month so far</span><div class="cb now"></div><b>$243K</b></div><div class="cr"><span>Same date last year</span><div class="cb then"></div><b>$299K</b></div></div>
+ <div class="src">From invoices in accounting, Oct 1 to 18</div>`);
+const Q = 'Which branch is behind on billing?';
+const A = 'Fort Worth. It has billed $243K so far this month, 81% of the $299K it had billed by this date last year.';
+const pq = panel.querySelector('.q'), pyou = panel.querySelector('.you'), pthink = panel.querySelector('.think'), pans = panel.querySelector('.ans'), pcmp = panel.querySelector('.cmp'), psrc = panel.querySelector('.src'), caret = panel.querySelector('.caret');
+const cbNow = panel.querySelector('.cb.now'), cbThen = panel.querySelector('.cb.then');
+
+// --- alerts
+const alerts = h('div', 'page', body);
+alerts.innerHTML = `<div class="ptitle">Alerts</div><div class="psub">What reached a leader’s phone or inbox this week</div>`;
+const AL = [['Billing behind pace', 'Fort Worth is at 81% of last year’s billing for the month so far', '$243K vs $299K', 'Oct 18'],
+  ['Deal slipped', 'Westlake Corporate Campus - Rooftop unit replacement moved to Nov 13', '$391K', 'Oct 14'],
+  ['Big loss', 'Lost: Cypress Bend Prep School - Rooftop unit replacement', '$192K', 'Oct 12'],
+  ['Deal slipped', 'Blanco Valley Community College - Tenant fit-out MEP moved to Dec 8', '$185K', 'Oct 17'],
+  ['Big loss', 'Lost: Mesquite Creek Academy - Generator maintenance agreement', '$154K', 'Oct 16']];
+const alist = h('div', 'card alist', alerts);
+const arows = AL.map(([k, d, a, dt]) => h('div', 'arow', alist, `<div class="bang">!</div><div class="ak"><div class="akind">${k}</div><div>${d}</div></div><div class="amt">${a}</div><div class="muted adt">${dt}</div>`));
+const phone = h('div', 'phone', stage, `<div class="notch"></div><div class="ptime">9:41</div><div class="pdate">Wednesday, October 14</div>
+ <div class="notif"><div class="nh"><b class="nlogo"></b>BLUESTEM HUB<span>now</span></div><div class="nt">Deal slipped: Westlake Corporate Campus</div><div class="nb">Rooftop unit replacement moved to Nov 13 · $391K. Tap to see the deal.</div></div>`);
+const notif = phone.querySelector('.notif');
+
+// --- AI agents
+const agents = h('div', 'page', body);
+agents.innerHTML = `<div class="ptitle">AI agents</div><div class="psub">What the AI agents prepared this morning</div>`;
+const ag = h('div', 'grid2 ag', agents);
+const brief = h('div', 'card brief', ag, `<div class="ch"><b>Daily brief</b><span class="muted">For the COO · prepared 6:30 AM</span></div>`);
+const BRIEF = ['51 deals are due to close in the next 7 days, $4.6M in total.', '73 invoices are more than 60 days late, $454K in total. Reminders for the largest are drafted.',
+  '8 open deals were pushed to a later month this week ($808K).', 'Fort Worth is at 81% of last year’s billing for the month so far.'];
+const blines = BRIEF.map(s => { const e = h('div', 'bl', brief, `<span class="bt"></span>`); return { e, s, t: e.querySelector('.bt') }; });
+const appr = h('div', 'card appr', ag, `<div class="ch"><b>Waiting for approval</b><span class="muted">3 payment reminders</span></div>
+ <div class="mail"><div class="mh">Invoice 005362: a friendly reminder</div><div class="muted sm">To Riverbend Health Partners · Austin · $28K, 79 days late</div><div class="mbody"></div>
+ <div class="btns"><span class="approve">Approve and send</span><span class="copy">Copy text</span></div><div class="done">✓ Approved and sent</div></div>`);
+const MAIL = 'Hi Riverbend Health Partners team,\n\nOur records show invoice 005362 for $28K is now 79 days past its due date.\n\nIf it’s already on its way, thank you, and please ignore this note. If anything needs sorting out, just reply and we’ll take care of it.\n\nThank you,\nBluestem Facility Services accounts';
+const mbody = appr.querySelector('.mbody'), approveBtn = appr.querySelector('.approve'), done = appr.querySelector('.done'), mail = appr.querySelector('.mail');
+
+// ---------------------------------------------------------------- cursor
+const cursor = h('div', 'cursor', stage, `<svg width="34" height="40" viewBox="0 0 34 40"><path d="M3 2 L3 31 L10.5 24.5 L15.5 36 L21 33.6 L16 22.4 L26 22.4 Z" fill="#1d1d1f" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/></svg>`);
+const click = h('div', 'click', stage);
+// [time, x, y] in screen pixels; clicks at the listed times
+const tabX = i => tabs[i].offsetLeft + tabs[i].offsetWidth / 2;
+let CUR = [], CLICKS = [];
+
+// ---------------------------------------------------------------- end and title cards
+const veil = h('div', 'veil', stage);
+const endc = h('div', 'card-end', stage, `<img src="SEAL_OX" alt="" width="200" height="200"><div class="e1">Your data in one place.</div><div class="e1">Numbers everyone trusts, put to work.</div><div class="e2">sanfordoperations.com</div>`);
+const title = h('div', 'card-end title', stage, `<div class="t0">Sanford Operations</div><div class="t1">How we put your data to work</div>`);
+
+function curAt(t) { if (t <= CUR[0][0]) return CUR[0].slice(1); for (let i = 0; i < CUR.length - 1; i++) { const [t0, x0, y0] = CUR[i], [t1, x1, y1] = CUR[i + 1]; if (t <= t1) { const k = ease((t - t0) / (t1 - t0)); return [lerp(x0, x1, k), lerp(y0, y1, k)]; } } return CUR[CUR.length - 1].slice(1); }
+
+function renderAt(t) {
+  t = clamp(t, 0, T);
+  caps.forEach(c => { const o = fade(t, c.a - 0.5, c.a, c.b - 0.5, c.b); css(c.e, o, `translateY(${(1 - o) * 14}px)`); });
+
+  // act 1: scattered systems drift, then fly into the hub
+  const hubIn = segO(t, 7.2, 8.0), hubOut = seg(t, 12.0, 12.8);
+  sys.forEach(s => { const app = seg(t, 0.3 + s.i * 0.12, 0.9 + s.i * 0.12); const t1 = 8.0 + s.i * 0.16, k = segE(t, t1, t1 + 1.0);
+    const dx = 10 * Math.sin(t * 0.7 + s.i), dy = 8 * Math.cos(t * 0.6 + s.i * 1.7);
+    const tx = (HX - (s.x + 170)) * k, ty = (HY - 53 - (s.y + 48)) * k;
+    css(s.e, app * (1 - seg(t, t1 + 0.4, t1 + 0.8)), `translate(${dx * (1 - k) + tx}px,${dy * (1 - k) + ty}px) rotate(${s.r * (1 - k)}deg) scale(${1 - 0.75 * k})`); });
+  const pulse = Math.max(...sys.map(s => { const a = 8.85 + s.i * 0.16; return t > a ? Math.max(0, 1 - (t - a) / 0.5) : 0; }));
+  css(hub, hubIn * (1 - hubOut), `translate(-50%,-50%) scale(${(0.85 + 0.15 * hubIn) * (1 + 0.03 * pulse) * (1 - 0.3 * hubOut)})`);
+  hubTxt.forEach((e, i) => css(e, seg(t, 9.8 + i * 0.2, 10.3 + i * 0.2), `translateY(${(1 - seg(t, 9.8 + i * 0.2, 10.4 + i * 0.2)) * 10}px)`));
+  const rk = ((t - 10.2) % 1.4 + 1.4) % 1.4 / 1.4; css(ring, t > 10.2 && t < 12.2 ? (1 - rk) * 0.5 * hubIn : 0, `translate(-50%,-50%) scale(${1 + rk * 0.7})`);
+
+  // the window grows out of the hub, and shrinks away at the end
+  const wIn = segE(t, 12.1, 13.6), wOut = segE(t, 53.8, 55.0);
+  const ws = lerp(0.1, 1, wIn) * lerp(1, 0.86, wOut), wcx = lerp(HX, WX + WW / 2, wIn), wcy = lerp(HY, WY + WH / 2, wIn);
+  css(win, seg(t, 12.1, 12.6) * (1 - seg(t, 54.2, 55.0)), `translate(${wcx - (WX + WW / 2)}px,${wcy - (WY + WH / 2)}px) scale(${ws})`);
+  css(note, fade(t, 14.0, 14.6, 21.5, 22.2));
+
+  // which page is showing
+  const P = t < 22.9 ? 'home' : t < 38.5 ? 'score' : t < 44.7 ? 'alerts' : 'agents';
+  tabs.forEach(s => s.classList.toggle('on', s.dataset.p === P));
+  css(home, P === 'home' ? 1 : 0); css(score, P === 'score' ? seg(t, 22.9, 23.2) : 0); css(alerts, P === 'alerts' ? seg(t, 38.5, 38.8) : 0); css(agents, P === 'agents' ? seg(t, 44.7, 45.0) : 0);
+
+  // home: tiles count up, bars grow, the week's list slides in
+  tiles.forEach((o, i) => { const a = 14.9 + i * 0.14, k = segO(t, a, a + 1.3); css(o.e, seg(t, a - 0.2, a + 0.2), `translateY(${(1 - seg(t, a - 0.2, a + 0.3)) * 16}px)`); o.num.textContent = o.f(o.v * k); });
+  css(chart, seg(t, 15.6, 16.0)); bars.forEach(o => { const a = 15.9 + o.i * 0.09 + o.k * 0.04, k = segO(t, a, a + 0.8); o.b.style.height = (o.v / 4.2 * 100 * k) + '%'; });
+  css(last7, seg(t, 16.0, 16.4)); l7.forEach((e, i) => { const a = 16.7 + i * 0.22; css(e, seg(t, a, a + 0.35), `translateX(${(1 - segO(t, a, a + 0.4)) * 24}px)`); });
+
+  // scorecard: fills in week by week
+  css(table, 1); cells.forEach(o => { const a = 23.5 + o.j * 0.42; const k = seg(t, a, a + 0.3); css(o.c.firstChild, k, `scale(${0.8 + 0.2 * k})`); });
+  goals.forEach((g, i) => css(g, seg(t, 27.0 + i * 0.08, 27.4 + i * 0.08)));
+  css(hdr, 1);
+
+  // ask AI
+  const pin = segE(t, 30.6, 31.1), pout = segE(t, 37.6, 38.1);
+  css(panel, pin * (1 - pout), `translateX(${(1 - pin) * 60 + pout * 60}px)`); css(dim, 0.35 * pin * (1 - pout));
+  const qT = typed(Q, t, 31.3, 32.7); pq.textContent = t < 33.0 ? qT : ''; css(caret, t < 33.0 && t > 31.1 ? (Math.floor(t * 2.5) % 2 ? 1 : 0.15) : 0);
+  pyou.textContent = Q; css(pyou, seg(t, 33.0, 33.3));
+  css(pthink, fade(t, 33.2, 33.4, 34.0, 34.2)); pthink.querySelectorAll('i').forEach((d, i) => { d.style.opacity = 0.3 + 0.7 * Math.max(0, Math.sin(t * 8 - i)); });
+  pans.textContent = typed(A, t, 34.1, 36.1); css(pans, t > 34.1 ? 1 : 0);
+  css(pcmp, seg(t, 36.2, 36.5)); cbNow.style.width = (243 / 299 * 100 * segO(t, 36.3, 37.0)) + '%'; cbThen.style.width = (100 * segO(t, 36.4, 37.1)) + '%';
+  css(psrc, seg(t, 36.9, 37.2));
+  askBtn.classList.toggle('on', t > 30.5 && t < 38.0);
+
+  // alerts: rows slide in, one reaches a phone
+  arows.forEach((e, i) => { const a = 39.0 + i * 0.3; css(e, seg(t, a, a + 0.35), `translateY(${(1 - segO(t, a, a + 0.45)) * 18}px)`); });
+  const ph = segE(t, 40.6, 41.4), phOut = segE(t, 44.2, 44.8);
+  css(phone, ph * (1 - phOut), `translateY(${(1 - ph) * 380 + phOut * 380}px) rotate(${-3 + 3 * ph}deg)`);
+  const nk = segO(t, 41.6, 42.1); css(notif, nk, `translateY(${(1 - nk) * -30}px) scale(${0.94 + 0.06 * nk})`);
+  arows[1].classList.toggle('hl', t > 41.5);
+
+  // AI agents: the brief writes itself, a reminder drafts, a person approves
+  css(brief, seg(t, 45.0, 45.4)); blines.forEach((o, i) => { const a = 45.5 + i * 0.75; o.t.textContent = typed(o.s, t, a, a + 0.7); css(o.e, t > a ? 1 : 0); });
+  css(appr, seg(t, 45.3, 45.7)); mbody.textContent = typed(MAIL, t, 46.4, 50.4);
+  const ap = t > 51.9; approveBtn.classList.toggle('press', t > 51.8 && t < 52.0); css(appr.querySelector('.btns'), ap ? 1 - seg(t, 51.95, 52.15) : seg(t, 50.4, 50.8));
+  css(done, seg(t, 52.1, 52.4), `scale(${0.9 + 0.1 * segO(t, 52.1, 52.5)})`); mail.classList.toggle('ok', t > 52.1);
+
+  // cursor and clicks
+  const cv = fade(t, 13.8, 14.2, 53.6, 54.0); const [cx, cy] = curAt(t); css(cursor, cv, `translate(${cx}px,${cy}px)`);
+  let ck = 0; CLICKS.forEach(c => { if (t >= c[0] && t < c[0] + 0.45) { ck = 1 - (t - c[0]) / 0.45; click.style.left = c[1] + 'px'; click.style.top = c[2] + 'px'; } });
+  css(click, ck * cv, `translate(-50%,-50%) scale(${1.6 - ck})`);
+
+  // end
+  css(veil, seg(t, 54.6, 55.3)); const e = fade(t, 55.2, 56.0, 60.5, 61); css(endc, e, `translateY(${(1 - seg(t, 55.2, 56.0)) * 18}px)`);
+  css(title, 1 - seg(t, 2.6, 3.3));
+}
+
+function layoutCursor() {
+  // positions are worked out from the laid-out window so clicks land on the real buttons
+  const r = el => { const b = el.getBoundingClientRect(), f = document.getElementById('film').getBoundingClientRect(), s = f.width / 1920; return [(b.left - f.left) / s + b.width / (2 * s), (b.top - f.top) / s + b.height / (2 * s)]; };
+  const [sx, sy] = r(tabs[1]), [ax, ay] = r(askBtn), [lx, ly] = r(tabs[4]), [gx, gy] = r(tabs[5]);
+  const send = panel.querySelector('.send'); const [qx, qy] = r(send); const [px, py] = r(approveBtn); const tile = r(tiles[5].e);
+  CUR = [[13.8, 1000, 640], [17.4, 1180, 560], [19.4, tile[0] - 30, tile[1] + 10], [20.8, tile[0] - 20, tile[1] + 14], [22.3, sx, sy], [22.8, sx, sy],
+         [27.6, 900, 640], [29.6, ax, ay], [30.3, ax, ay], [32.4, qx - 40, qy + 10], [32.85, qx, qy], [37.0, qx - 120, qy + 160], [37.9, lx + 160, ly + 80], [38.3, lx, ly],
+         [42.8, 1100, 700], [44.1, gx, gy], [44.6, gx, gy], [49.0, 1300, 760], [51.6, px, py], [53.6, px + 40, py + 30]];
+  CLICKS = [[22.6, sx, sy], [30.3, ax, ay], [32.85, qx, qy], [38.35, lx, ly], [44.5, gx, gy], [51.85, px, py]];
+}
+
+async function boot() {
+  try { await Promise.all(['400 20px Inter', '600 20px Inter', '700 40px Inter', '700 60px "Playfair Display"'].map(f => document.fonts.load(f))); } catch (e) {}
+  // measure with the window and panel at rest
+  [win, panel, approveBtn.parentElement].forEach(e => { e.style.transform = 'none'; e.style.visibility = 'visible'; });
+  layoutCursor();
+  window.renderAt = renderAt; renderAt(0); window.sceneReady = true;
+  if (!window.CAPTURE) {
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let t0 = performance.now(), paused = reduce, at = reduce ? 26 : 0;
+    const loop = now => { if (!paused) { at = (now - t0) / 1000; if (at > T) { at = 0; t0 = now; } } renderAt(at); requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+    window.film = { toggle() { paused = !paused; if (!paused) t0 = performance.now() - at * 1000; return paused; }, replay() { at = 0; t0 = performance.now(); paused = false; } };
+  }
+}
+boot();
+})();
+</script>
