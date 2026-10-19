@@ -144,11 +144,19 @@ def set_secret(name: str, stdin: bool):
     path = env_file()
     lines = path.read_text().splitlines() if path.exists() else []
     lines = [l for l in lines if not l.strip().startswith(name + "=")] + [f"{name}={value}"]
+    text = "\n".join(lines) + "\n"
     tmp = path.with_suffix(".tmp")
-    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "w") as f:
-        f.write("\n".join(lines) + "\n")
-    os.replace(tmp, path)
+    try:
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    except PermissionError:
+        # On a server the folder (/etc/hub) is root's and only the file is ours: rewrite it in place.
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w") as f:
+            f.write(text)
+    else:
+        with os.fdopen(fd, "w") as f:
+            f.write(text)
+        os.replace(tmp, path)
     os.chmod(path, 0o600)
     print(f"Saved {name} to .env. Restart the hub so it picks it up.")
 
