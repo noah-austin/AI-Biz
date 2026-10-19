@@ -15,7 +15,7 @@ Then in the Admin console:
 
 **Add DMARC** (one record, helps keep our emails out of spam): open the domain's DNS settings (Admin console → Account → Domains → Manage domains → your domain → **Advanced DNS settings**, which opens Squarespace) and add a TXT record named `_dmarc` with value `v=DMARC1; p=none; rua=mailto:hello@sanfordoperations.com`.
 
-**On Monday, once the server exists** (step 1 below shows its IP address), add these records in the same Squarespace DNS page. The server can be set up before this: it starts on temporary `sslip.io` addresses.
+**Once the server exists** (step 1 below shows its IP address), add these records in the same Squarespace DNS page. The server can be set up before this: it starts on temporary `sslip.io` addresses.
 
 | Type | Name | Value | For |
 |---|---|---|---|
@@ -34,6 +34,8 @@ If Squarespace already has a record for `@` or `www` that isn't Google's email (
 - Authentication: Password. Make it strong and save it in a password manager.
 - Tick **Backups** (weekly, about $5 a month more).
 - Hostname: `biz-server`.
+
+**1b. Add the DNS records** from the table above, with the droplet's IPv4 address (shown on its page). Doing it now gives them time to spread while you work through the rest.
 
 **2. Open the console:** click the droplet, then Access → **Launch Droplet Console**.
 
