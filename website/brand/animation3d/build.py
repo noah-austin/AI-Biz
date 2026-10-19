@@ -12,9 +12,11 @@ FILM_CSS = """
 .film { position:relative; width:1920px; height:1080px; overflow:hidden; background:#f5efe4; color:#2a2622;
   font-family:'Inter', system-ui, Arial, sans-serif; transform-origin:0 0 }
 .film canvas { position:absolute; left:0; top:0; width:1920px; height:1080px }
-.cap { position:absolute; left:120px; top:72px; width:1300px; opacity:0 }
-.c1 { font-family:'Playfair Display', Playfair, Georgia, serif; font-weight:700; font-size:66px; line-height:1.1 }
-.c2 { font-size:30px; color:#4f4842; margin-top:12px }
+.lt { position:absolute; left:96px; bottom:84px; width:1100px; padding:26px 34px 28px 40px; opacity:0;
+  background:rgba(245,239,228,.9); border-radius:6px; box-shadow:0 12px 40px rgba(42,38,34,.18) }
+.lt i { position:absolute; left:0; top:0; bottom:0; width:8px; background:#8f6f3e; border-radius:6px 0 0 6px }
+.c1 { font-family:'Playfair Display', Playfair, Georgia, serif; font-weight:700; font-size:56px; line-height:1.1 }
+.c2 { font-size:28px; color:#4f4842; margin-top:12px }
 .veil { position:absolute; inset:0; background:#f5efe4 }
 .card-end { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; background:transparent }
 #title { background:#f5efe4; gap:22px }
@@ -59,8 +61,8 @@ FILM_CSS
 </style>
 <div class="wrap">
   <p class="eyebrow">Sanford Operations</p>
-  <h1>What we do, in 3D</h1>
-  <p class="lead">The same story in three dimensions: many systems, brought together into your data hub, working as one, then built on. The video file is made from this same scene.</p>
+  <h1>The foundation</h1>
+  <p class="lead">A small world of separate systems, joined to one foundation, with tools, AI and AI agents built on top. The video file is made from this same scene.</p>
   <div class="frame" id="frame">SCENE</div>
   <div class="controls"><button type="button" class="primary" id="toggle">Pause</button><button type="button" id="replay">Play from the start</button></div>
 </div>
