@@ -124,9 +124,7 @@ def test_only_demo_hubs_can_be_framed_and_only_by_the_website(monkeypatch):
 def test_home_shows_how_it_works_without_scripts_and_hides_the_demo(site):
     client, _ = site
     html = client.get("/").text
-    from website.how import INDUSTRIES
-    assert html.count('class="how-panel"') == len(INDUSTRIES) == 5
-    assert html.count('name="how-industry"') == 5 and html.count(" checked") >= 1   # one industry picked by default
+    assert html.count('class="how-panel"') == 1 and html.count('class="catch c') == 3
     assert "<script" not in html and "style=" not in html                          # the CSP allows neither
     assert 'href="/demo"' not in html and "/contact?interest=demo" in html          # demo is by request only
     assert "Disallow: /demo" in client.get("/robots.txt").text
