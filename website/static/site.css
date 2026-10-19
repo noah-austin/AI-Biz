@@ -462,11 +462,13 @@ section { padding: 104px 0; }
 /* Explainer video: wide cut, or the tall cut on phones; a still instead for reduced motion. */
 .explainer { border-radius: 14px; border: 1px solid var(--line); overflow: hidden; background: #f5efe4; }
 .explainer-video, .explainer-still img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: contain; background: #f5efe4; }
-.explainer-still { display: none; }
+.explainer-video.tall, .explainer-still { display: none; }
 @media (max-width: 640px) {
-  .explainer-video, .explainer-still img { aspect-ratio: 2 / 3; }
+  .explainer-video.wide { display: none; }
+  .explainer-video.tall { display: block; }
+  .explainer-video.tall, .explainer-still img { aspect-ratio: 2 / 3; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .explainer-video { display: none; }
+  .explainer-video.wide, .explainer-video.tall { display: none; }
   .explainer-still { display: block; }
 }

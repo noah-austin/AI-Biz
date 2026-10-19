@@ -78,11 +78,14 @@ def sec_head(eyebrow: str, title: str, lead: str = "", center: bool = True) -> s
 def explainer() -> str:
     """The explainer video (website/brand/animation/): a tall cut on phones, a wide one elsewhere; a still for reduced motion."""
     u = lambda name: f"/static/{name}?v={ASSET_V[name]}"
+    label = ("Animation: a company's scattered systems come together in one data hub, "
+             "then reports, tools, AI and AI agents are built on top.")
+    # Two videos rather than <source media>, which iPhone Safari ignores; CSS shows the one that fits the screen.
+    videos = "".join(
+        f'<video class="explainer-video {cut}" autoplay muted loop playsinline preload="auto" poster="{u(f"video/explainer-{cut}.jpg")}" '
+        f'aria-label="{label}"><source src="{u(f"video/explainer-{cut}.mp4")}" type="video/mp4"></video>' for cut in ("wide", "tall"))
     return f"""<div class="explainer">
-    <video class="explainer-video" autoplay muted loop playsinline preload="auto" poster="{u("video/explainer-wide.jpg")}"
-      aria-label="Animation: a company's scattered systems come together in one data hub, then reports, tools, AI and AI agents are built on top.">
-      <source src="{u("video/explainer-tall.mp4")}" type="video/mp4" media="(max-width: 640px)">
-      <source src="{u("video/explainer-wide.mp4")}" type="video/mp4"></video>
+    {videos}
     <picture class="explainer-still"><source srcset="{u("video/explainer-tall-end.jpg")}" media="(max-width: 640px)">
       <img src="{u("video/explainer-wide-end.jpg")}" alt="Your data in one place. Numbers everyone trusts, put to work." loading="lazy"></picture>
   </div>"""

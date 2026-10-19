@@ -131,6 +131,6 @@ def test_home_hides_the_demo(site):
 def test_home_plays_the_explainer_with_a_phone_cut(site):
     client, _ = site
     html = client.get("/").text
-    assert 'media="(max-width: 640px)"' in html and "explainer-tall.mp4" in html and "explainer-wide.mp4" in html
+    assert 'class="explainer-video tall"' in html and 'class="explainer-video wide"' in html   # two videos: iPhones ignore <source media>
     for name in ("explainer-tall.mp4", "explainer-wide.mp4", "explainer-wide-end.jpg"):
         assert client.get(f"/static/video/{name}", headers={"Range": "bytes=0-9"}).status_code == 206   # iPhones need ranges
