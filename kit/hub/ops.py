@@ -10,6 +10,12 @@ def _scope(request):
     return request.state.user["branches"] or None
 
 
+def _frontline() -> str:
+    """What this company calls its frontline staff, from [people] frontline_label in config.toml."""
+    from ..config import get_settings
+    return get_settings().client.get("people", {}).get("frontline_label", "technicians")
+
+
 def _hrs(v) -> str:
     return "—" if v is None else f"{float(v):.1f} hrs"
 
@@ -101,7 +107,7 @@ def inventory_page(request):
     critical_out = [r for r in reorder if r["critical"] and float(r["on_hand"]) <= 0]
     tiles = "".join([
         ui.tile("Inventory value", money(s["value"], True), f'{money(s["van_value"], True)} of it on service vans', None, metrics.HOW["inventory_value"]),
-        ui.tile("Turns, last 12 months", f'{s["turns"]:.1f}×' if s["turns"] else "—", f'{money(s["used_12m"], True)} of parts used on jobs',
+        ui.tile("Turns, last 12 months", f'{s["turns"]:.1f}×' if s["turns"] else "—", f'{money(s["used_12m"], True)} used or shipped at cost',
                 None, metrics.HOW["turns"]),
         ui.tile("Below reorder point", ui.num(s["below_reorder"]),
                 f'<span class="delta bad">{len(critical_out)} critical part{"" if len(critical_out) == 1 else "s"} out of stock</span>'
@@ -202,7 +208,7 @@ def people_page(request):
     scope, t = _scope(request), metrics.today()
     s = metrics.people_summary(t, scope)
     tiles = "".join([
-        ui.tile("Headcount", ui.num(s["headcount"]), f'{int(s["technicians"])} technicians', None, metrics.HOW["headcount"]),
+        ui.tile("Headcount", ui.num(s["headcount"]), f'{int(s["frontline"])} {esc(_frontline())}', None, metrics.HOW["headcount"]),
         ui.tile("Open roles", ui.num(s["open_roles"]), f'avg {s["avg_days_open"]:.0f} days open' if s["avg_days_open"] is not None else "none open",
                 "#roles", metrics.HOW["open_roles"]),
         ui.tile("Turnover, last 12 months", pct(s["turnover"], 0), f'{int(s["exits_12m"])} left ({int(s["quits_12m"])} by choice) · {int(s["hires_12m"])} hired',
@@ -226,7 +232,7 @@ def people_page(request):
                        label="Overtime by branch")
     hb = metrics.headcount_by_branch(t, scope)
     hc_bars = ui.hbars([{"label": r["branch"], "value": r["headcount"], "shown": str(r["headcount"]),
-                         "sub": f'{r["technicians"]} technicians'} for r in hb], label="Headcount by branch")
+                         "sub": f'{r["frontline"]} {esc(_frontline())}'} for r in hb], label="Headcount by branch")
     certs = metrics.cert_problems(scope)
     def state(c):
         if c["status"] == "Expired":
@@ -274,6 +280,9 @@ SOURCE_FIELDS = {
     "po": [("number", "PO number"), ("vendor", "Vendor"), ("kind", "Type"), ("status", "Status"), ("ordered_date", "Ordered"),
            ("expected_date", "Expected"), ("received_date", "Received"), ("amount", "Amount"), ("billed_amount", "Billed by vendor"),
            ("deal_id", "For deal"), ("id", "Record ID")],
+    "order": [("number", "Order number"), ("customer", "Customer"), ("channel", "Channel"), ("status", "Status"),
+              ("order_date", "Ordered"), ("requested_date", "Customer wants it by"), ("first_ship_date", "First shipment"),
+              ("last_ship_date", "Last shipment"), ("rep", "Sales rep"), ("invoice_number", "Invoice number"), ("id", "Record ID")],
     "employee": [("name", "Name"), ("title", "Job title"), ("department", "Department"), ("branch_code", "Location"),
                  ("hire_date", "Hire date"), ("termination_date", "Last day"), ("manager", "Manager"), ("pay_type", "Pay type"),
                  ("id", "Employee ID")],
@@ -316,6 +325,17 @@ def demo_record(system: str, obj: str, rec_id: str, scope):
         rel = "<h3>Lines</h3><ul class=\"list\">" + "".join(
             f'<li>{esc(x["description"])}<span class="amt">{ui.num(x["qty"])} × {money(x["unit_price"])}</span></li>' for x in lines) + "</ul>"
         return r, "Purchasing", "po", rel
+    if (system, obj) == ("orders", "order"):
+        r = db.one("""SELECT o.*, a.name AS customer, u.name AS rep FROM ord.orders o LEFT JOIN crm.accounts a ON a.id = o.account_id
+                      LEFT JOIN crm.users u ON u.id = o.rep_id WHERE o.id = %(i)s""", {"i": rec_id})
+        if not r or not ok(r["branch_code"]):
+            return None
+        lines = db.query("""SELECT l.*, coalesce(i.description, l.sku) AS description FROM ord.order_lines l
+                            LEFT JOIN inv.items i ON i.id = l.sku WHERE l.order_id = %(i)s ORDER BY l.id""", {"i": rec_id})
+        rel = "<h3>Lines</h3><ul class=\"list\">" + "".join(
+            f'<li>{esc(x["description"])}<span class="amt">{ui.num(x["qty_shipped"])} of {ui.num(x["qty_ordered"])} shipped × '
+            f'{money(x["unit_price"])} (cost {money(x["unit_cost"])})</span></li>' for x in lines) + "</ul>"
+        return r, "Orders (ERP)", "order", rel
     if (system, obj) == ("hr", "employee"):
         r = db.one("""SELECT e.*, m.name AS manager FROM hr.employees e LEFT JOIN hr.employees m ON m.id = e.manager_id
                       WHERE e.id = %(i)s""", {"i": rec_id})
@@ -327,3 +347,73 @@ def demo_record(system: str, obj: str, rec_id: str, scope):
             for c in certs) + "</ul>") if certs else ""
         return r, "HR and payroll", "employee", rel
     return None
+
+
+# ---------------------------------------------------------------- orders and shipping
+
+def orders_page(request):
+    scope, t = _scope(request), metrics.today()
+    last30, prev30 = (t - dt.timedelta(days=29), t), (t - dt.timedelta(days=59), t - dt.timedelta(days=30))
+    s, p = metrics.orders_summary(*last30, scope), metrics.orders_summary(*prev30, scope)
+    tiles = "".join([
+        ui.tile("Sales, last 30 days", money(s["sales"], True), ui.delta(s["sales"], p["sales"], label="vs the 30 days before"),
+                None, metrics.HOW["sales_shipped"]),
+        ui.tile("Gross margin", pct(s["gross_margin"], 1), ui.points_delta(s["gross_margin"], p["gross_margin"], "vs the 30 days before"),
+                "#margin", metrics.HOW["gross_margin"]),
+        ui.tile("Fill rate", pct(s["fill_rate"], 1), f'{int(s["lines_filled"]):,} of {int(s["lines"]):,} lines complete first time',
+                "#fill", metrics.HOW["fill_rate"]),
+        ui.tile("Shipped on time", pct(s["on_time_ship"], 0), f'{int(s["orders_shipped"]):,} orders shipped', "#fill", metrics.HOW["on_time_ship"]),
+        ui.tile("Backorders", money(s["backorder_value"], True), f'{s["backorder_orders"]} orders waiting on stock', "#backorders",
+                metrics.HOW["backorders"]),
+    ])
+    weeks = metrics.orders_by_week(t, 12, scope)
+    weekly = ui.chart("orders-wk", {"type": "bar", "format": "money", "labels": [ui.short_date(w["week"]) for w in weeks], "datasets": [
+        {"label": "Sales", "data": [float(w["sales"]) for w in weeks], "color": "--series-1"}]}, height=230, label="Sales by week")
+    lines = metrics.orders_by("product_line", *last30, scope)
+    margin_bars = ui.hbars([{"label": r["key"], "value": (r["gross_margin"] or 0) * 100, "shown": pct(r["gross_margin"], 1),
+                             "sub": f'{money(r["sales"], True)} sales'} for r in sorted(lines, key=lambda r: -(r["gross_margin"] or 0))],
+                           label="Gross margin by product line", top=50)
+    squeeze = metrics.margin_by_month(t, 12, scope=scope)
+    months = sorted({m for v in squeeze.values() for m in v})
+    worst = sorted(squeeze.items(), key=lambda kv: (kv[1].get(months[-1]) or 0) - (kv[1].get(months[0]) or 0))[:3] if months else []
+    trend = ui.chart("margin-trend", {"type": "line", "format": "pct", "labels": [m.strftime("%b") for m in months], "datasets": [
+        {"label": k, "data": [None if v.get(m) is None else 100 * v[m] for m in months], "color": f"--series-{i + 1}"}
+        for i, (k, v) in enumerate(worst)]}, height=230, label="Gross margin by month for the product lines that fell most")
+    reps = metrics.orders_by("rep", *last30, scope)
+    rep_bars = ui.hbars([{"label": r["key"], "value": (r["gross_margin"] or 0) * 100, "shown": pct(r["gross_margin"], 1),
+                          "sub": f'{money(r["sales"], True)}'} for r in sorted(reps, key=lambda r: r["gross_margin"] or 0)[:10]],
+                        label="Gross margin by rep, lowest first", top=50)
+    fill = metrics.orders_by("branch", *last30, scope)
+    ontime = {r["branch"]: r for r in metrics.orders_on_time_by_branch(*last30, scope)}
+    fill_bars = _pct_bars([dict(r, branch=r["key"]) for r in fill], "fill_rate",
+                          lambda r: f'{pct(ontime.get(r["key"], {}).get("on_time_ship"), 0)} shipped on time', "Fill rate by branch")
+    custs = metrics.orders_by("customer", *last30, scope)[:10]
+    crows = [f'<tr><td class="wrap">{esc(c["key"])}</td><td class="n">{money(c["sales"])}</td><td class="n">{pct(c["gross_margin"], 1)}</td>'
+             f'<td class="n">{c["orders"]}</td></tr>' for c in custs]
+    bo = metrics.backorders(scope, 15)
+    brows = [f'<tr><td>{ui.source_link("ord_order", b["order_id"], "Order " + b["order_number"])}</td><td class="wrap">{esc(b["account_name"])}</td>'
+             f'<td class="wrap">{esc(b["description"])}</td><td>{esc(b["branch"])}</td><td class="n">{ui.num(b["qty_open"])}</td>'
+             f'<td class="n">{money(b["backorder_value"])}</td><td class="n">{ui.short_date(b["order_date"])}</td></tr>' for b in bo]
+    legend = "".join(f'<span><i style="background:var(--series-{i + 1})"></i>{esc(k)}</span>' for i, (k, _v) in enumerate(worst))
+    body = f"""<div class="tiles">{tiles}</div>
+<div class="cols even">
+  <section class="card"><div class="card-head"><h2>Sales by week</h2><span class="muted">What shipped, at the order price</span></div>
+    {weekly}{ui.how(metrics.HOW["sales_shipped"])}</section>
+  <section class="card" id="fill"><div class="card-head"><h2>Fill rate by branch</h2><span class="muted">Last 30 days · goal 95%</span></div>
+    {fill_bars}{ui.how(metrics.HOW["fill_rate"] + " " + metrics.HOW["on_time_ship"])}</section>
+</div>
+<div class="cols even" id="margin">
+  <section class="card"><div class="card-head"><h2>Gross margin by product line</h2><span class="muted">Last 30 days</span></div>
+    {margin_bars}{ui.how(metrics.HOW["gross_margin"])}</section>
+  <section class="card"><div class="card-head"><h2>Where margin is slipping</h2><div class="legend">{legend}</div></div>
+    {trend}<p class="muted" style="margin:6px 0 0;font-size:13px">The product lines whose margin fell most over 12 months. Usually a vendor raised costs and prices didn't follow.</p></section>
+</div>
+<div class="cols even">
+  <section class="card"><div class="card-head"><h2>Margin by rep</h2><span class="muted">Lowest first, last 30 days</span></div>{rep_bars}</section>
+  <section class="card"><div class="card-head"><h2>Top customers</h2><span class="muted">Last 30 days</span></div>
+    {_table(["Customer", "Sales", "Margin", "Orders"], crows, "No orders yet.", (1, 2, 3))}</section>
+</div>
+<section class="card" id="backorders"><div class="card-head"><h2>Biggest backorders</h2><span class="muted">Ordered, not yet shipped</span></div>
+  {_table(["Order", "Customer", "Item", "Branch", "Qty open", "Value", "Ordered"], brows, "Nothing on backorder.", (4, 5, 6))}
+  {ui.how(metrics.HOW["backorders"])}</section>"""
+    return ui.page(request, "Orders", body, "Orders", subtitle="Sales orders and shipping, from the ERP, last 30 days unless noted")

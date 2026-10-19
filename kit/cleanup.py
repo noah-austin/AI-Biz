@@ -22,7 +22,7 @@ class Check:
     app: str = "analytics"   # only run for installs with this app (and so this system) switched on
 
 
-SYSTEMS = {"crm": "CRM", "accounting": "Accounting", "fieldservice": "Field service", "inventory": "Inventory",
+SYSTEMS = {"crm": "CRM", "accounting": "Accounting", "orders": "Orders (ERP)", "fieldservice": "Field service", "inventory": "Inventory",
            "purchasing": "Purchasing", "hr": "HR and payroll"}
 
 
@@ -89,6 +89,22 @@ CHECKS = [
           """SELECT id, name AS label, 'Branch code ' || coalesce(branch_code, '(blank)') AS detail, amount, branch_code,
                     branch, owner_name
              FROM rpt.deals WHERE region = 'Unmapped' AND %(scope)s IS NULL ORDER BY amount DESC NULLS LAST"""),
+    Check("order_not_invoiced", "Order shipped but not invoiced after 5 days",
+          "Goods are gone but the bill never went out.",
+          "Invoice the order, or record why it isn't billable.", "orders", "ord_order",
+          f"""SELECT id, 'Order ' || number || ' · ' || coalesce(account_name, '') AS label,
+                     'Shipped ' || to_char(last_ship_date, 'Mon FMDD, YYYY') AS detail, sales AS amount, branch_code, branch,
+                     'Billing team' AS owner_name
+              FROM rpt.orders WHERE status = 'Shipped' AND invoice_number IS NULL AND last_ship_date <= core.local_today() - 5 {_s()}
+              ORDER BY sales DESC NULLS LAST""", "orders"),
+    Check("below_cost", "Order line priced below cost (last 90 days)",
+          "Every unit sold loses money; usually a typo in the price or an override nobody approved.",
+          "Check the price with the rep; fix the price list or the customer's special pricing.", "orders", "ord_order",
+          f"""SELECT order_id AS id, 'Order ' || order_number || ' · ' || description AS label,
+                     to_char(unit_price, 'FM$999,990.00') || ' each, cost ' || to_char(unit_cost, 'FM$999,990.00') AS detail,
+                     cost - sales AS amount, branch_code, branch, coalesce(rep_name, 'Sales') AS owner_name
+              FROM rpt.order_lines WHERE status <> 'Canceled' AND unit_price < unit_cost
+                AND order_date >= core.local_today() - 90 {_s()} ORDER BY cost - sales DESC""", "orders"),
     Check("job_not_invoiced", "Completed job not invoiced after 14 days",
           "Work that's done but never billed is revenue that quietly disappears.",
           "Raise the invoice, or note on the job why it isn't billable.", "fieldservice", "fsm_job",
@@ -105,15 +121,14 @@ CHECKS = [
                      billable_amount AS amount, branch_code, branch, 'Service coordinator' AS owner_name
               FROM rpt.jobs WHERE is_open AND technician_id IS NOT NULL AND NOT technician_active {_s()}
               ORDER BY scheduled_date""", "field_service"),
-    Check("expired_license_booked", "Technician with an expired license still booked on jobs",
+    Check("expired_license_booked", "Still working on an expired license",
           "Working without a current license is a compliance and insurance risk.",
-          "Renew the license, or move their jobs until it's renewed.", "hr", "hr_employee",
+          "Renew the license, or take them off the work that needs it until it's renewed.", "hr", "hr_employee",
           f"""SELECT c.employee_id AS id, c.employee_name AS label,
-                     c.certification || ' expired ' || to_char(c.expires_date, 'Mon FMDD, YYYY') || ', ' ||
-                     (SELECT count(*) FROM rpt.jobs j WHERE j.technician_id = c.employee_id AND j.is_open) || ' open jobs' AS detail,
-                     NULL::numeric AS amount, c.branch_code, c.branch, 'Branch lead technician' AS owner_name
-              FROM rpt.certifications c WHERE c.is_active AND c.status = 'Expired' AND c.certification LIKE 'State HVAC%%'
-                AND EXISTS (SELECT 1 FROM rpt.jobs j WHERE j.technician_id = c.employee_id AND j.is_open) {_s('c.branch_code')}""", "people"),
+                     c.certification || ' expired ' || to_char(c.expires_date, 'Mon FMDD, YYYY') AS detail,
+                     NULL::numeric AS amount, c.branch_code, c.branch, coalesce(e.manager_name, 'HR') AS owner_name
+              FROM rpt.certifications c JOIN rpt.employees e ON e.id = c.employee_id
+              WHERE c.is_active AND c.status = 'Expired' AND c.is_license {_s('c.branch_code')}""", "people"),
     Check("missing_timesheet", "No timesheet for last week",
           "Payroll can't run correctly, and overtime and utilization are understated.",
           "Submit and approve last week's timesheet.", "hr", "hr_employee",
@@ -156,7 +171,8 @@ CHECKS = [
                     (SELECT sum(amount) FROM ap.purchase_orders p WHERE p.vendor_id = b.id) AS amount,
                     NULL AS branch_code, NULL AS branch, 'AP team' AS owner_name
              FROM ap.vendors a JOIN ap.vendors b ON a.id < b.id
-                  AND regexp_replace(lower(a.name), '[^a-z]| inc$|inc$|llc$', '', 'g') = regexp_replace(lower(b.name), '[^a-z]|inc$|llc$', '', 'g')
+                  AND regexp_replace(lower(a.name), '\\m(and|inc|llc|co)\\M|[^a-z]', '', 'g')
+                    = regexp_replace(lower(b.name), '\\m(and|inc|llc|co)\\M|[^a-z]', '', 'g')
              WHERE %(scope)s IS NULL""", "purchasing"),
 ]
 
@@ -164,9 +180,10 @@ CHECKS = [
 def run_checks(scope=None, limit=200) -> list[dict]:
     from .config import get_settings
     apps = get_settings().apps
+    skip = set(get_settings().client.get("checks", {}).get("skip", []))   # checks that don't fit how this company works
     out = []
     for c in CHECKS:
-        if c.app not in apps:
+        if c.app not in apps or c.key in skip:
             continue
         rows = db.query(c.sql, {"scope": scope})
         out.append({"check": c, "count": len(rows), "amount": sum(float(r["amount"] or 0) for r in rows),

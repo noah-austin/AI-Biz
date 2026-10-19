@@ -8,4 +8,5 @@ REGISTRY = {
     "demo_field_service": demo.DemoFieldService,
     "demo_inventory": demo.DemoInventory,
     "demo_purchasing": demo.DemoPurchasing,
+    "demo_orders": demo.DemoOrders,
 }

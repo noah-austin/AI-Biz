@@ -95,6 +95,10 @@ def load_reference(conn, client: dict):
     db.execute("INSERT INTO core.settings (key, value) VALUES ('timezone', %(tz)s) "
                "ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value",
                {"tz": client.get("timezone", "America/Chicago")}, conn)
+    people = client.get("people", {})
+    for key, default in (("frontline_department", "Field Service"), ("license", "")):
+        db.execute("INSERT INTO core.settings (key, value) VALUES (%(k)s, %(v)s) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value",
+                   {"k": key, "v": people.get(key, default)}, conn)
     for b in client.get("branches", []):
         db.execute("""INSERT INTO core.branches (code, name, region, active) VALUES (%(code)s, %(name)s, %(region)s, %(active)s)
                       ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name, region = EXCLUDED.region,

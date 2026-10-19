@@ -10,6 +10,7 @@ demo_guest = true          # the website's "See a live demo" button signs visito
 demo_by = "Sanford Operations"
 demo_by_url = "https://sanfordoperations.com"
 demo_cta_url = "https://sanfordoperations.com/contact?interest=demo"
+demo_more_url = "https://sanfordoperations.com/demo"
 # Which parts of the hub this install shows. The operations pages need their systems connected (see [[sources]]).
 apps = ["analytics", "field_service", "inventory", "purchasing", "people"]
 fiscal_year_start_month = 1
@@ -130,3 +131,9 @@ value = 85
 metric = "overtime_pct"
 period = "weekly"
 value = 8
+
+# Who the frontline staff are, what to call them, and which license is a legal must for them.
+[people]
+frontline_department = "Field Service"
+frontline_label = "technicians"
+license = "State HVAC license (TDLR)"

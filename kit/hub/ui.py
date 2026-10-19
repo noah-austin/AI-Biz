@@ -28,6 +28,7 @@ NAV = [  # path, label, admin only, group (pages in a group share one menu item 
     ("/winloss", "Win / loss", False, "Sales", "analytics"),
     ("/forecast", "Forecast", False, "Sales", "analytics"),
     ("/receivables", "Receivables", False, None, "analytics"),
+    ("/orders", "Orders", False, "Operations", "orders"),
     ("/jobs", "Field service", False, "Operations", "field_service"),
     ("/inventory", "Inventory", False, "Operations", "inventory"),
     ("/purchasing", "Purchasing", False, "Operations", "purchasing"),
@@ -236,6 +237,7 @@ def page(request, title: str, body: str, active: str = "", subtitle: str = "", w
         demo = ('<div class="demo-banner"><span>Demo company with made-up data: '
                 f'{esc(client.get("company", "this company"))} is fictional.</span>'
                 + (f' <span>Built by <a href="{esc(client.get("demo_by_url", "#"))}">{esc(by)}</a>.</span>' if by else "")
+                + (f' <span>· <a href="{esc(client["demo_more_url"])}">Other industries</a> ·</span>' if client.get("demo_more_url") else "")
                 + (f' <a class="demo-cta" href="{esc(cta)}">See it on your own data: book a call →</a>' if cta else "")
                 + "</div>")
     chat_on = chat_available(user)

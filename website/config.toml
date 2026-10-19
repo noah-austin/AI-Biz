@@ -6,4 +6,21 @@ owner = "Noah Austin"
 owner_title = "Founder"
 email = "hello@sanfordoperations.com"        # Google Workspace address
 city = "Based in Texas, working across the US"
-demo_url = "https://demo.sanfordoperations.com/guest"   # the Bluestem demo's guest sign-in
+demo_url = "/demo"   # the demo picker; each industry's demo is listed below
+
+# The live demos, one fictional company per industry. Each card signs the visitor in as a guest.
+[[demos]]
+industry = "Facility services"
+company = "Bluestem Facility Services"
+icon = "clipboard"
+url = "https://demo.sanfordoperations.com/guest"
+blurb = "HVAC and building services across six Texas branches: sales, field service, parts, purchasing and people."
+shows = ["Emergency calls answered on time", "First-time fix by branch", "Parts to reorder", "Licenses about to lapse"]
+
+[[demos]]
+industry = "Distribution"
+company = "Bramblewood Industrial Supply"
+icon = "truck"
+url = "https://distribution.demo.sanfordoperations.com/guest"
+blurb = "An industrial supply distributor: orders and shipping, margin by product line, stock, vendors and warehouse staff."
+shows = ["Fill rate and on-time shipping", "Margin slipping on a product line", "Backorders and stock-outs", "Who discounts too much"]

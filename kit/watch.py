@@ -14,6 +14,7 @@ DEFAULTS = {
     "big_win": 100_000,
     "big_loss": 150_000,
     "late_days": [60, 90],     # an invoice passing these many days past due is an alert (the last one is critical)
+    "late_min": 0,             # ...if its unpaid balance is at least this much (for companies with many small invoices)
     "billing_pace": 0.85,      # a branch billing below this share of last year's month-to-date is an alert
     "billing_min": 50_000,     # ...if last year's month-to-date was at least this much
     "closing_days": 7,         # the brief lists deals due to close within this many days
@@ -70,8 +71,8 @@ def alerts(t: dt.date, scope=None, days: int = 7) -> list[dict]:
     marks = sorted(r["late_days"])
     for n in marks:
         rows = db.query(f"""SELECT id, number, customer_name, branch, balance, due_date FROM rpt.invoices
-                            WHERE is_open AND balance > 0 AND (due_date + %(n)s) BETWEEN %(since)s AND %(t)s
-                            {_scope(scope)}""", dict(p, n=n))
+                            WHERE is_open AND balance > 0 AND balance >= %(lm)s AND (due_date + %(n)s) BETWEEN %(since)s AND %(t)s
+                            {_scope(scope)}""", dict(p, n=n, lm=r["late_min"]))
         for i in rows:
             out.append({"date": i["due_date"] + dt.timedelta(days=n), "severity": "critical" if n == marks[-1] else "warning",
                         "kind": f"Invoice {n} days late", "title": f'{i["customer_name"]}: invoice {i["number"]}',
@@ -99,6 +100,13 @@ def ops_alerts(t: dt.date, scope, since: dt.date) -> list[dict]:
             out.append({"date": j["arrived_date"], "severity": "warning", "kind": "Emergency call late",
                         "title": f'{j["account_name"]}: reached after {float(j["response_hours"]):.1f} hours',
                         "detail": f'{j["branch"]} · job {j["number"]} · the promise is 4 hours', "amount": None, "job_id": j["id"]})
+    if "orders" in apps:
+        week = t - dt.timedelta(days=t.weekday() + 7)
+        for b in metrics.orders_by("branch", week, week + dt.timedelta(days=6), scope):
+            if b["lines"] >= 50 and b["fill_rate"] is not None and b["fill_rate"] < r.get("fill_rate_min", 0.9):
+                out.append({"date": week + dt.timedelta(days=6), "severity": "warning", "kind": "Fill rate low",
+                            "title": f'{b["key"]}: only {b["fill_rate"]:.0%} of order lines shipped complete last week',
+                            "detail": f'{b["lines"] - b["lines_filled"]} lines short, week of {week:%b %-d}', "amount": None})
     if "inventory" in apps:
         for s_ in db.query(f"""SELECT sku, description, branch FROM rpt.stock WHERE critical AND location_kind = 'Warehouse'
                                AND on_hand <= 0 AND reorder_point > 0 {_scope(scope)}""", p):
@@ -211,12 +219,28 @@ def daily_brief(t: dt.date, scope=None) -> list[dict]:
 def ops_brief(t: dt.date, scope=None) -> list[dict]:
     """Morning-brief lines from the operations systems this install has switched on."""
     apps, lines = get_settings().apps, []
+    if "orders" in apps:
+        month = metrics.orders_by("branch", t - dt.timedelta(days=29), t, scope)
+        worst = min((b for b in month if b["lines"] >= 100), key=lambda b: b["fill_rate"] or 1, default=None)
+        if worst and (worst["fill_rate"] or 1) < 0.92:
+            lines.append({"text": f'{worst["key"]} shipped {worst["fill_rate"]:.0%} of order lines complete in the last 30 days, '
+                                  f'against a 95% goal: customers there are waiting on backorders.', "link": "/orders#fill"})
+        trend = metrics.margin_by_month(t, 12, scope=scope)
+        drops = []
+        for k, v in trend.items():
+            ms = sorted(v)
+            if len(ms) >= 6 and v[ms[0]] is not None and v[ms[-1]] is not None:
+                drops.append((v[ms[0]] - v[ms[-1]], k, v[ms[0]], v[ms[-1]]))
+        if drops and max(drops)[0] > 0.03:
+            d, k, a, b = max(drops)
+            lines.append({"text": f'{k} margin has slid from {a:.0%} to {b:.0%} over the year. Check whether vendor price '
+                                  f'increases were passed on.', "link": "/orders#margin"})
     if "inventory" in apps:
         out = db.query(f"""SELECT description, branch FROM rpt.stock WHERE critical AND location_kind = 'Warehouse' AND on_hand <= 0
                            AND reorder_point > 0 {_scope(scope)}""", {"scope": scope})
         if out:
             lines.append({"text": f'Out of stock: {"; ".join(f"{o["description"]} at {o["branch"]}" for o in out[:3])}. '
-                                  f'Both are critical parts, so jobs needing them will wait.' if len(out) == 2 else
+                                  f'Both are critical items, so work that needs them will wait.' if len(out) == 2 else
                                   f'{len(out)} critical part{"s are" if len(out) != 1 else " is"} out of stock at a warehouse.',
                           "link": "/inventory#reorder"})
     if "field_service" in apps:
@@ -233,7 +257,7 @@ def ops_brief(t: dt.date, scope=None) -> list[dict]:
     if "people" in apps:
         expired = [c for c in metrics.cert_problems(scope) if c["status"] == "Expired"]
         if expired:
-            lines.append({"text": f'{len(expired)} technician{"s" if len(expired) != 1 else ""} working on an expired license: '
+            lines.append({"text": f'{len(expired)} {"people are" if len(expired) != 1 else "person is"} working on an expired license: '
                                   f'{", ".join(c["employee_name"] for c in expired[:3])}.', "link": "/people#certs"})
     return lines
 

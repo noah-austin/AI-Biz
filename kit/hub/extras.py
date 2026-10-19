@@ -42,9 +42,10 @@ def alerts_page(request) -> str:
         f'<div class="alert-side"><strong>{money(a["amount"], True) if a.get("amount") else ""}</strong>'
         f'<div class="meta">{ui.date(a["date"])}</div></div></li>' for a in found)
     late = " and ".join(f"{n}" for n in r["late_days"])
+    min_txt = f" of {money(r['late_min'], True)} or more" if r["late_min"] else ""
     rule_rows = [("Deal slipped", f"An open deal of {money(r['slipped_min'], True)} or more is pushed to a later month."),
                  ("Big win / big loss", f"A deal of {money(r['big_win'], True)}+ is won, or {money(r['big_loss'], True)}+ is lost."),
-                 ("Invoice late", f"An unpaid invoice passes {late} days past due ({r['late_days'][-1]} is urgent)."),
+                 ("Invoice late", f"An unpaid invoice{min_txt} passes {late} days past due ({r['late_days'][-1]} is urgent)."),
                  ("Billing behind pace", f"A branch has billed under {r['billing_pace']:.0%} of last year's figure for the month so far.")]
     apps = get_settings().apps
     if "field_service" in apps:
@@ -87,7 +88,8 @@ def agents_page(request) -> str:
     update = watch.weekly_update(t, scope)
     prep = watch.meeting_prep(t, scope)
     note = ("In a live install, AI agents write these from your data each morning and hand them to the right person. "
-            "In this demo they're prepared from Bluestem's data by the same rules, so you can see the shape of the work."
+            f"In this demo they're prepared from {get_settings().client.get('short_name', 'the company')}'s data by the same rules, "
+            "so you can see the shape of the work."
             if get_settings().is_demo else
             "Prepared from your data by rules. With the AI agents switched on, they write these each morning.")
     brief_html = ""
@@ -113,7 +115,7 @@ def agents_page(request) -> str:
     <h3>{ui.source_link("crm_deal", d["id"], d["name"])}</h3>
     <p class="meta">{esc(d["branch"])} · {esc(d["owner_name"])} · {esc(d["stage"])} ({d["probability"]:.0f}%) · closes {ui.date(d["close_date"])} · {money(d["amount"], True)}</p>
     <div class="facts"><div><span>Account since</span><strong>{ui.date(h["first_seen"])}</strong></div>
-      <div><span>Won with them</span><strong>{h["won_n"]} deals · {money(h["won_amt"], True)}</strong></div>
+      <div><span>Won with them</span><strong>{h["won_n"]} deal{"" if h["won_n"] == 1 else "s"} · {money(h["won_amt"], True)}</strong></div>
       <div><span>Lost</span><strong>{h["lost_n"]}</strong></div><div><span>Other open deals</span><strong>{max(h["open_n"] - 1, 0)}</strong></div>
       <div><span>Unpaid invoices</span><strong>{money(ar["unpaid"], True)}{f' · oldest {ar["oldest"]} days late' if ar["oldest"] else ""}</strong></div></div></div>
     <div><h4>Recent changes</h4><ul class="list compact">{ch}</ul></div>

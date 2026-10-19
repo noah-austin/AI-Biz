@@ -5,12 +5,13 @@ DROP VIEW IF EXISTS rpt.employees, rpt.certifications, rpt.timesheets, rpt.jobs,
     rpt.purchase_orders, rpt.po_lines CASCADE;
 
 -- One row per person on payroll, past and present. Active = not yet past their termination date.
+-- Frontline = the department set as [people] frontline_department in config.toml (technicians, drivers, crews...).
 CREATE VIEW rpt.employees AS
 SELECT e.id, e.name, e.email, e.title, e.department, e.branch_code,
        coalesce(b.name, e.branch_code) AS branch, coalesce(b.region, 'Unmapped') AS region,
        e.hire_date, e.termination_date, e.termination_type, e.manager_id, m.name AS manager_name, e.pay_type,
        (e.termination_date IS NULL OR e.termination_date >= core.local_today()) AS is_active,
-       (e.department = 'Field Service') AS is_technician
+       (e.department = coalesce((SELECT value FROM core.settings WHERE key = 'frontline_department'), 'Field Service')) AS is_frontline
 FROM hr.employees e
 LEFT JOIN hr.employees m ON m.id = e.manager_id
 LEFT JOIN core.branches b ON b.code = e.branch_code;
@@ -20,6 +21,7 @@ CREATE VIEW rpt.certifications AS
 SELECT c.id, c.employee_id, e.name AS employee_name, e.title, e.branch_code, e.branch, e.is_active,
        c.name AS certification, c.issued_date, c.expires_date,
        c.expires_date - core.local_today() AS days_left,
+       (c.name = (SELECT value FROM core.settings WHERE key = 'license')) AS is_license,
        CASE WHEN c.expires_date IS NULL THEN 'No expiry'
             WHEN c.expires_date < core.local_today() THEN 'Expired'
             WHEN c.expires_date <= core.local_today() + 30 THEN 'Expiring'
@@ -28,7 +30,7 @@ FROM hr.certifications c JOIN rpt.employees e ON e.id = c.employee_id;
 
 -- Weekly hours from payroll. Worked = regular + overtime; paid time off is not time worked.
 CREATE VIEW rpt.timesheets AS
-SELECT t.id, t.employee_id, e.name AS employee_name, e.department, e.is_technician, e.branch_code, e.branch,
+SELECT t.id, t.employee_id, e.name AS employee_name, e.department, e.is_frontline, e.branch_code, e.branch,
        t.week_start, t.regular_hours, t.overtime_hours, t.pto_hours,
        t.regular_hours + t.overtime_hours AS worked_hours, t.approved
 FROM hr.timesheets t JOIN rpt.employees e ON e.id = t.employee_id;

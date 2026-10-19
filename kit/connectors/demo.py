@@ -169,3 +169,20 @@ class DemoPurchasing(Connector):
                   {"id": "Id", "po_id": "POId", "sku": "Sku", "description": "Description", "qty": "Qty",
                    "unit_price": "UnitPrice"}, o),
         ]
+
+
+class DemoOrders(Connector):
+    source = "demo orders (ERP)"
+
+    def objects(self):
+        o = self.options
+        return [
+            _spec("ord.orders", "orders/orders.json",
+                  {"id": "Id", "number": "OrderNumber", "account_id": "AccountId", "branch_code": "BranchCode", "rep_id": "RepId",
+                   "channel": "Channel", "order_date": "OrderDate", "requested_date": "RequestedDate", "status": "Status",
+                   "first_ship_date": "FirstShipDate", "last_ship_date": "LastShipDate", "invoice_number": "InvoiceNumber"}, o),
+            _spec("ord.order_lines", "orders/order_lines.json",
+                  {"id": "Id", "order_id": "OrderId", "sku": "Sku", "qty_ordered": "QtyOrdered",
+                   "qty_first_shipment": "QtyFirstShipment", "qty_shipped": "QtyShipped", "unit_price": "UnitPrice",
+                   "unit_cost": "UnitCost"}, o),
+        ]

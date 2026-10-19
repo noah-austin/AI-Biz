@@ -417,3 +417,17 @@ section { padding: 104px 0; }
   .who-row { gap: 10px; } .offer::after { width: 300px; height: 300px; right: -120px; bottom: -120px; }
   .demo-shot .fine { text-align: left; }
 }
+
+/* Demo picker */
+.demo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+.demo-card { display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 28px; color: var(--ink); text-decoration: none; transition: border-color .15s, transform .15s; }
+.demo-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.demo-card > .ico { width: 44px; height: 44px; padding: 10px; border-radius: 12px; background: var(--accent-soft); color: var(--accent);
+  box-sizing: border-box; margin-bottom: 14px; }
+.demo-card .eyebrow { margin: 0 0 4px; }
+.demo-card h3 { margin: 0 0 8px; font-size: 20px; }
+.demo-card p { color: var(--ink-2); font-size: 15.5px; margin: 0 0 12px; }
+.demo-card ul { margin: 0 0 18px; padding-left: 18px; color: var(--ink-2); font-size: 15px; }
+.demo-card li { margin: 3px 0; }
+.demo-go { margin-top: auto; font-weight: 600; color: var(--accent); }

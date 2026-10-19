@@ -37,7 +37,9 @@ def guest_tour(request) -> str:
     user = getattr(request.state, "user", None)
     if not (get_settings().is_demo and user and user["email"].endswith("@demo.invalid")):
         return ""
-    steps = [("/scorecard", "Scorecard", "The weekly numbers, filled in automatically. Green means the goal was hit."),
+    client = get_settings().client
+    custom = [(s["href"], s["title"], s["text"]) for s in client.get("tour", [])]
+    steps = custom or [("/scorecard", "Scorecard", "The weekly numbers, filled in automatically. Green means the goal was hit."),
              ("#", "Click any number", "Every tile, bar and row opens the records behind it, down to the deal."),
              ("/agent-work", "AI agents", "This morning's brief, payment reminders waiting for approval, and prep for the next big meeting."),
              (None, "Ask AI", "Ask a question in plain English, like \u201cWhich branch is behind on billing?\u201d")
@@ -54,7 +56,8 @@ def guest_tour(request) -> str:
         items += f"<li><strong>{head}</strong><span>{esc(d)}</span></li>"
     return (f'<section class="card tour" data-tour><div class="card-head"><h2>Welcome to the demo</h2>'
             f'<button type="button" class="linkish" data-tour-hide>Hide</button></div>'
-            f'<p class="muted">A fictional facility-services company with nearly three years of realistic data. Four things to try:</p>'
+            f'<p class="muted">{esc(client.get("demo_intro", "A fictional facility-services company with nearly three years of realistic data."))} '
+            f'Four things to try:</p>'
             f'<ol class="tour-steps">{items}</ol></section>')
 
 
@@ -193,6 +196,9 @@ def _changes_card(ch, t):
 def _across_the_business(t, scope) -> str:
     """One tile per operations area this install has, each opening its page."""
     apps, tiles = get_settings().apps, []
+    if "orders" in apps:
+        o = metrics.orders_summary(t - dt.timedelta(days=29), t, scope)
+        tiles.append(ui.tile("Fill rate", pct(o["fill_rate"], 1), f'margin {pct(o["gross_margin"], 1)} · last 30 days', "/orders"))
     if "field_service" in apps:
         j = metrics.jobs_summary(t - dt.timedelta(days=29), t, scope)
         tiles.append(ui.tile("Emergency calls on time", pct(j["emergency_on_time"], 0), f'{ui.num(j["completed"])} jobs done, last 30 days', "/jobs"))
@@ -208,8 +214,7 @@ def _across_the_business(t, scope) -> str:
         tiles.append(ui.tile("Headcount", ui.num(h["headcount"]), f'{h["open_roles"]} open roles · overtime {pct(h["overtime_pct"], 0)}', "/people"))
     if not tiles:
         return ""
-    return (f'<section class="card"><div class="card-head"><h2>Across the business</h2><span class="muted">Field service, stock, '
-            f'vendors and people, from their own systems</span></div><div class="tiles flat">{"".join(tiles)}</div></section>')
+    return (f'<section class="card"><div class="card-head"><h2>Across the business</h2><span class="muted">Each from its own system</span></div><div class="tiles flat">{"".join(tiles)}</div></section>')
 
 
 def _stage_bars(t, scope) -> str:
@@ -636,6 +641,7 @@ def invoices(request):
 CHECK_SHORT = {"placeholder_close": "Placeholder close date", "duplicates": "Possible duplicates", "stale_open": "Stale open deals",
                "missing_margin": "No margin entered", "lost_no_reason": "No loss reason", "won_not_billed": "Won, not billed",
                "unlinked_customer": "Unlinked customer", "unmapped_branch": "Unknown branch",
+               "order_not_invoiced": "Order not invoiced", "below_cost": "Sold below cost",
                "job_not_invoiced": "Job not invoiced", "job_left_tech": "Job on a leaver", "expired_license_booked": "Expired license",
                "missing_timesheet": "Missing timesheet", "no_manager": "No manager", "negative_stock": "Negative stock",
                "item_no_cost": "Part with no cost", "po_not_billed": "No vendor bill", "duplicate_vendor": "Duplicate vendor"}
@@ -648,6 +654,7 @@ def cleanup_page(request):
     short = {"placeholder_close": "Placeholder", "duplicates": "Duplicates", "stale_open": "Stale open",
              "missing_margin": "No margin", "lost_no_reason": "No loss reason", "won_not_billed": "Not billed",
              "unlinked_customer": "Unlinked", "unmapped_branch": "Unknown branch", "job_not_invoiced": "Not invoiced",
+             "order_not_invoiced": "Order not billed", "below_cost": "Below cost",
              "job_left_tech": "On a leaver", "expired_license_booked": "Expired license", "missing_timesheet": "Timesheet",
              "no_manager": "No manager", "negative_stock": "Negative stock", "item_no_cost": "No cost", "po_not_billed": "No bill",
              "duplicate_vendor": "Dup. vendor"}

@@ -168,9 +168,9 @@ def home() -> str:
 <section class="band"><div class="wrap demo-split">
   <div class="demo-copy">
     <p class="eyebrow">See it working</p>
-    <h2>Explore a live example</h2>
-    <p class="lead">A fictional company with realistic data: the scorecard, pipeline, win/loss, receivables and the AI assistant. No sign-up needed.</p>
-    <a class="btn" href="{esc(c["demo_url"])}">Open the live demo →</a>
+    <h2>Explore a company like yours</h2>
+    <p class="lead">Live demos for different industries, each a fictional company with realistic data: the scorecard, sales, operations, people and the AI agents. No sign-up needed.</p>
+    <a class="btn" href="{esc(c["demo_url"])}">Pick a demo →</a>
   </div>
   <div class="demo-shot">{v.demo_shot("home", "The demo hub's home page: bookings, win rate, pipeline, billing and cash, with a bookings-by-month chart.")}
   <p class="fine">Shown in the demo company's colors. Your hub uses yours.</p></div>
@@ -193,6 +193,26 @@ def home() -> str:
   <div class="cta-row center"><a class="btn" href="/contact?interest=call">Book a call</a><a class="btn ghost light" href="/what-we-build">What we build</a></div>
 </div></section>"""
     return layout(c["name"], body, "/")
+
+
+def demos() -> str:
+    """Pick a demo: one fictional company per industry, each a click away from signing in as a guest."""
+    c = cfg()
+    cards = "".join(
+        f'<a class="demo-card" href="{esc(d["url"])}">{v.icon(d.get("icon", "chart"))}'
+        f'<p class="eyebrow">{esc(d["industry"])}</p><h3>{esc(d["company"])}</h3><p>{esc(d["blurb"])}</p>'
+        f'<ul>{"".join(f"<li>{esc(s)}</li>" for s in d.get("shows", []))}</ul>'
+        f'<span class="demo-go">Open this demo →</span></a>' for d in c.get("demos", []))
+    body = f"""<section class="hero slim"><div class="wrap narrow center">
+  <p class="eyebrow">Live demos</p><h1>Pick a company like yours</h1>
+  <p class="lead">Each is a fictional company with realistic data in its own hub. No sign-up: click one and you're in.
+  Every number opens the records behind it.</p>
+</div></section>
+<section><div class="wrap"><div class="demo-grid">{cards}</div>
+  <p class="fine center" style="margin-top:28px">Don't see your industry? The hub is built around your systems, whatever you do.
+  <a href="/contact?interest=demo">Tell us about yours</a> and we'll show you what it would look like.</p>
+</div></section>"""
+    return layout("Live demos", body, "/demo", "Live demos of the Sanford Operations hub for different industries, with realistic fictional data.")
 
 
 def what_we_build() -> str:

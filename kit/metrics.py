@@ -216,6 +216,9 @@ SCORECARD = [  # key, label, format, higher_is_better, how, app it needs
     ("emergency_on_time", "Emergency calls reached in 4 hours", "pct", True, "emergency_on_time", "field_service"),
     ("first_time_fix", "First-time fix", "pct", True, "first_time_fix", "field_service"),
     ("overtime_pct", "Overtime, % of hours worked", "pct", False, "overtime", "people"),
+    ("fill_rate", "Fill rate (lines complete first time)", "pct", True, "fill_rate", "orders"),
+    ("on_time_ship", "Orders shipped on time", "pct", True, "on_time_ship", "orders"),
+    ("gross_margin", "Gross margin on orders", "pct", True, "gross_margin", "orders"),
 ]
 
 
@@ -281,6 +284,17 @@ def scorecard(t: dt.date, weeks=13, scope=None) -> dict:
             SELECT week_start AS w, sum(overtime_hours) AS ot, sum(worked_hours) AS worked FROM rpt.timesheets
             WHERE week_start BETWEEN %(first)s AND %(t)s {_scope(scope)} GROUP BY 1""", p)}
         series["overtime_pct"] = {w: 100 * float(r["ot"] or 0) / float(r["worked"]) for w, r in ot.items() if r["worked"]}
+    if "orders" in apps:
+        ol = {r["w"]: r for r in db.query(f"""
+            SELECT {wk.format(col='order_date')} AS w, count(*) AS lines, count(*) FILTER (WHERE filled_first_time) AS filled,
+                   sum(sales) AS sales, sum(cost) AS cost FROM rpt.order_lines
+            WHERE status <> 'Canceled' AND order_date BETWEEN %(first)s AND %(t)s {_scope(scope)} GROUP BY 1""", p)}
+        series["fill_rate"] = {w: 100 * r["filled"] / r["lines"] for w, r in ol.items() if r["lines"]}
+        series["gross_margin"] = {w: 100 * float(r["sales"] - r["cost"]) / float(r["sales"]) for w, r in ol.items() if r["sales"]}
+        oo = {r["w"]: r for r in db.query(f"""
+            SELECT {wk.format(col='order_date')} AS w, count(*) FILTER (WHERE on_time IS NOT NULL) AS n, count(*) FILTER (WHERE on_time) AS ok
+            FROM rpt.orders WHERE status <> 'Canceled' AND order_date BETWEEN %(first)s AND %(t)s {_scope(scope)} GROUP BY 1""", p)}
+        series["on_time_ship"] = {w: 100 * r["ok"] / r["n"] for w, r in oo.items() if r["n"]}
     goals = {r["metric"]: float(r["value"]) for r in
              db.query("SELECT metric, value FROM core.goals WHERE period = 'weekly'")}
     rows = []
@@ -429,11 +443,12 @@ HOW.update({
     "response": "Average hours from the call coming in to the technician arriving, emergency calls only.",
     "not_invoiced": "Completed billable jobs (repairs and installs) finished more than 14 days ago with no invoice number "
                     "in the field-service app. Maintenance visits are covered by the contract and aren't billed per visit.",
-    "utilization": "Hours on completed jobs ÷ hours worked (regular + overtime, from payroll), technicians only, over the "
+    "utilization": "Hours on completed jobs ÷ hours worked (regular + overtime, from payroll), field technicians only, over the "
                    "last 4 complete weeks. Travel and shop time make up the rest.",
     "inventory_value": "On hand × standard cost, for every warehouse and van. Negative balances count as zero; parts with no "
                        "standard cost are left out (see Data checks).",
-    "turns": "Cost of parts used on jobs in the last 12 months ÷ today's inventory value. Higher means stock moves faster.",
+    "turns": "Cost of what was used on jobs or shipped on orders in the last 12 months ÷ today's inventory value. Higher means "
+             "stock moves faster.",
     "below_reorder": "Warehouse stock at or below its reorder point. Vans are restocked from the warehouse, so they're not listed.",
     "dead_stock": "Parts on hand that haven't been used on a job in 180 days, at standard cost.",
     "shrinkage": "Cycle-count and damage corrections in the last 90 days, at standard cost. Negative means stock went missing.",
@@ -448,6 +463,7 @@ HOW.update({
     "overtime": "Overtime hours ÷ hours worked (regular + overtime), hourly staff, last 4 complete weeks.",
     "open_roles": "Job openings not yet filled, with days since each was opened.",
     "certs": "Certifications and licenses held by people on payroll: expired, or running out within 30 days.",
+    "frontline": "People on payroll today in the frontline department set for this company (technicians, drivers, crews).",
 })
 
 
@@ -513,7 +529,7 @@ def utilization(t: dt.date, weeks=4, scope=None) -> list[dict]:
     first, last = _weeks_back(t, weeks)
     return db.query(f"""
         WITH worked AS (SELECT employee_id, sum(worked_hours) AS worked FROM rpt.timesheets
-                        WHERE is_technician AND week_start BETWEEN %(f)s AND %(l)s GROUP BY 1),
+                        WHERE is_frontline AND week_start BETWEEN %(f)s AND %(l)s GROUP BY 1),
              onjob AS (SELECT technician_id, sum(labor_hours) AS on_jobs FROM rpt.jobs
                        WHERE status = 'Completed' AND completed_date BETWEEN %(f)s AND %(l)s GROUP BY 1)
         SELECT e.id, e.name, e.title, e.branch, e.branch_code, coalesce(o.on_jobs, 0) AS on_jobs, w.worked,
@@ -532,6 +548,8 @@ def inventory_summary(t: dt.date, scope=None) -> dict:
                    FROM rpt.stock WHERE true {_scope(scope)}""", p)
     used = db.one(f"""SELECT coalesce(sum(cost), 0) AS c FROM rpt.part_usage WHERE used_date BETWEEN %(t)s - 364 AND %(t)s
                       {_scope(scope)}""", p)["c"]
+    used += db.one(f"""SELECT coalesce(sum(cost), 0) AS c FROM rpt.order_lines WHERE status <> 'Canceled'
+                       AND order_date BETWEEN %(t)s - 364 AND %(t)s {_scope(scope)}""", p)["c"]
     shrink = db.one(f"""SELECT coalesce(sum(a.qty * i.standard_cost), 0) AS v FROM inv.adjustments a
                         JOIN inv.items i ON i.id = a.sku JOIN inv.locations l ON l.id = a.location_id
                         WHERE a.adj_date BETWEEN %(t)s - 89 AND %(t)s {_scope(scope, 'l.branch_code')}""", p)["v"]
@@ -610,7 +628,7 @@ def price_changes(t: dt.date, scope=None, limit=12) -> list[dict]:
 def people_summary(t: dt.date, scope=None) -> dict:
     p = {"t": t, "scope": scope}
     h = db.one(f"""SELECT count(*) FILTER (WHERE hire_date <= %(t)s AND (termination_date IS NULL OR termination_date >= %(t)s)) AS headcount,
-                          count(*) FILTER (WHERE is_technician AND hire_date <= %(t)s AND (termination_date IS NULL OR termination_date >= %(t)s)) AS technicians,
+                          count(*) FILTER (WHERE is_frontline AND hire_date <= %(t)s AND (termination_date IS NULL OR termination_date >= %(t)s)) AS frontline,
                           count(*) FILTER (WHERE termination_date BETWEEN %(t)s - 364 AND %(t)s) AS exits_12m,
                           count(*) FILTER (WHERE termination_date BETWEEN %(t)s - 364 AND %(t)s AND termination_type = 'Voluntary') AS quits_12m,
                           count(*) FILTER (WHERE hire_date BETWEEN %(t)s - 364 AND %(t)s) AS hires_12m
@@ -663,7 +681,7 @@ def overtime_by_branch(t: dt.date, weeks=4, scope=None) -> list[dict]:
 
 
 def headcount_by_branch(t: dt.date, scope=None) -> list[dict]:
-    return db.query(f"""SELECT branch, count(*) AS headcount, count(*) FILTER (WHERE is_technician) AS technicians
+    return db.query(f"""SELECT branch, count(*) AS headcount, count(*) FILTER (WHERE is_frontline) AS frontline
                         FROM rpt.employees WHERE hire_date <= %(t)s AND (termination_date IS NULL OR termination_date >= %(t)s)
                         {_scope(scope)} GROUP BY 1 ORDER BY 2 DESC""", {"t": t, "scope": scope})
 
@@ -679,3 +697,85 @@ def open_roles(t: dt.date, scope=None) -> list[dict]:
                                %(t)s - r.opened_date AS days_open, r.reason, r.applicants
                         FROM hr.requisitions r LEFT JOIN core.branches b ON b.code = r.branch_code
                         WHERE r.status = 'Open' {_scope(scope, 'r.branch_code')} ORDER BY r.opened_date""", {"t": t, "scope": scope})
+
+
+# ---------- orders and shipping (distribution) ----------
+
+HOW.update({
+    "sales_shipped": "Value of what shipped in the period, at the order price (by order date). Backorders count when they ship.",
+    "fill_rate": "Order lines whose first shipment carried the whole quantity ordered ÷ order lines, for orders placed in the period. "
+                 "The share of lines a customer got complete, first time.",
+    "on_time_ship": "Orders whose first shipment left on or before the date the customer asked for ÷ orders shipped, by order date.",
+    "gross_margin": "(Sales − cost of what shipped) ÷ sales, for orders placed in the period. Cost is the item cost on the order.",
+    "backorders": "What's still owed on orders that have already shipped once, at the order price, as of today. New orders "
+                  "that haven't shipped yet aren't backorders.",
+    "below_cost": "Order lines priced below their cost: a pricing error or a deal nobody approved.",
+})
+
+
+def orders_summary(start, end, scope=None) -> dict:
+    p = {"s": start, "e": end, "scope": scope}
+    r = db.one(f"""SELECT count(DISTINCT order_id) AS orders, coalesce(sum(sales), 0) AS sales, coalesce(sum(cost), 0) AS cost,
+                          count(*) AS lines, count(*) FILTER (WHERE filled_first_time) AS lines_filled
+                   FROM rpt.order_lines WHERE status <> 'Canceled' AND order_date BETWEEN %(s)s AND %(e)s {_scope(scope)}""", p)
+    o = db.one(f"""SELECT count(*) FILTER (WHERE on_time IS NOT NULL) AS shipped, count(*) FILTER (WHERE on_time) AS on_time
+                   FROM rpt.orders WHERE status <> 'Canceled' AND order_date BETWEEN %(s)s AND %(e)s {_scope(scope)}""", p)
+    b = db.one(f"""SELECT coalesce(sum(backorder_value), 0) AS v, count(*) FILTER (WHERE backorder_value > 0) AS n
+                   FROM rpt.orders WHERE status <> 'Canceled' AND backorder_value > 0 {_scope(scope)}""", p)
+    out = {k: float(v) for k, v in r.items()}
+    out.update({"fill_rate": _ratio(r["lines_filled"], r["lines"]), "on_time_ship": _ratio(o["on_time"], o["shipped"]),
+                "gross_margin": _ratio(r["sales"] - r["cost"], r["sales"]), "backorder_value": float(b["v"]),
+                "backorder_orders": b["n"], "orders_shipped": o["shipped"]})
+    return out
+
+
+def orders_by(dim: str, start, end, scope=None) -> list[dict]:
+    """Sales, margin and fill rate split by branch, product line, rep, segment or customer."""
+    cols = {"branch": "branch", "product_line": "product_line", "rep": "rep_name", "segment": "segment", "customer": "account_name"}
+    if dim not in cols:
+        raise ValueError("unsupported dimension")
+    rows = db.query(f"""SELECT coalesce({cols[dim]}, '(none)') AS key, coalesce(sum(sales), 0) AS sales, coalesce(sum(cost), 0) AS cost,
+                               count(*) AS lines, count(*) FILTER (WHERE filled_first_time) AS lines_filled,
+                               count(DISTINCT order_id) AS orders
+                        FROM rpt.order_lines WHERE status <> 'Canceled' AND order_date BETWEEN %(s)s AND %(e)s {_scope(scope)}
+                        GROUP BY 1 ORDER BY 2 DESC""", {"s": start, "e": end, "scope": scope})
+    for r in rows:
+        r["gross_margin"] = _ratio(r["sales"] - r["cost"], r["sales"])
+        r["fill_rate"] = _ratio(r["lines_filled"], r["lines"])
+    return rows
+
+
+def orders_on_time_by_branch(start, end, scope=None) -> list[dict]:
+    rows = db.query(f"""SELECT branch, count(*) FILTER (WHERE on_time IS NOT NULL) AS shipped, count(*) FILTER (WHERE on_time) AS on_time
+                        FROM rpt.orders WHERE status <> 'Canceled' AND order_date BETWEEN %(s)s AND %(e)s {_scope(scope)}
+                        GROUP BY 1 ORDER BY 1""", {"s": start, "e": end, "scope": scope})
+    for r in rows:
+        r["on_time_ship"] = _ratio(r["on_time"], r["shipped"])
+    return rows
+
+
+def margin_by_month(t: dt.date, months=12, dim="product_line", scope=None) -> dict:
+    """Gross margin % by month for each value of `dim` (for spotting a squeeze), oldest first."""
+    first = (t.replace(day=1) - dt.timedelta(days=31 * (months - 1))).replace(day=1)
+    rows = db.query(f"""SELECT date_trunc('month', order_date)::date AS m, product_line AS key, sum(sales) AS sales, sum(cost) AS cost
+                        FROM rpt.order_lines WHERE status <> 'Canceled' AND order_date BETWEEN %(f)s AND %(t)s {_scope(scope)}
+                        GROUP BY 1, 2 ORDER BY 1""", {"f": first, "t": t, "scope": scope})
+    out = {}
+    for r in rows:
+        out.setdefault(r["key"], {})[r["m"]] = _ratio(r["sales"] - r["cost"], r["sales"])
+    return out
+
+
+def orders_by_week(t: dt.date, weeks=12, scope=None) -> list[dict]:
+    first, last = _weeks_back(t, weeks)
+    return db.query(f"""SELECT date_trunc('week', order_date)::date AS week, count(DISTINCT order_id) AS orders,
+                               coalesce(sum(sales), 0) AS sales, coalesce(sum(cost), 0) AS cost
+                        FROM rpt.order_lines WHERE status <> 'Canceled' AND order_date BETWEEN %(f)s AND %(l)s {_scope(scope)}
+                        GROUP BY 1 ORDER BY 1""", {"f": first, "l": last, "scope": scope})
+
+
+def backorders(scope=None, limit=25) -> list[dict]:
+    return db.query(f"""SELECT order_id, order_number, account_name, branch, sku, description, product_line,
+                               qty_ordered - qty_shipped AS qty_open, backorder_value, order_date
+                        FROM rpt.order_lines WHERE backorder_value > 0 {_scope(scope)}
+                        ORDER BY backorder_value DESC LIMIT {int(limit)}""", {"scope": scope})

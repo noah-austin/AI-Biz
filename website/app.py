@@ -138,6 +138,11 @@ def home():
     return pages.home()
 
 
+@app.get("/demo", response_class=HTMLResponse)
+def demos():
+    return pages.demos()
+
+
 @app.get("/what-we-build", response_class=HTMLResponse)
 def what_we_build():
     return pages.what_we_build()
