@@ -10,7 +10,6 @@ from pathlib import Path
 
 
 from . import visuals as v
-from .how import how_it_works
 
 HERE = Path(__file__).parent
 EXPLAINER = (HERE / "explainer.html").read_text()  # built by website/brand/animation/build.py
@@ -79,7 +78,7 @@ def sec_head(eyebrow: str, title: str, lead: str = "", center: bool = True) -> s
 def cta_row(primary=("Book a call", "/contact?interest=call")) -> str:
     c = cfg()
     return (f'<div class="cta-row"><a class="btn" href="{primary[1]}">{esc(primary[0])}</a>'
-            f'<a class="btn ghost" href="/#how-it-works">See how it works ↓</a></div>')
+            f'<a class="btn ghost" href="/what-we-build">What we build →</a></div>')
 
 
 FAQ = [
@@ -174,8 +173,6 @@ def home() -> str:
   {sec_head("How it works", "Four steps, no surprises")}
   <ol class="flow-steps">{step_html}</ol>
 </div></section>
-
-{how_it_works()}
 
 <section><div class="wrap">
   {sec_head("Why us", "Why work with us")}
