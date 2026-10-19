@@ -4,4 +4,8 @@ from . import demo
 REGISTRY = {
     "demo_crm": demo.DemoCRM,
     "demo_accounting": demo.DemoAccounting,
+    "demo_hr": demo.DemoHR,
+    "demo_field_service": demo.DemoFieldService,
+    "demo_inventory": demo.DemoInventory,
+    "demo_purchasing": demo.DemoPurchasing,
 }

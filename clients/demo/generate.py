@@ -11,6 +11,9 @@ forward (new deals appear, open deals progress, invoices get paid). So the
 demo can be regenerated daily and the sync, history capture and "what
 changed" views all behave as they would with a live client.
 
+The operations systems (HR and payroll, field service, inventory, purchasing) are built
+in generate_ops.py from the same people, accounts and deals.
+
 Data problems are planted on purpose so the clean-up list has real work:
 placeholder close dates, duplicates, stale open deals, missing margins in
 one branch, lost deals with no reason, won deals never billed, and
@@ -23,6 +26,7 @@ import datetime as dt
 import json
 import math
 import random
+import sys
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -339,7 +343,9 @@ def generate(as_of):
             dup_n += 1
 
     customers, invoices = build_accounting(deals, acct_index, as_of)
-    return {
+    import generate_ops  # the operations systems: HR, field service, inventory, purchasing
+    ops = generate_ops.build(sys.modules[__name__], deals, users, accounts, accounts_by_branch, as_of)
+    return {**ops, 
         "crm/users.json": users,
         "crm/accounts.json": accounts,
         "crm/opportunities.json": opportunities,

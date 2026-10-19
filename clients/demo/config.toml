@@ -10,6 +10,8 @@ demo_guest = true          # the website's "See a live demo" button signs visito
 demo_by = "Sanford Operations"
 demo_by_url = "https://sanfordoperations.com"
 demo_cta_url = "https://sanfordoperations.com/contact?interest=demo"
+# Which parts of the hub this install shows. The operations pages need their systems connected (see [[sources]]).
+apps = ["analytics", "field_service", "inventory", "purchasing", "people"]
 fiscal_year_start_month = 1
 
 # Where "open in source system" links go. In the demo they open a stand-in page.
@@ -18,6 +20,10 @@ crm_deal = "/demo-source/crm/opportunity/{id}"
 crm_account = "/demo-source/crm/account/{id}"
 accounting_invoice = "/demo-source/accounting/invoice/{id}"
 accounting_customer = "/demo-source/accounting/customer/{id}"
+fsm_job = "/demo-source/fieldservice/job/{id}"
+inv_item = "/demo-source/inventory/item/{id}"
+ap_po = "/demo-source/purchasing/po/{id}"
+hr_employee = "/demo-source/hr/employee/{id}"
 
 # AI layer. Each feature has its own API key (in .env), its own monthly cap and a usage log.
 [ai]
@@ -35,6 +41,22 @@ path = "source"
 
 [[sources]]
 type = "demo_accounting"
+path = "source"
+
+[[sources]]
+type = "demo_hr"
+path = "source"
+
+[[sources]]
+type = "demo_field_service"
+path = "source"
+
+[[sources]]
+type = "demo_inventory"
+path = "source"
+
+[[sources]]
+type = "demo_purchasing"
 path = "source"
 
 # CRM branch codes -> the names people use, and which region each rolls up to.
