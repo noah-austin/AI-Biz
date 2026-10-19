@@ -50,7 +50,7 @@ def layout(title: str, body: str, path: str = "/", description: str = "", noinde
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(page_title)}</title><meta name="description" content="{esc(desc)}">{'<meta name="robots" content="noindex">' if noindex else ''}
 <meta property="og:title" content="{esc(page_title)}"><meta property="og:description" content="{esc(desc)}">
-<link rel="icon" href="/static/brand/mark.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/static/brand/apple-touch-icon.png"><meta property="og:image" content="{esc(c["url"])}/static/brand/profile-800.png"><meta property="og:url" content="{esc(c["url"])}{esc(path)}"><link rel="canonical" href="{esc(c["url"])}{esc(path)}"><link rel="stylesheet" href="/static/site.css?v={ASSET_V["site.css"]}">
+<link rel="icon" href="/static/brand/mark.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/static/brand/apple-touch-icon.png"><meta property="og:type" content="website"><meta property="og:site_name" content="{esc(c["name"])}"><meta property="og:image" content="{esc(c["url"])}/static/brand/og-card.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="{esc(c["name"])}: {esc(c["tagline"])}"><meta name="twitter:card" content="summary_large_image"><meta property="og:url" content="{esc(c["url"])}{esc(path)}"><link rel="canonical" href="{esc(c["url"])}{esc(path)}"><link rel="stylesheet" href="/static/site.css?v={ASSET_V["site.css"]}">
 </head><body>
 <header class="site-head"><div class="wrap">
   <a class="logo" href="/" aria-label="{esc(c["name"])}, home"><picture><source srcset="/static/brand/lockup-reversed.svg" media="(prefers-color-scheme: dark)"><img src="/static/brand/lockup.svg" alt="{esc(c["name"])}" width="262" height="64"></picture></a>
@@ -62,7 +62,7 @@ def layout(title: str, body: str, path: str = "/", description: str = "", noinde
   <div class="foot-grid">
     <div class="foot-brand"><a class="logo" href="/" aria-label="{esc(c["name"])}, home"><picture><source srcset="/static/brand/lockup-reversed.svg" media="(prefers-color-scheme: dark)"><img src="/static/brand/lockup.svg" alt="{esc(c["name"])}" width="262" height="64"></picture></a>
       <p>{esc(c["tagline"])}</p></div>
-    <div><h4>Company</h4><a href="/what-we-build">What we build</a><a href="/about">About</a><a href="{esc(c["demo_url"])}">Request a demo</a></div>
+    <div><h4>Company</h4><a href="/what-we-build">What we build</a><a href="/about">About</a><a href="{esc(c["demo_url"])}">Request a live demo</a></div>
     <div><h4>Get in touch</h4><a href="/contact">Book a call</a><a href="mailto:{esc(c["email"])}">{esc(c["email"])}</a><span>{esc(c["city"])}</span></div>
   </div>
   <div class="foot-bottom"><span>© {date.today().year} {esc(c["name"])}</span><a href="/privacy">Privacy</a></div>
@@ -126,7 +126,7 @@ def home() -> str:
         (v.mock_scorecard(), "Reports that build themselves", "The weekly scorecard and monthly review, ready without anyone typing."),
         (v.mock_dashboard(), "Dashboards you can click into", "From the company total down to every record behind it."),
         (v.mock_tool(), "Tools that replace spreadsheets", "The forecast or tracker someone rebuilds every week, as a simple tool."),
-        (v.mock_alerts(), "Alerts that come to you", "By email, Teams or phone, the moment something needs attention."),
+        (v.mock_alerts(), "Alerts that come to you", "By email, Teams or phone, as soon as something needs attention."),
         (v.mock_ask(), "AI that knows your business", "Plain-English questions, answered from your own data, with the numbers shown."),
     ]
     cards = "".join(f'<div class="show-card"><div class="show-visual">{m}</div><h3>{esc(t)}</h3><p>{esc(d)}</p></div>'
@@ -138,7 +138,7 @@ def home() -> str:
     step_html = "".join(f'<li><span class="step-ico">{v.icon(i)}</span><small>Step {n}</small><h3>{t}</h3><p>{d}</p></li>'
                         for n, (i, t, d) in enumerate(steps, 1))
     why = [("people", "Operators, not a vendor", "We come from running companies, as COO and chief of staff."),
-           ("blocks", "Built around you", "No off-the-shelf package. Nothing you use gets replaced."),
+           ("blocks", "Built around you", "No off-the-shelf package. None of your systems get replaced."),
            ("server", "Your data, your choice", "Your own server or hosted by us. No per-seat licenses."),
            ("shield", "Safe by design", "Read-only access, nightly backups, and everyone sees only what they should.")]
     why_html = "".join(f'<div class="why">{v.icon(i)}<h3>{t}</h3><p>{d}</p></div>' for i, t, d in why)
@@ -148,7 +148,7 @@ def home() -> str:
     <p class="eyebrow">For leaders of small and mid-size companies</p>
     <h1>{esc(c["tagline"])}</h1>
     <p class="lead">We connect the systems your company runs on into one place, then build what that makes possible:
-    reports that build themselves, tools, AI, and AI agents that do real work.</p>
+    reports that build themselves, tools, AI and AI agents that do real work.</p>
     {cta_row()}
     <ul class="trust">{"".join(f"<li>{v.icon('check')}{t}</li>" for t in ("Read-only access", "Your data stays yours", "Fixed quote up front"))}</ul>
   </div>
@@ -178,7 +178,7 @@ def home() -> str:
 </div></section>
 
 <section class="agents-band"><div class="wrap">
-  {sec_head("AI agents", "A day with your agents", "AI assistants with a job. They work from your data every day and hand the result to the right person.")}
+  {sec_head("AI agents", "A day with your agents", "AI assistants, each with one job. They work from your data every day and hand the result to the right person.")}
   {v.agent_day()}
   <p class="approve-note">{v.icon("lock")}<span>Agents prepare the work. A person approves anything that goes out.</span></p>
 </div></section>
@@ -189,7 +189,7 @@ def home() -> str:
 </div></section>
 
 <section><div class="wrap">
-  {sec_head("Why us", "Why work with us")}
+  {sec_head("Our approach", "Why work with us")}
   <div class="why-grid">{why_html}</div>
 </div></section>
 
@@ -202,7 +202,7 @@ def home() -> str:
   <p class="eyebrow">Now taking a small number of founding clients</p>
   <h2>Start with a conversation</h2>
   <p class="lead">Tell us how your company runs and where your data lives. If there's a fit, you'll get a custom proposal.</p>
-  <div class="cta-row center"><a class="btn" href="/contact?interest=call">Book a call</a><a class="btn ghost light" href="/what-we-build">What we build</a></div>
+  <div class="cta-row center"><a class="btn" href="/contact?interest=call">Book a call</a><a class="btn ghost light" href="/what-we-build">What we build →</a></div>
 </div></section>"""
     return layout(c["name"], body, "/")
 
@@ -263,7 +263,7 @@ def what_we_build() -> str:
 <section class="hero slim with-cta"><div class="wrap">
   <p class="eyebrow">What we build</p>
   <h1>Your data in one place, put to work</h1>
-  <p class="lead">Every build is custom. These are the pieces we put together, on top of the systems you already use.</p>
+  <p class="lead">Start with your data hub, then add the reports, tools and AI you need, on top of the systems you already use.</p>
   {cta_row(secondary=("Request a live demo →", "/contact?interest=demo"))}
 </div></section>
 
@@ -272,13 +272,13 @@ def what_we_build() -> str:
     <div>
       <p class="eyebrow">The foundation</p>
       <h2>Your data hub</h2>
-      <p>We connect every system with data in it into one database that you own. It updates on its own and keeps history.
+      <p>We connect the systems your company runs on into one database that you own. It updates on its own and keeps history.
       Every number is defined once, in plain English, so it means the same thing everywhere.</p>
       <p>Before showing you anything new, we reproduce the reports you already use, to the cent.</p>
     </div>
     {v.mock_foundation()}
   </div>
-  <h3 class="sys-title">We connect anything with data in it</h3>
+  <h3 class="sys-title">We connect almost anything with data in it</h3>
   {v.systems_grid()}
 </div></section>
 
@@ -289,6 +289,7 @@ def what_we_build() -> str:
     <div class="show-card"><div class="show-visual">{v.mock_dashboard()}</div><h3>Dashboards and drill-downs</h3><p>By location, team or person, down to every record.</p></div>
     <div class="show-card"><div class="show-visual">{v.mock_tool()}</div><h3>Tools that replace spreadsheets</h3><p>Forecasts, trackers and workbooks, on live data.</p></div>
   </div>
+  <p class="fine center">Examples use made-up data.</p>
 </div></section>
 
 <section><div class="wrap">
@@ -307,7 +308,7 @@ def what_we_build() -> str:
 </div></section>
 
 <section class="agents-band"><div class="wrap">
-  {sec_head("AI agents", "Agents that do the work", "AI assistants with a job, working from your data every day.")}
+  {sec_head("AI agents", "Agents that do the work", "AI assistants, each with one job, working from your data every day.")}
   <div class="split agents-split">
     {v.mock_brief()}
     <div class="agent-list">{agent_html}</div>
@@ -381,9 +382,9 @@ def about() -> str:
   <p class="eyebrow">Now taking a small number of founding clients</p>
   <h2>Let's talk about your company</h2>
   <p class="lead">A short conversation, then a custom proposal with a fixed quote.</p>
-  <div class="cta-row center"><a class="btn" href="/contact?interest=call">Talk to us</a><a class="btn ghost light" href="{esc(c["demo_url"])}">Request a live demo →</a></div>
+  <div class="cta-row center"><a class="btn" href="/contact?interest=call">Book a call</a><a class="btn ghost light" href="{esc(c["demo_url"])}">Request a live demo →</a></div>
 </div></section>"""
-    return layout("About", body, "/about")
+    return layout("About", body, "/about", f"{c['name']} brings a company's data together in one place and puts it to work. Built by operators, for operators.")
 
 
 SIZES = ["1–19 people", "20–49", "50–199", "200–499", "500–1,000", "Over 1,000"]
@@ -396,7 +397,10 @@ def contact(token: str, values: dict | None = None, errors: dict | None = None) 
     v, e = values or {}, errors or {}
 
     def err(k):
-        return f'<span class="field-err">{esc(e[k])}</span>' if k in e else ""
+        return f'<span class="field-err" id="err-{k}">{esc(e[k])}</span>' if k in e else ""
+
+    def inv(k):
+        return f' aria-invalid="true" aria-describedby="err-{k}"' if k in e else ""
 
     def sel(options, chosen):
         return "".join(f'<option value="{esc(val)}"{" selected" if val == chosen else ""}>{esc(label)}</option>'
@@ -404,23 +408,23 @@ def contact(token: str, values: dict | None = None, errors: dict | None = None) 
     body = f"""
 <section class="hero slim"><div class="wrap">
   <p class="eyebrow">Contact</p>
-  <h1>Let's talk about your company</h1>
+  <h1>Tell us how your company runs</h1>
   <p class="lead">Tell us a little about your company and what you'd like help with. We reply within one business day.</p>
 </div></section>
 <section><div class="wrap contact-grid">
   <form method="post" action="/contact" class="contact-form" novalidate>
-    {'<p class="form-err">Please fix the highlighted fields.</p>' if e else ""}
+    {f'<p class="form-err" role="alert">{esc(e.get("_form") or "Please fix the highlighted fields.")}</p>' if e else ""}
     <input type="hidden" name="token" value="{esc(token)}">
     <div class="hp" aria-hidden="true"><label>Leave this empty<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
-    <label><span>Your name <span class="req">*</span></span><input name="name" required maxlength="120" autocomplete="name" value="{esc(v.get("name"))}">{err("name")}</label>
-    <label><span>Work email <span class="req">*</span></span><input type="email" name="email" required maxlength="200" autocomplete="email" value="{esc(v.get("email"))}">{err("email")}</label>
+    <label><span>Your name <span class="req">*</span></span><input name="name" required maxlength="120" autocomplete="name"{inv("name")} value="{esc(v.get("name"))}">{err("name")}</label>
+    <label><span>Work email <span class="req">*</span></span><input type="email" name="email" required maxlength="200" autocomplete="email"{inv("email")} value="{esc(v.get("email"))}">{err("email")}</label>
     <label>Company<input name="company" maxlength="160" autocomplete="organization" value="{esc(v.get("company"))}"></label>
     <label>Your role<input name="role" maxlength="120" value="{esc(v.get("role"))}" placeholder="e.g. COO"></label>
     <label>Company size<select name="company_size"><option value="">Choose…</option>{sel([(s, s) for s in SIZES], v.get("company_size"))}</select></label>
     <label>I'm interested in<select name="interest">{sel(INTERESTS, v.get("interest") or "call")}</select></label>
     <label class="wide">Main systems you use<input name="systems" maxlength="200" value="{esc(v.get("systems"))}" placeholder="e.g. HubSpot, QuickBooks, Procore, a lot of Excel"></label>
-    <label class="wide">Anything you'd like us to know<textarea name="message" rows="5" maxlength="3000">{esc(v.get("message"))}</textarea>{err("message")}</label>
-    <p class="small muted wide">By sending this you agree to be contacted about your enquiry. See the <a href="/privacy">privacy notice</a>.</p>
+    <label class="wide">Anything you'd like us to know<textarea name="message" rows="5" maxlength="3000"{inv("message")}>{esc(v.get("message"))}</textarea>{err("message")}</label>
+    <p class="small muted wide">By sending this you agree to be contacted about your inquiry. See the <a href="/privacy">privacy notice</a>.</p>
     <div class="wide"><button class="btn" type="submit">Send</button></div>
   </form>
   <aside class="contact-side">
@@ -428,19 +432,19 @@ def contact(token: str, values: dict | None = None, errors: dict | None = None) 
     <h3>What happens next</h3>
     <ol><li>We read your note and reply within one business day.</li><li>We have a conversation about how your company runs and where your data lives.</li>
     <li>If there's a fit, we send you a custom proposal.</li></ol>
-    <h3>Want to see it first?</h3><p>Pick "A walkthrough of the demo" above and we'll show you a live hub for a company like yours.</p>
+    <h3>Want to see it first?</h3><p>Choose "A walkthrough of the demo" in the form and we'll show you a live hub for a company like yours.</p>
   </aside>
 </div></section>"""
-    return layout("Contact", body, "/contact")
+    return layout("Contact", body, "/contact", "Tell us how your company runs and where your data lives. We reply within one business day.")
 
 
 def thanks(name: str) -> str:
     body = f"""<section class="hero slim"><div class="wrap narrow">
-<h1>Thanks, {esc(name.split()[0] if name else "")}.</h1>
+<h1>{f"Thanks, {esc(name.split()[0])}." if name.strip() else "Thanks."}</h1>
 <p class="lead">Your note is in. We'll reply within one business day.</p>
 <p>In the meantime, you can read about
 <a href="/what-we-build">what we build</a>.</p></div></section>"""
-    return layout("Thanks", body, "/contact")
+    return layout("Thanks", body, "/thanks", noindex=True)
 
 
 def privacy() -> str:
@@ -448,20 +452,26 @@ def privacy() -> str:
     body = f"""<section class="hero slim"><div class="wrap"><h1>Privacy notice</h1></div></section>
 <section><div class="wrap"><div class="prose">
 <p><strong>What we collect.</strong> Only what you type into the contact form (name, email, company, role, company
-size, the systems you use and your message), plus basic server logs. We keep a one-way scrambled version of your IP
-address for a short time, only to block spam.</p>
-<p><strong>Why.</strong> To reply to your enquiry and, if you ask us to, to work with you. Nothing else.</p>
-<p><strong>Who sees it.</strong> Only {esc(c["name"])}. We don't sell, rent or share it, and we don't use advertising or
+size, the systems you use and your message), plus basic server logs. We store a one-way scrambled version of your IP
+address with your message, only to block spam; it can't be turned back into the address.</p>
+<p><strong>Why.</strong> To reply to your inquiry and, if you ask us to, to work with you. Nothing else.</p>
+<p><strong>Who sees it.</strong> Only {esc(c["name"])}, plus the companies that host this site and run our email,
+which handle it on our behalf. We don't sell, rent or share it, and we don't use advertising or
 tracking cookies on this site.</p>
-<p><strong>How long.</strong> Enquiries that don't turn into work are deleted within 24 months, or sooner if you ask.</p>
+<p><strong>How long.</strong> Inquiries that don't turn into work are deleted within 24 months, or sooner if you ask.</p>
 <p><strong>Your choices.</strong> Email <a href="mailto:{esc(c["email"])}">{esc(c["email"])}</a> to see, correct or delete
 what we hold about you.</p>
 <p><strong>Client data</strong> (for companies we work with) is covered by a separate confidentiality agreement signed
 before any work starts.</p>
 </div></div></section>"""
-    return layout("Privacy", body, "/privacy")
+    return layout("Privacy", body, "/privacy", f"How {c['name']} handles what you send through this website.")
 
 
 def not_found() -> str:
-    return layout("Not found", '<section class="hero slim"><div class="wrap"><h1>That page isn\'t here.</h1>'
-                               '<p><a href="/">Go to the home page</a></p></div></section>')
+    body = """<section class="hero slim not-found"><div class="wrap">
+  <p class="eyebrow">404</p><h1>That page isn't here.</h1>
+  <p class="lead">It may have moved, or the link has a typo. These are a good place to start:</p>
+  <ul class="nf-links"><li><a href="/">Home</a></li><li><a href="/what-we-build">What we build</a></li>
+  <li><a href="/about">About</a></li><li><a href="/contact">Contact</a></li></ul>
+</div></section>"""
+    return layout("Not found", body, "", noindex=True)

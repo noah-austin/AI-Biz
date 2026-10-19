@@ -141,12 +141,12 @@ def _window(title: str, body: str, cls: str = "") -> str:
 
 
 def before_after() -> str:
-    cells = [["", "Q3", "Q4", "Total"], ["Bookings", "4,212", "3,870", "8,082"], ["Billed", "3,955", "#REF!", "#REF!"],
+    cells = [["", "Q3", "Q4", "Total"], ["Bookings", "4,212", "3,870", "8,082"], ["Billed", "3,912", "#REF!", "#REF!"],
              ["Cash", "3,610", "3,402", "7,012"], ["Pipeline", "18.9", "??", ""]]
     grid = "".join("<tr>" + "".join(f'<td class="{"bad" if "#" in v or "?" in v else ""}">{v}</td>' for v in row) + "</tr>"
                    for row in cells)
     sheet = _window("leadership_report_v7_FINAL(2).xlsx", f'<table class="mini-sheet">{grid}</table>', "sheet")
-    kpis = [("Bookings", "$664K", "up"), ("Billed", "$2.3M", "up"), ("Cash collected", "$532K", "up"), ("Win rate", "36.1%", "up")]
+    kpis = [("Bookings", "$664K", "up"), ("Billed", "$631K", "up"), ("Cash collected", "$532K", "up"), ("Win rate", "36.1%", "up")]
     tiles = "".join(f'<div class="kpi"><span>{k}</span><strong>{v}</strong><em class="{t}">on goal</em></div>' for k, v, t in kpis)
     before_list = "".join(f'<li>{icon("x")}{t}</li>' for t in
                           ["Data in ten places", "Monday is report day", "Two meetings, two numbers", "AI that knows nothing about you"])
@@ -195,7 +195,7 @@ def mock_foundation() -> str:
 
 def mock_scorecard() -> str:
     rows = [("Deals", [31, 31, 26, 30], 25, "{}"), ("Booked", [761, 561, 668, 664], 500, "${}K"),
-            ("Billed", [2.3, 2.5, 2.4, 2.3], 1.9, "${}M"), ("Cash", [417, 494, 306, 532], 450, "${}K")]
+            ("Billed", [612, 694, 588, 631], 550, "${}K"), ("Cash", [417, 494, 306, 532], 450, "${}K")]
     head = "".join(f"<th>{w}</th>" for w in ["Sep 14", "Sep 21", "Sep 28", "Oct 5"])
     body = ""
     for name, vals, goal, fmt in rows:
@@ -219,7 +219,7 @@ def mock_dashboard() -> str:
     return _window("Bookings by month", f"""<div class="dash">
   <div class="legend"><span class="la">This year</span><span class="lb">Last year</span></div>
   {svg}
-  <div class="tip">{icon("cursor")}<div><strong>September: $3.3M</strong><span>41 deals · click to see them</span></div></div>
+  <div class="tip">{icon("cursor")}<div><strong>September: $3.3M</strong><span>131 deals · click to see them</span></div></div>
 </div>""")
 
 

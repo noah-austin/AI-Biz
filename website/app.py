@@ -184,7 +184,7 @@ async def contact_send(request: Request):
     try:
         started = _signer().loads(str(form.get("token") or ""), max_age=MAX_SECONDS)["t"]
     except (BadSignature, SignatureExpired, KeyError, TypeError):
-        return HTMLResponse(pages.contact(form_token(), dict(form), {"name": "This form expired. Please send it again."}),
+        return HTMLResponse(pages.contact(form_token(), dict(form), {"_form": "This form expired. Please press Send again."}),
                             status_code=400)
     if time.time() - started < MIN_SECONDS:
         return RedirectResponse("/thanks", status_code=303)  # faster than a person can type: treat as a bot
@@ -194,13 +194,13 @@ async def contact_send(request: Request):
     data["ip_hash"] = _ip_hash(request)
     data["source_page"] = (request.headers.get("referer") or "")[:300]
     if await run_in_threadpool(_too_many, data["ip_hash"]):
-        return HTMLResponse(pages.contact(form_token(), data, {"message": "Too many messages from here. Please email instead."}),
+        return HTMLResponse(pages.contact(form_token(), data, {"_form": f"Too many messages from here. Please email {pages.cfg()['email']} instead."}),
                             status_code=429)
     try:
         await run_in_threadpool(save_lead, data)
     except psycopg2.Error:
-        log.exception("could not save enquiry")
-        return HTMLResponse(pages.contact(form_token(), data, {"message": "Something went wrong saving that. Please email instead."}),
+        log.exception("could not save inquiry")
+        return HTMLResponse(pages.contact(form_token(), data, {"_form": f"Something went wrong saving that. Please email {pages.cfg()['email']} instead."}),
                             status_code=500)
     threading.Thread(target=notify, args=(data,), daemon=True).start()
     return RedirectResponse(f"/thanks?n={data['name'].split()[0][:40]}", status_code=303)
