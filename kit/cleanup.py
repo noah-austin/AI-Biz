@@ -22,7 +22,7 @@ class Check:
     app: str = "analytics"   # only run for installs with this app (and so this system) switched on
 
 
-SYSTEMS = {"crm": "CRM", "accounting": "Accounting", "orders": "Orders (ERP)", "projects": "Projects and time", "jobcost": "Job cost", "fieldservice": "Field service", "inventory": "Inventory",
+SYSTEMS = {"crm": "CRM", "accounting": "Accounting", "orders": "Orders (ERP)", "projects": "Projects and time", "jobcost": "Job cost", "production": "Production (MES)", "fieldservice": "Field service", "inventory": "Inventory",
            "purchasing": "Purchasing", "hr": "HR and payroll"}
 
 
@@ -89,6 +89,21 @@ CHECKS = [
           """SELECT id, name AS label, 'Branch code ' || coalesce(branch_code, '(blank)') AS detail, amount, branch_code,
                     branch, owner_name
              FROM rpt.deals WHERE region = 'Unmapped' AND %(scope)s IS NULL ORDER BY amount DESC NULLS LAST"""),
+    Check("late_production", "Production order past due and not finished",
+          "Customers are waiting on it, and the plan behind it is out of date.",
+          "Reschedule it with a realistic date, or expedite it.", "production", "mfg_order",
+          f"""SELECT id, 'MO ' || number || ' · ' || description AS label,
+                     'Due ' || to_char(due_date, 'Mon FMDD') || ' on ' || plant || ' ' || work_center AS detail, NULL::numeric AS amount,
+                     branch_code, plant AS branch, 'Production planner' AS owner_name
+              FROM rpt.production_orders WHERE is_late {_s()} ORDER BY due_date""", "production"),
+    Check("high_scrap", "Production order with more than 10% scrap (last 90 days)",
+          "Scrap costs material and machine time twice; a pattern points at a machine, a setup or training.",
+          "Have quality review the cause and record it.", "production", "mfg_order",
+          f"""SELECT id, 'MO ' || number || ' · ' || description AS label,
+                     qty_scrapped || ' of ' || (qty_completed + qty_scrapped) || ' scrapped on ' || work_center AS detail,
+                     NULL::numeric AS amount, branch_code, plant AS branch, 'Quality manager' AS owner_name
+              FROM rpt.production_orders WHERE status = 'Completed' AND completed_date >= core.local_today() - 90
+                AND qty_scrapped > 0.1 * (qty_completed + qty_scrapped) {_s()} ORDER BY completed_date DESC""", "production"),
     Check("loss_job", "Active job projected to lose money",
           "Its estimated cost at completion is more than its contract: every month makes it worse unless something changes.",
           "Review the estimate with the project manager; chase change orders and back-charges.", "jobcost", "jc_job",

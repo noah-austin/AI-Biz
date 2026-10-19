@@ -28,6 +28,7 @@ NAV = [  # path, label, admin only, group (pages in a group share one menu item 
     ("/winloss", "Win / loss", False, "Sales", "analytics"),
     ("/forecast", "Forecast", False, "Sales", "analytics"),
     ("/receivables", "Receivables", False, None, "analytics"),
+    ("/production", "Production", False, "Operations", "production"),
     ("/job-cost", "Job cost", False, "Operations", "job_cost"),
     ("/projects", "Projects", False, "Operations", "projects"),
     ("/orders", "Orders", False, "Operations", "orders"),

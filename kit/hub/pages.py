@@ -196,6 +196,9 @@ def _changes_card(ch, t):
 def _across_the_business(t, scope) -> str:
     """One tile per operations area this install has, each opening its page."""
     apps, tiles = get_settings().apps, []
+    if "production" in apps:
+        ps = metrics.production_summary(t - dt.timedelta(days=29), t, scope)
+        tiles.append(ui.tile("Production on time", pct(ps["on_time_rate"], 0), f'scrap {pct(ps["scrap_rate"], 1)} · last 30 days', "/production"))
     if "job_cost" in apps:
         w = metrics.wip_summary(scope)
         tiles.append(ui.tile("Backlog", money(w["backlog"], True), f'margin {pct(w["projected_margin"], 1)}, bid {pct(w["original_margin"], 1)}',
@@ -653,6 +656,7 @@ CHECK_SHORT = {"placeholder_close": "Placeholder close date", "duplicates": "Pos
                "order_not_invoiced": "Order not invoiced", "below_cost": "Sold below cost",
                "time_not_billed": "Time not billed", "over_budget": "Over budget", "loss_job": "Job losing money",
                "stale_change_order": "Change order waiting", "under_billed": "Under-billed job",
+               "late_production": "Late production order", "high_scrap": "High scrap",
                "job_not_invoiced": "Job not invoiced", "job_left_tech": "Job on a leaver", "expired_license_booked": "Expired license",
                "missing_timesheet": "Missing timesheet", "no_manager": "No manager", "negative_stock": "Negative stock",
                "item_no_cost": "Part with no cost", "po_not_billed": "No vendor bill", "duplicate_vendor": "Duplicate vendor"}
@@ -667,7 +671,7 @@ def cleanup_page(request):
              "unlinked_customer": "Unlinked", "unmapped_branch": "Unknown branch", "job_not_invoiced": "Not invoiced",
              "order_not_invoiced": "Order not billed", "below_cost": "Below cost", "time_not_billed": "Not billed",
              "over_budget": "Over budget", "loss_job": "Losing money", "stale_change_order": "Old change order",
-             "under_billed": "Under-billed",
+             "under_billed": "Under-billed", "late_production": "Late MO", "high_scrap": "High scrap",
              "job_left_tech": "On a leaver", "expired_license_booked": "Expired license", "missing_timesheet": "Timesheet",
              "no_manager": "No manager", "negative_stock": "Negative stock", "item_no_cost": "No cost", "po_not_billed": "No bill",
              "duplicate_vendor": "Dup. vendor"}
@@ -878,4 +882,5 @@ def demo_source(request, system: str, obj: str, rec_id: str):
     body = f"""<div class="fake-src"><div class="fake-src-head"><span class="pill warn">Stand-in {esc(system_name)}</span>
 <span class="muted">With a real client, this link opens the record in their own system (Salesforce, QuickBooks, ServiceTitan, ADP and so on).</span></div>
 <dl class="kv">{kv}</dl>{related}{hist_html}</div>"""
-    return ui.page(request, f"{kind.capitalize()}: {title}", body, subtitle=f"{system_name} record")
+    names = {"jcjob": "Job", "mo": "Production order", "po": "Purchase order", "item": "Item"}
+    return ui.page(request, f"{names.get(kind, kind.capitalize())}: {title}", body, subtitle=f"{system_name} record")

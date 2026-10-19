@@ -226,3 +226,21 @@ class DemoJobCost(Connector):
                   {"id": "Id", "job_id": "JobId", "period": "Period", "gross_billed": "GrossBilled", "retainage_held": "RetainageHeld",
                    "retainage_released": "RetainageReleased", "bill_date": "BillDate"}, o),
         ]
+
+
+class DemoProduction(Connector):
+    source = "demo production (MES)"
+
+    def objects(self):
+        o = self.options
+        return [
+            _spec("mfg.work_centers", "production/work_centers.json",
+                  {"id": "Id", "name": "Name", "branch_code": "PlantCode", "hours_per_day": "HoursPerDay"}, o),
+            _spec("mfg.production_orders", "production/production_orders.json",
+                  {"id": "Id", "number": "OrderNumber", "sku": "Sku", "work_center_id": "WorkCenterId", "branch_code": "PlantCode",
+                   "qty_planned": "QtyPlanned", "qty_completed": "QtyCompleted", "qty_scrapped": "QtyScrapped", "due_date": "DueDate",
+                   "start_date": "StartDate", "completed_date": "CompletedDate", "status": "Status",
+                   "standard_hours": "StandardHours", "actual_hours": "ActualHours"}, o),
+            _spec("mfg.downtime", "production/downtime.json",
+                  {"id": "Id", "work_center_id": "WorkCenterId", "event_date": "Date", "minutes": "Minutes", "reason": "Reason"}, o),
+        ]

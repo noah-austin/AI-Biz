@@ -100,6 +100,13 @@ def ops_alerts(t: dt.date, scope, since: dt.date) -> list[dict]:
             out.append({"date": j["arrived_date"], "severity": "warning", "kind": "Emergency call late",
                         "title": f'{j["account_name"]}: reached after {float(j["response_hours"]):.1f} hours',
                         "detail": f'{j["branch"]} · job {j["number"]} · the promise is 4 hours', "amount": None, "job_id": j["id"]})
+    if "production" in apps:
+        for d in db.query(f"""SELECT work_center, plant, event_date, sum(minutes) AS m FROM rpt.downtime
+                               WHERE reason = 'Breakdown' AND event_date BETWEEN %(since)s AND %(t)s {_scope(scope)}
+                               GROUP BY 1, 2, 3 HAVING sum(minutes) >= %(min)s""", dict(p, min=r.get("breakdown_minutes", 240))):
+            out.append({"date": d["event_date"], "severity": "warning", "kind": "Machine down",
+                        "title": f'{d["plant"]} {d["work_center"]} was down {float(d["m"]) / 60:.1f} hours (breakdown)',
+                        "detail": f'{d["event_date"]:%b %-d}', "amount": None})
     if "job_cost" in apps:
         for j in metrics.wip_jobs(scope):
             if (j["projected_margin"] or 0) < 0:
@@ -242,6 +249,21 @@ def daily_brief(t: dt.date, scope=None) -> list[dict]:
 def ops_brief(t: dt.date, scope=None) -> list[dict]:
     """Morning-brief lines from the operations systems this install has switched on."""
     apps, lines = get_settings().apps, []
+    if "production" in apps:
+        oee = [r for r in metrics.oee_by_work_center(t, 30, scope) if r["oee"] is not None]
+        low = min(oee, key=lambda r: r["oee"], default=None)
+        if low:
+            bd = next((x for x in metrics.downtime_by("work_center", t, 30, scope) if x["key"] == f'{low["plant"]} · {low["name"]}'), None)
+            lines.append({"text": f'{low["plant"]} {low["name"]} is the weakest work center: {low["oee"]:.0%} effective in the last '
+                                  f'30 days' + (f', with {float(bd["minutes"]) / 60:.0f} hours of downtime.' if bd else '.'), "link": "/production#downtime"})
+        wcs = metrics.production_by("work_center", t - dt.timedelta(days=29), t, scope)
+        worst = max(wcs, key=lambda r: r["scrap_rate"] or 0, default=None)
+        if worst and (worst["scrap_rate"] or 0) > 0.04:
+            lines.append({"text": f'Scrap on {worst["key"]} is running at {worst["scrap_rate"]:.1%} (the shop averages about 2%).',
+                          "link": "/production#scrap"})
+        late = metrics.late_production(scope)
+        if late:
+            lines.append({"text": f'{len(late)} production order{"s are" if len(late) != 1 else " is"} past due.', "link": "/production#late"})
     if "job_cost" in apps:
         w = metrics.wip_summary(scope)
         if w["original_margin"] and w["projected_margin"] is not None and w["original_margin"] - w["projected_margin"] > 0.005:

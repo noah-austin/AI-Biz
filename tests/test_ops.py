@@ -63,7 +63,8 @@ def test_operations_pages_and_grouped_menu(client):
     jobs = c.get("/jobs").text
     assert 'class="subtabs"' in jobs and ">Inventory</a>" in jobs
     job = db.one("SELECT id FROM fsm.work_orders LIMIT 1")["id"]
-    assert "Stand-in Field service" in c.get(f"/demo-source/fieldservice/job/{job}").text
+    page = c.get(f"/demo-source/fieldservice/job/{job}").text
+    assert "Stand-in Field service" in page and "Call received" in page and "Retainage" not in page   # not the construction job layout
 
 
 def test_branch_user_sees_only_their_branch_operations(client):

@@ -15,7 +15,8 @@ def price_on(base, drift, start, day):
 
 
 def build(p, R, usage, as_of, vendor_ids, drift, locations, legacy_at, stockouts, negatives, no_cost=(),
-          weeks_held=(3, 6), shrink_branch=None):
+          weeks_held=(3, 6), shrink_branch=None, stocked=None):
+    """stocked(location, item row) -> bool says which items each location carries (default: all of them)."""
     items = [{"Sku": sku, "Description": desc, "Category": cat,
               "StandardCost": None if sku in no_cost else round(price_on(cost, drift[vend], p.START_OPS, as_of), 2),
               "PreferredVendorId": vendor_ids[vend], "Critical": crit, "Active": True}
@@ -33,7 +34,10 @@ def build(p, R, usage, as_of, vendor_ids, drift, locations, legacy_at, stockouts
     hold, reorder = weeks_held
     stock = []
     for loc in locations:
-        for sku, desc, cat, cost, weekly, vend, crit in p.ITEMS:
+        for item in p.ITEMS:
+            sku, desc, cat, cost, weekly, vend, crit = item
+            if stocked and not stocked(loc, item):
+                continue
             r = R("stock", loc["Id"], sku)
             wk = used_91.get((loc["BranchCode"], sku), 0) / 13
             rp = rq = None
@@ -68,7 +72,7 @@ def build(p, R, usage, as_of, vendor_ids, drift, locations, legacy_at, stockouts
             if day > as_of:
                 continue
             for _ in range(r.randint(3, 6)):
-                sku = r.choice([it[0] for it in p.ITEMS if it[4] > 0])
+                sku = r.choice([it[0] for it in p.ITEMS if it[4] > 0 and (not stocked or stocked(loc, it))])
                 qty = -r.randint(1, 2) if r.random() < (0.85 if loc["BranchCode"] == shrink_branch else 0.62) else r.randint(1, 2)
                 adjustments.append({"Id": f"ADJ-{n:05d}", "Date": day.isoformat(), "LocationId": loc["Id"], "Sku": sku, "Qty": qty,
                                     "Reason": "Cycle count" if r.random() < 0.85 else "Damaged"})

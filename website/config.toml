@@ -40,3 +40,11 @@ icon = "blocks"
 url = "https://construction.demo.sanfordoperations.com/guest"
 blurb = "A commercial general contractor: the work-in-progress report every morning, margin fade, billing, change orders and crews."
 shows = ["Margin fade by project manager", "Over- and under-billed jobs", "Change orders stuck with owners", "A job about to lose money"]
+
+[[demos]]
+industry = "Manufacturing"
+company = "Cottonwood Precision Manufacturing"
+icon = "factory"
+url = "https://manufacturing.demo.sanfordoperations.com/guest"
+blurb = "A contract manufacturer: machine effectiveness, downtime, scrap, on-time production and shipping, stock and steel costs."
+shows = ["The machine that keeps breaking down", "Scrap spike after staff turnover", "Orders short because production is late", "Margin squeezed by steel prices"]

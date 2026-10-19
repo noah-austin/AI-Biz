@@ -278,7 +278,11 @@ SOURCE_FIELDS = {
     "po": [("number", "PO number"), ("vendor", "Vendor"), ("kind", "Type"), ("status", "Status"), ("ordered_date", "Ordered"),
            ("expected_date", "Expected"), ("received_date", "Received"), ("amount", "Amount"), ("billed_amount", "Billed by vendor"),
            ("deal_id", "For deal"), ("id", "Record ID")],
-    "job": [("number", "Job number"), ("name", "Job"), ("customer", "Owner"), ("status", "Status"), ("contract_value", "Original contract"),
+    "mo": [("number", "Production order"), ("description", "Item"), ("work_center", "Work center"), ("status", "Status"),
+           ("qty_planned", "Quantity"), ("qty_completed", "Completed"), ("qty_scrapped", "Scrapped"), ("start_date", "Started"),
+           ("due_date", "Due"), ("completed_date", "Completed on"), ("standard_hours", "Standard hours"), ("actual_hours", "Actual hours"),
+           ("id", "Record ID")],
+    "jcjob": [("number", "Job number"), ("name", "Job"), ("customer", "Owner"), ("status", "Status"), ("contract_value", "Original contract"),
             ("budget_cost", "Budget cost"), ("estimate_at_completion", "Estimate at completion"), ("start_date", "Start"),
             ("end_date", "Finish"), ("pm", "Project manager"), ("retainage_pct", "Retainage %"), ("deal_id", "CRM deal"), ("id", "Record ID")],
     "project": [("number", "Project number"), ("name", "Project"), ("customer", "Client"), ("billing_type", "Billing"),
@@ -330,6 +334,13 @@ def demo_record(system: str, obj: str, rec_id: str, scope):
         rel = "<h3>Lines</h3><ul class=\"list\">" + "".join(
             f'<li>{esc(x["description"])}<span class="amt">{ui.num(x["qty"])} × {money(x["unit_price"])}</span></li>' for x in lines) + "</ul>"
         return r, "Purchasing", "po", rel
+    if (system, obj) == ("production", "mo"):
+        r = db.one("""SELECT o.*, coalesce(i.description, o.sku) AS description, w.name AS work_center FROM mfg.production_orders o
+                      LEFT JOIN inv.items i ON i.id = o.sku LEFT JOIN mfg.work_centers w ON w.id = o.work_center_id WHERE o.id = %(i)s""",
+                   {"i": rec_id})
+        if not r or not ok(r["branch_code"]):
+            return None
+        return r, "Production (MES)", "mo", ""
     if (system, obj) == ("jobcost", "job"):
         r = db.one("""SELECT j.*, a.name AS customer, e.name AS pm FROM jc.jobs j LEFT JOIN crm.accounts a ON a.id = j.account_id
                       LEFT JOIN hr.employees e ON e.id = j.pm_id WHERE j.id = %(i)s""", {"i": rec_id})
@@ -349,7 +360,7 @@ def demo_record(system: str, obj: str, rec_id: str, scope):
             f'<li>{a["period"]:%B %Y}<span class="amt">{money(a["gross_billed"])} billed · {money(a["retainage_held"])} retainage held'
             f'{released(a)}</span></li>'
             for a in apps) + "</ul>"
-        return r, "Job cost", "job", rel
+        return r, "Job cost", "jcjob", rel
     if (system, obj) == ("projects", "project"):
         r = db.one("""SELECT p.*, a.name AS customer, e.name AS pm FROM psa.projects p LEFT JOIN crm.accounts a ON a.id = p.account_id
                       LEFT JOIN hr.employees e ON e.id = p.pm_id WHERE p.id = %(i)s""", {"i": rec_id})
@@ -581,3 +592,66 @@ def jobcost_page(request):
   {_table(["Job", "Waiting", "Amount", "Oldest submitted"], prow, "Nothing waiting.", (1, 2, 3))}
   {ui.how(metrics.HOW["pending_changes"])}</section>"""
     return ui.page(request, "Job cost", body, "Job cost", subtitle="Jobs, costs and billing from the job-cost system", wide=True)
+
+
+# ---------------------------------------------------------------- production (manufacturing)
+
+def production_page(request):
+    scope, t = _scope(request), metrics.today()
+    last30, prev30 = (t - dt.timedelta(days=29), t), (t - dt.timedelta(days=59), t - dt.timedelta(days=30))
+    s, p = metrics.production_summary(*last30, scope), metrics.production_summary(*prev30, scope)
+    oee = metrics.oee_by_work_center(t, 30, scope)
+    sched = sum(float(r["scheduled"]) for r in oee)   # shift hours, for the share of time lost
+    down = sum(float(r["down"]) for r in oee)
+    tiles = "".join([
+        ui.tile("Production on time", pct(s["on_time_rate"], 0), ui.points_delta(s["on_time_rate"], p["on_time_rate"], "vs the 30 days before"),
+                "#late", metrics.HOW["prod_on_time"]),
+        ui.tile("Scrap rate", pct(s["scrap_rate"], 1), ui.points_delta(s["scrap_rate"], p["scrap_rate"], "vs the 30 days before").replace(
+            "delta good", "delta tmp").replace("delta bad", "delta good").replace("delta tmp", "delta bad"), "#scrap", metrics.HOW["scrap_rate"]),
+        ui.tile("Labor efficiency", pct(s["labor_efficiency"], 0), "standard ÷ actual hours", None, metrics.HOW["labor_efficiency"]),
+        ui.tile("Downtime", f'{down / 60:,.0f} hrs', f'{pct(down / sched if sched else None, 0)} of scheduled time, last 30 days', "#downtime",
+                metrics.HOW["downtime"]),
+        ui.tile("Late production orders", ui.num(s["late_open"]), "past due and not finished", "#late", metrics.HOW["prod_on_time"]),
+    ])
+    oee_bars = ui.hbars([{"label": f'{r["plant"]} · {r["name"]}', "value": (r["oee"] or 0) * 100, "shown": pct(r["oee"], 0),
+                          "sub": f'avail {pct(r["availability"], 0)} · perf {pct(r["performance"], 0)} · quality {pct(r["quality"], 1)}'}
+                         for r in sorted(oee, key=lambda r: r["oee"] or 0)], label="Effectiveness by work center", top=100)
+    reasons = metrics.downtime_by("reason", t, 30, scope)
+    reason_bars = ui.hbars([{"label": r["key"], "value": r["minutes"], "shown": f'{float(r["minutes"]) / 60:,.0f} hrs', "sub": f'{r["events"]} times',
+                             "dim": r["key"] in ("Changeover", "Planned maintenance")} for r in reasons], label="Downtime by reason")
+    wc_down = metrics.downtime_by("work_center", t, 30, scope)
+    wc_bars = ui.hbars([{"label": r["key"], "value": r["minutes"], "shown": f'{float(r["minutes"]) / 60:,.0f} hrs', "sub": f'{r["events"]} events'}
+                        for r in wc_down], label="Downtime by work center")
+    by_wc = metrics.production_by("work_center", *last30, scope)
+    ontime_bars = _pct_bars([dict(r, branch=r["key"]) for r in by_wc], "on_time_rate",
+                            lambda r: f'{r["completed"]} orders · scrap {pct(r["scrap_rate"], 1)}', "On time by work center")
+    weekly = metrics.scrap_by_week(t, 26, scope)
+    weeks = sorted({w["week"] for w in weekly})
+    worst = sorted({w["key"] for w in weekly}, key=lambda k: -sum(float(w["rate"] or 0) for w in weekly if w["key"] == k))[:3]
+    trend = ui.chart("scrap-trend", {"type": "line", "format": "pct", "labels": [ui.short_date(w) for w in weeks], "datasets": [
+        {"label": k, "data": [next((100 * float(x["rate"]) for x in weekly if x["key"] == k and x["week"] == w and x["rate"] is not None), None)
+                              for w in weeks], "color": f"--series-{i + 1}", "points": False} for i, k in enumerate(worst)]},
+        height=220, label="Scrap rate by week for the work centers with the most scrap")
+    legend = "".join(f'<span><i style="background:var(--series-{i + 1})"></i>{esc(k)}</span>' for i, k in enumerate(worst))
+    late = metrics.late_production(scope)
+    lrows = [f'<tr><td>{ui.source_link("mfg_order", r["id"], "MO " + r["number"])}</td><td class="wrap">{esc(r["description"])}</td>'
+             f'<td>{esc(r["plant"])} · {esc(r["work_center"])}</td><td class="n">{ui.num(r["qty_planned"])}</td>'
+             f'<td class="n">{ui.short_date(r["due_date"])}</td><td class="n">{r["days_late"]} day{"" if r["days_late"] == 1 else "s"}</td></tr>'
+             for r in late]
+    body = f"""<div class="tiles">{tiles}</div>
+<div class="cols even">
+  <section class="card"><div class="card-head"><h2>Effectiveness by work center</h2><span class="muted">Last 30 days, lowest first</span></div>
+    {oee_bars}{ui.how(metrics.HOW["oee"])}</section>
+  <section class="card" id="downtime"><div class="card-head"><h2>Downtime by reason</h2><span class="muted">Grey = expected</span></div>
+    {reason_bars}<div style="margin-top:14px"><h3 style="font-size:14px">By work center</h3>{wc_bars}</div>
+    {ui.how(metrics.HOW["downtime"])}</section>
+</div>
+<div class="cols even" id="scrap">
+  <section class="card"><div class="card-head"><h2>On time by work center</h2><span class="muted">Last 30 days</span></div>
+    {ontime_bars}{ui.how(metrics.HOW["prod_on_time"])}</section>
+  <section class="card"><div class="card-head"><h2>Scrap, last 6 months</h2><div class="legend">{legend}</div></div>
+    {trend}{ui.how(metrics.HOW["scrap_rate"])}</section>
+</div>
+<section class="card" id="late"><div class="card-head"><h2>Late production orders</h2><span class="muted">Past due, oldest first</span></div>
+  {_table(["Order", "Item", "Where", "Qty", "Due", "Late by"], lrows, "Nothing is late.", (3, 4, 5))}</section>"""
+    return ui.page(request, "Production", body, "Production", subtitle="Work centers, production orders and downtime, from the shop floor system")

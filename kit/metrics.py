@@ -217,6 +217,8 @@ SCORECARD = [  # key, label, format, higher_is_better, how, app it needs
     ("first_time_fix", "First-time fix", "pct", True, "first_time_fix", "field_service"),
     ("overtime_pct", "Overtime, % of hours worked", "pct", False, "overtime", "people"),
     ("billable_util", "Billable utilization", "pct", True, "billable_util", "projects"),
+    ("prod_on_time", "Production orders on time", "pct", True, "prod_on_time", "production"),
+    ("scrap_rate", "Scrap rate", "pct", False, "scrap_rate", "production"),
     ("fill_rate", "Fill rate (lines complete first time)", "pct", True, "fill_rate", "orders"),
     ("on_time_ship", "Orders shipped on time", "pct", True, "on_time_ship", "orders"),
     ("gross_margin", "Gross margin on orders", "pct", True, "gross_margin", "orders"),
@@ -285,6 +287,13 @@ def scorecard(t: dt.date, weeks=13, scope=None) -> dict:
             SELECT week_start AS w, sum(overtime_hours) AS ot, sum(worked_hours) AS worked FROM rpt.timesheets
             WHERE week_start BETWEEN %(first)s AND %(t)s {_scope(scope)} GROUP BY 1""", p)}
         series["overtime_pct"] = {w: 100 * float(r["ot"] or 0) / float(r["worked"]) for w, r in ot.items() if r["worked"]}
+    if "production" in apps:
+        po = {r["w"]: r for r in db.query(f"""
+            SELECT date_trunc('week', completed_date)::date AS w, count(*) AS n, count(*) FILTER (WHERE on_time) AS ok,
+                   sum(qty_completed) AS good, sum(qty_scrapped) AS scrap
+            FROM rpt.production_orders WHERE status = 'Completed' AND completed_date BETWEEN %(first)s AND %(t)s {_scope(scope)} GROUP BY 1""", p)}
+        series["prod_on_time"] = {w: 100 * r["ok"] / r["n"] for w, r in po.items() if r["n"]}
+        series["scrap_rate"] = {w: 100 * float(r["scrap"]) / float(r["good"] + r["scrap"]) for w, r in po.items() if (r["good"] or 0) + (r["scrap"] or 0)}
     if "projects" in apps:
         te = {r["w"]: r for r in db.query(f"""
             SELECT date_trunc('week', week_ending)::date AS w, sum(hours) FILTER (WHERE billable) AS b, sum(hours) AS n
@@ -927,3 +936,88 @@ def fade_by(dim: str, scope=None) -> list[dict]:
         r["projected_margin"] = _ratio(r["proj_gp"], r["contract"])
         r["fade"] = (r["original_margin"] or 0) - (r["projected_margin"] or 0)
     return rows
+
+
+# ---------- production (manufacturing) ----------
+
+HOW.update({
+    "prod_on_time": "Production orders completed on or before their due date ÷ production orders completed, by completion date.",
+    "scrap_rate": "Units scrapped ÷ (units completed + scrapped), production orders completed in the period.",
+    "labor_efficiency": "Standard hours ÷ actual hours on completed production orders. Above 100% means faster than standard.",
+    "oee": "Availability × performance × quality, by work center, last 30 days. Availability = hours running ÷ (hours running "
+           "+ downtime); performance = standard hours earned ÷ hours running; quality = good units ÷ all units made. Idle time "
+           "with no work booked doesn't count against a machine.",
+    "downtime": "Minutes logged as downtime by the work centers, by reason. Changeovers and planned maintenance are expected; "
+                "breakdowns, waiting on material and no operator are not.",
+})
+
+
+def production_summary(start, end, scope=None) -> dict:
+    r = db.one(f"""SELECT count(*) AS completed, count(*) FILTER (WHERE on_time) AS on_time,
+                          coalesce(sum(qty_completed), 0) AS good, coalesce(sum(qty_scrapped), 0) AS scrap,
+                          coalesce(sum(standard_hours), 0) AS std, coalesce(sum(actual_hours), 0) AS actual
+                   FROM rpt.production_orders WHERE status = 'Completed' AND completed_date BETWEEN %(s)s AND %(e)s {_scope(scope)}""",
+               {"s": start, "e": end, "scope": scope})
+    late = db.one(f"SELECT count(*) AS n FROM rpt.production_orders WHERE is_late {_scope(scope)}", {"scope": scope})["n"]
+    out = {k: float(v) for k, v in r.items()}
+    out.update({"on_time_rate": _ratio(r["on_time"], r["completed"]), "scrap_rate": _ratio(r["scrap"], r["good"] + r["scrap"]),
+                "labor_efficiency": _ratio(r["std"], r["actual"]), "late_open": late})
+    return out
+
+
+def oee_by_work_center(t: dt.date, days=30, scope=None) -> list[dict]:
+    start = t - dt.timedelta(days=days - 1)
+    workdays = sum(1 for i in range(days) if (start + dt.timedelta(days=i)).weekday() < 5)
+    rows = db.query(f"""
+        SELECT w.id, w.name, coalesce(b.name, w.branch_code) AS plant, w.hours_per_day * 60 * %(wd)s AS scheduled,
+               coalesce((SELECT sum(minutes) FROM mfg.downtime d WHERE d.work_center_id = w.id AND d.event_date BETWEEN %(s)s AND %(t)s), 0) AS down,
+               coalesce((SELECT sum(standard_hours) * 60 FROM mfg.production_orders o WHERE o.work_center_id = w.id
+                         AND o.status = 'Completed' AND o.completed_date BETWEEN %(s)s AND %(t)s), 0) AS earned,
+               coalesce((SELECT sum(actual_hours) * 60 FROM mfg.production_orders o WHERE o.work_center_id = w.id
+                         AND o.status = 'Completed' AND o.completed_date BETWEEN %(s)s AND %(t)s), 0) AS run,
+               coalesce((SELECT sum(qty_completed) FROM mfg.production_orders o WHERE o.work_center_id = w.id
+                         AND o.status = 'Completed' AND o.completed_date BETWEEN %(s)s AND %(t)s), 0) AS good,
+               coalesce((SELECT sum(qty_scrapped) FROM mfg.production_orders o WHERE o.work_center_id = w.id
+                         AND o.status = 'Completed' AND o.completed_date BETWEEN %(s)s AND %(t)s), 0) AS scrap
+        FROM mfg.work_centers w LEFT JOIN core.branches b ON b.code = w.branch_code
+        WHERE true {_scope(scope, 'w.branch_code')} ORDER BY 3, 2""", {"s": start, "t": t, "wd": workdays, "scope": scope})
+    for r in rows:
+        run, down = float(r["run"]), float(r["down"])
+        r["availability"] = _ratio(run, run + down)
+        r["performance"] = min(1.0, _ratio(r["earned"], run)) if run else None
+        r["quality"] = _ratio(r["good"], float(r["good"]) + float(r["scrap"]))
+        r["oee"] = (r["availability"] * r["performance"] * r["quality"]) if None not in (r["availability"], r["performance"], r["quality"]) else None
+    return rows
+
+
+def downtime_by(dim: str, t: dt.date, days=30, scope=None) -> list[dict]:
+    cols = {"reason": "reason", "work_center": "plant || ' · ' || work_center"}
+    return db.query(f"""SELECT {cols[dim]} AS key, sum(minutes) AS minutes, count(*) AS events FROM rpt.downtime
+                        WHERE event_date BETWEEN %(s)s AND %(t)s {_scope(scope)} GROUP BY 1 ORDER BY 2 DESC""",
+                    {"s": t - dt.timedelta(days=days - 1), "t": t, "scope": scope})
+
+
+def production_by(dim: str, start, end, scope=None) -> list[dict]:
+    cols = {"work_center": "plant || ' · ' || work_center", "family": "product_family", "plant": "plant"}
+    rows = db.query(f"""SELECT {cols[dim]} AS key, count(*) AS completed, count(*) FILTER (WHERE on_time) AS on_time,
+                               sum(qty_completed) AS good, sum(qty_scrapped) AS scrap, sum(standard_hours) AS std, sum(actual_hours) AS actual
+                        FROM rpt.production_orders WHERE status = 'Completed' AND completed_date BETWEEN %(s)s AND %(e)s {_scope(scope)}
+                        GROUP BY 1 ORDER BY 1""", {"s": start, "e": end, "scope": scope})
+    for r in rows:
+        r["on_time_rate"] = _ratio(r["on_time"], r["completed"])
+        r["scrap_rate"] = _ratio(r["scrap"], (r["good"] or 0) + (r["scrap"] or 0))
+        r["labor_efficiency"] = _ratio(r["std"], r["actual"])
+    return rows
+
+
+def scrap_by_week(t: dt.date, weeks=26, scope=None) -> list[dict]:
+    first, last = _weeks_back(t, weeks)
+    return db.query(f"""SELECT date_trunc('week', completed_date)::date AS week, plant || ' · ' || work_center AS key,
+                               sum(qty_scrapped)::numeric / nullif(sum(qty_completed) + sum(qty_scrapped), 0) AS rate
+                        FROM rpt.production_orders WHERE status = 'Completed' AND completed_date BETWEEN %(f)s AND %(l)s {_scope(scope)}
+                        GROUP BY 1, 2 ORDER BY 1""", {"f": first, "l": last, "scope": scope})
+
+
+def late_production(scope=None) -> list[dict]:
+    return db.query(f"""SELECT id, number, description, work_center, plant, qty_planned, due_date, core.local_today() - due_date AS days_late
+                        FROM rpt.production_orders WHERE is_late {_scope(scope)} ORDER BY due_date""", {"scope": scope})
