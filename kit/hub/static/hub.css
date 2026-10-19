@@ -410,3 +410,6 @@ td.heat { font-variant-numeric: tabular-nums; }
 .subtabs a:hover { background: var(--card-2); text-decoration: none; }
 .subtabs a[aria-current="page"] { background: var(--ink); color: var(--card); border-color: var(--ink); font-weight: 600; }
 .tiles.flat { margin-bottom: 0; } .tiles.flat .tile { background: var(--card-2); border-color: transparent; }
+
+/* Shown inside the website's demo page */
+html.embedded .demo-banner { display: none; }

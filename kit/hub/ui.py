@@ -261,6 +261,7 @@ def page(request, title: str, body: str, active: str = "", subtitle: str = "", w
 <title>{esc(title)} · {esc(client.get("short_name", "Hub"))}</title>
 <link rel="stylesheet" href="/static/hub.css?v={ASSET_V["hub.css"]}"><link rel="icon" href="/static/icon.svg" type="image/svg+xml">
 <script src="{CHART_JS}" defer></script><script src="/static/hub.js?v={ASSET_V["hub.js"]}" defer></script><script src="/static/ask.js?v={ASSET_V["ask.js"]}" defer></script>
+<script>if (window.top !== window.self) document.documentElement.classList.add("embedded")  // shown inside our website</script>
 </head><body>
 {demo}{alert_bar}
 <header class="top"><div class="bar">

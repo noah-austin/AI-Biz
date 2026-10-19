@@ -448,8 +448,12 @@ section { padding: 104px 0; }
 .demo-frame { display: block; width: 100%; height: calc(100vh - 210px); min-height: 640px; border: 1px solid var(--line);
   border-radius: var(--radius); background: var(--card); box-shadow: 0 8px 30px rgba(16, 24, 40, .08); }
 @media (max-width: 760px) {
-  .demo-stage { padding-top: 12px; }
-  .demo-frame { height: calc(100vh - 150px); min-height: 520px; border-radius: 10px; }
-  .demo-bar p { font-size: 14.5px; }
-  .demo-full { display: none; }
+  .demo-stage { padding: 10px 0 24px; }
+  .demo-tabs { margin-bottom: 10px; }
+  .demo-tabs a { padding: 6px 12px; font-size: 14px; }
+  .demo-bar { margin-bottom: 10px; flex-wrap: nowrap; gap: 12px; }
+  .demo-bar h1 { font-size: 20px; margin: 0; }
+  .demo-bar p, .demo-full { display: none; }
+  .demo-bar-actions .btn.small { padding: 8px 12px; font-size: 14px; white-space: nowrap; }
+  .demo-frame { height: calc(100vh - 120px); min-height: 520px; border-radius: 10px; }
 }
