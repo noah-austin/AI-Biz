@@ -204,3 +204,25 @@ class DemoProjects(Connector):
                    "hours": "Hours", "billable": "Billable", "bill_rate": "BillRate", "cost_rate": "CostRate",
                    "invoice_number": "InvoiceNumber"}, o),
         ]
+
+
+class DemoJobCost(Connector):
+    source = "demo job cost"
+
+    def objects(self):
+        o = self.options
+        return [
+            _spec("jc.jobs", "jobcost/jobs.json",
+                  {"id": "Id", "number": "JobNumber", "name": "Name", "account_id": "AccountId", "deal_id": "DealId",
+                   "branch_code": "OfficeCode", "pm_id": "ProjectManagerId", "super_id": "SuperintendentId",
+                   "contract_value": "ContractValue", "budget_cost": "BudgetCost", "estimate_at_completion": "EstimateAtCompletion",
+                   "start_date": "StartDate", "end_date": "EndDate", "status": "Status", "retainage_pct": "RetainagePct"}, o),
+            _spec("jc.change_orders", "jobcost/change_orders.json",
+                  {"id": "Id", "job_id": "JobId", "number": "Number", "description": "Description", "amount": "Amount", "cost": "Cost",
+                   "status": "Status", "submitted_date": "SubmittedDate", "approved_date": "ApprovedDate"}, o),
+            _spec("jc.costs", "jobcost/costs.json",
+                  {"id": "Id", "job_id": "JobId", "period": "Period", "category": "Category", "amount": "Amount"}, o),
+            _spec("jc.pay_apps", "jobcost/pay_apps.json",
+                  {"id": "Id", "job_id": "JobId", "period": "Period", "gross_billed": "GrossBilled", "retainage_held": "RetainageHeld",
+                   "retainage_released": "RetainageReleased", "bill_date": "BillDate"}, o),
+        ]

@@ -22,7 +22,7 @@ class Check:
     app: str = "analytics"   # only run for installs with this app (and so this system) switched on
 
 
-SYSTEMS = {"crm": "CRM", "accounting": "Accounting", "orders": "Orders (ERP)", "projects": "Projects and time", "fieldservice": "Field service", "inventory": "Inventory",
+SYSTEMS = {"crm": "CRM", "accounting": "Accounting", "orders": "Orders (ERP)", "projects": "Projects and time", "jobcost": "Job cost", "fieldservice": "Field service", "inventory": "Inventory",
            "purchasing": "Purchasing", "hr": "HR and payroll"}
 
 
@@ -89,6 +89,28 @@ CHECKS = [
           """SELECT id, name AS label, 'Branch code ' || coalesce(branch_code, '(blank)') AS detail, amount, branch_code,
                     branch, owner_name
              FROM rpt.deals WHERE region = 'Unmapped' AND %(scope)s IS NULL ORDER BY amount DESC NULLS LAST"""),
+    Check("loss_job", "Active job projected to lose money",
+          "Its estimated cost at completion is more than its contract: every month makes it worse unless something changes.",
+          "Review the estimate with the project manager; chase change orders and back-charges.", "jobcost", "jc_job",
+          f"""SELECT id, 'Job ' || number || ' · ' || name AS label,
+                     'Projected margin ' || round(projected_margin * 100, 1) || '%%, bid at ' || round(original_margin * 100, 1) || '%%' AS detail,
+                     est_cost - contract AS amount, branch_code, branch, coalesce(pm_name, 'Operations') AS owner_name
+              FROM rpt.wip WHERE status = 'Active' AND projected_margin < 0 {_s()} ORDER BY projected_margin""", "job_cost"),
+    Check("stale_change_order", "Change order waiting on the owner for 60+ days",
+          "The work is often already done; the longer it waits, the harder it is to get paid.",
+          "Escalate with the owner, or price it into the next pay application.", "jobcost", "jc_job",
+          f"""SELECT id, 'Job ' || number || ' · ' || name AS label,
+                     pending_n || ' waiting, oldest from ' || to_char(oldest_pending, 'Mon FMDD, YYYY') AS detail,
+                     pending_changes AS amount, branch_code, branch, coalesce(pm_name, 'Operations') AS owner_name
+              FROM rpt.wip WHERE status = 'Active' AND oldest_pending < core.local_today() - 60 {_s()}
+              ORDER BY oldest_pending""", "job_cost"),
+    Check("under_billed", "Job under-billed by more than $100K",
+          "Work done but not billed: the company is paying for the owner's job.",
+          "Catch up on the next pay application.", "jobcost", "jc_job",
+          f"""SELECT id, 'Job ' || number || ' · ' || name AS label, round(pct_complete * 100) || '%% complete, billed ' ||
+                     round(billed / nullif(contract, 0) * 100) || '%% of contract' AS detail, -over_under AS amount,
+                     branch_code, branch, coalesce(pm_name, 'Billing') AS owner_name
+              FROM rpt.wip WHERE status = 'Active' AND over_under < -100000 {_s()} ORDER BY over_under""", "job_cost"),
     Check("time_not_billed", "Hourly project with time not billed for 60+ days",
           "Work done but not invoiced is cash the firm is lending its client, and it gets harder to collect the older it is.",
           "Bill the time, or write down what won't be billed, with the project manager's say-so.", "projects", "psa_project",

@@ -196,6 +196,10 @@ def _changes_card(ch, t):
 def _across_the_business(t, scope) -> str:
     """One tile per operations area this install has, each opening its page."""
     apps, tiles = get_settings().apps, []
+    if "job_cost" in apps:
+        w = metrics.wip_summary(scope)
+        tiles.append(ui.tile("Backlog", money(w["backlog"], True), f'margin {pct(w["projected_margin"], 1)}, bid {pct(w["original_margin"], 1)}',
+                             "/job-cost"))
     if "projects" in apps:
         first, last = metrics._weeks_back(t, 4)
         u = metrics.time_summary(first, last, scope)
@@ -647,7 +651,8 @@ CHECK_SHORT = {"placeholder_close": "Placeholder close date", "duplicates": "Pos
                "missing_margin": "No margin entered", "lost_no_reason": "No loss reason", "won_not_billed": "Won, not billed",
                "unlinked_customer": "Unlinked customer", "unmapped_branch": "Unknown branch",
                "order_not_invoiced": "Order not invoiced", "below_cost": "Sold below cost",
-               "time_not_billed": "Time not billed", "over_budget": "Over budget",
+               "time_not_billed": "Time not billed", "over_budget": "Over budget", "loss_job": "Job losing money",
+               "stale_change_order": "Change order waiting", "under_billed": "Under-billed job",
                "job_not_invoiced": "Job not invoiced", "job_left_tech": "Job on a leaver", "expired_license_booked": "Expired license",
                "missing_timesheet": "Missing timesheet", "no_manager": "No manager", "negative_stock": "Negative stock",
                "item_no_cost": "Part with no cost", "po_not_billed": "No vendor bill", "duplicate_vendor": "Duplicate vendor"}
@@ -661,7 +666,8 @@ def cleanup_page(request):
              "missing_margin": "No margin", "lost_no_reason": "No loss reason", "won_not_billed": "Not billed",
              "unlinked_customer": "Unlinked", "unmapped_branch": "Unknown branch", "job_not_invoiced": "Not invoiced",
              "order_not_invoiced": "Order not billed", "below_cost": "Below cost", "time_not_billed": "Not billed",
-             "over_budget": "Over budget",
+             "over_budget": "Over budget", "loss_job": "Losing money", "stale_change_order": "Old change order",
+             "under_billed": "Under-billed",
              "job_left_tech": "On a leaver", "expired_license_booked": "Expired license", "missing_timesheet": "Timesheet",
              "no_manager": "No manager", "negative_stock": "Negative stock", "item_no_cost": "No cost", "po_not_billed": "No bill",
              "duplicate_vendor": "Dup. vendor"}

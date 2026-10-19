@@ -78,7 +78,7 @@ def alerts(t: dt.date, scope=None, days: int = 7) -> list[dict]:
                         "kind": f"Invoice {n} days late", "title": f'{i["customer_name"]}: invoice {i["number"]}',
                         "detail": f'{i["branch"]} · due {i["due_date"]:%b %-d}', "amount": _f(i["balance"]),
                         "invoice_id": i["id"]})
-    for b in billing_pace(t, scope):
+    for b in (billing_pace(t, scope) if r["billing_pace"] else []):   # 0 switches it off (e.g. firms that bill once a month)
         if b["last_year"] >= r["billing_min"] and b["share"] < r["billing_pace"]:
             out.append({"date": t, "severity": "warning", "kind": "Billing behind pace",
                         "title": f'{b["branch"]} is at {b["share"]:.0%} of last year\'s billing for the month so far',
@@ -100,6 +100,17 @@ def ops_alerts(t: dt.date, scope, since: dt.date) -> list[dict]:
             out.append({"date": j["arrived_date"], "severity": "warning", "kind": "Emergency call late",
                         "title": f'{j["account_name"]}: reached after {float(j["response_hours"]):.1f} hours',
                         "detail": f'{j["branch"]} · job {j["number"]} · the promise is 4 hours', "amount": None, "job_id": j["id"]})
+    if "job_cost" in apps:
+        for j in metrics.wip_jobs(scope):
+            if (j["projected_margin"] or 0) < 0:
+                out.append({"date": t, "severity": "critical", "kind": "Job losing money",
+                            "title": f'{j["name"]}: now projected at {float(j["projected_margin"]):.1%} margin (bid at {float(j["original_margin"]):.1%})',
+                            "detail": f'{j["branch"]} · {j["pm_name"]}', "amount": float(j["contract"]), "jc_job_id": j["id"]})
+            elif float(j["over_under"]) < -r.get("under_billed_min", 250_000):
+                out.append({"date": t, "severity": "warning", "kind": "Under-billed",
+                            "title": f'{j["name"]} is under-billed by {metrics_money(-float(j["over_under"]))}',
+                            "detail": f'{float(j["pct_complete"]):.0%} complete · {j["branch"]}', "amount": -float(j["over_under"]),
+                            "jc_job_id": j["id"]})
     if "projects" in apps:
         week = t - dt.timedelta(days=t.weekday() + 7)
         for b in metrics.utilization_by("branch", week, week + dt.timedelta(days=6), scope):
@@ -231,6 +242,26 @@ def daily_brief(t: dt.date, scope=None) -> list[dict]:
 def ops_brief(t: dt.date, scope=None) -> list[dict]:
     """Morning-brief lines from the operations systems this install has switched on."""
     apps, lines = get_settings().apps, []
+    if "job_cost" in apps:
+        w = metrics.wip_summary(scope)
+        if w["original_margin"] and w["projected_margin"] is not None and w["original_margin"] - w["projected_margin"] > 0.005:
+            pm = max(metrics.fade_by("pm", scope), key=lambda r: float(r["orig_gp"] or 0) - float(r["proj_gp"] or 0), default=None)
+            lost = float(pm["orig_gp"] or 0) - float(pm["proj_gp"] or 0) if pm else 0
+            lines.append({"text": f'Active jobs are projected at {w["projected_margin"]:.1%} margin against {w["original_margin"]:.1%} at bid'
+                                  + (f'; {pm["key"]}\'s {pm["jobs"]} jobs account for {metrics_money(lost)} of the gross profit lost.'
+                                     if pm and lost > 100_000 else "."),
+                          "link": "/job-cost#fade"})
+        losing = [j for j in metrics.wip_jobs(scope) if (j["projected_margin"] or 0) < 0]
+        for j in losing[:1]:
+            lines.append({"text": f'{j["name"]} is now projected to lose money ({float(j["projected_margin"]):.1%}).', "link": "/job-cost#wip"})
+        under = sorted(metrics.wip_jobs(scope), key=lambda j: float(j["over_under"]))[:1]
+        if under and float(under[0]["over_under"]) < -250_000:
+            j = under[0]
+            lines.append({"text": f'{j["name"]} is under-billed by {metrics_money(-float(j["over_under"]))}: '
+                                  f'{float(j["pct_complete"]):.0%} done, {float(j["billed"]) / float(j["contract"]):.0%} billed.', "link": "/job-cost#wip"})
+        if w["pending"] > 0:
+            lines.append({"text": f'{int(w["pending_n"])} change orders worth {metrics_money(w["pending"])} are waiting on owners\' signatures.',
+                          "link": "/job-cost#changes"})
     if "projects" in apps:
         first, last = metrics._weeks_back(t, 4)
         offices = [b for b in metrics.utilization_by("branch", first, last, scope) if b["recorded"] >= 400]

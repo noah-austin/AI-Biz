@@ -878,3 +878,52 @@ def unbilled_projects(t: dt.date, scope=None) -> list[dict]:
                         FROM rpt.projects WHERE billing_type = 'Time & materials' AND unbilled_value > 0
                           AND oldest_unbilled < date_trunc('month', %(t)s::date) {_scope(scope)}
                         ORDER BY oldest_unbilled, unbilled_value DESC""", {"t": t, "scope": scope})
+
+
+# ---------- job cost (construction) ----------
+
+HOW.update({
+    "wip": "As of the end of last month. Contract = original contract + approved change orders. Percent complete = cost to "
+           "date ÷ estimated cost at completion. Earned = percent complete × contract.",
+    "backlog_jobs": "Contract not yet earned on jobs that aren't finished: contract − earned to date.",
+    "over_under": "Billed to date − earned to date. Over-billed is money collected ahead of the work (a liability); "
+                  "under-billed is work done and not yet billed (the company is financing the owner).",
+    "fade": "Margin at bid − margin projected today, on active jobs. Positive fade means the job is earning less than bid.",
+    "retainage": "Retainage held back by owners on pay applications and not yet released.",
+    "pending_changes": "Change orders submitted to owners and not yet signed: work that may not get paid for.",
+})
+
+
+def wip_summary(scope=None) -> dict:
+    r = db.one(f"""SELECT count(*) FILTER (WHERE status = 'Active') AS active,
+                          coalesce(sum(greatest(contract - earned, 0)) FILTER (WHERE status IN ('Active', 'Not started')), 0) AS backlog,
+                          coalesce(sum(over_under) FILTER (WHERE status = 'Active' AND over_under > 0), 0) AS over,
+                          coalesce(sum(over_under) FILTER (WHERE status = 'Active' AND over_under < 0), 0) AS under,
+                          coalesce(sum(retainage), 0) AS retainage,
+                          coalesce(sum(pending_changes) FILTER (WHERE status = 'Active'), 0) AS pending,
+                          coalesce(sum(pending_n) FILTER (WHERE status = 'Active'), 0) AS pending_n,
+                          coalesce(sum(contract * original_margin) FILTER (WHERE status = 'Active'), 0) AS orig_gp,
+                          coalesce(sum(contract * projected_margin) FILTER (WHERE status = 'Active'), 0) AS proj_gp,
+                          coalesce(sum(contract) FILTER (WHERE status = 'Active'), 0) AS active_contract
+                   FROM rpt.wip WHERE true {_scope(scope)}""", {"scope": scope})
+    out = {k: float(v) for k, v in r.items()}
+    out["original_margin"] = _ratio(out["orig_gp"], out["active_contract"])
+    out["projected_margin"] = _ratio(out["proj_gp"], out["active_contract"])
+    return out
+
+
+def wip_jobs(scope=None, status=("Active",)) -> list[dict]:
+    return db.query(f"""SELECT * FROM rpt.wip WHERE status = ANY(%(st)s) {_scope(scope)} ORDER BY contract DESC""",
+                    {"scope": scope, "st": list(status)})
+
+
+def fade_by(dim: str, scope=None) -> list[dict]:
+    cols = {"pm": "pm_name", "branch": "branch", "segment": "segment"}
+    rows = db.query(f"""SELECT coalesce({cols[dim]}, '(none)') AS key, count(*) AS jobs, sum(contract) AS contract,
+                               sum(contract * original_margin) AS orig_gp, sum(contract * projected_margin) AS proj_gp
+                        FROM rpt.wip WHERE status = 'Active' {_scope(scope)} GROUP BY 1 ORDER BY 3 DESC""", {"scope": scope})
+    for r in rows:
+        r["original_margin"] = _ratio(r["orig_gp"], r["contract"])
+        r["projected_margin"] = _ratio(r["proj_gp"], r["contract"])
+        r["fade"] = (r["original_margin"] or 0) - (r["projected_margin"] or 0)
+    return rows

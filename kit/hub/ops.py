@@ -194,9 +194,9 @@ def purchasing_page(request):
   <section class="card"><div class="card-head"><h2>On-time delivery by vendor</h2><span class="muted">Last 90 days, worst first</span></div>{otd_bars}
     {ui.how(metrics.HOW["on_time_delivery"])}</section>
 </div>
-<section class="card"><div class="card-head"><h2>Prices up the most</h2><span class="muted">Last 90 days against the same 90 days a year ago</span></div>
-  {_table(["Part", "Vendor", "A year ago", "Now", "Change"], prows, "Not enough history yet.", (2, 3, 4))}
-  {ui.how(metrics.HOW["price_change"])}</section>
+{f"""<section class="card"><div class="card-head"><h2>Prices up the most</h2><span class="muted">Last 90 days against the same 90 days a year ago</span></div>
+  {_table(["Part", "Vendor", "A year ago", "Now", "Change"], prows, "", (2, 3, 4))}
+  {ui.how(metrics.HOW["price_change"])}</section>""" if prows else ""}
 <section class="card" id="late"><div class="card-head"><h2>Orders past their expected date</h2><span class="muted">{len(late)} open</span></div>
   {_table(["Order", "Vendor", "Branch", "Type", "Expected", "Late by", "Amount"], lrows, "No open orders are late.", (4, 5, 6))}</section>"""
     return ui.page(request, "Purchasing", body, "Purchasing", subtitle="Purchase orders and vendors, from the purchasing system")
@@ -278,6 +278,9 @@ SOURCE_FIELDS = {
     "po": [("number", "PO number"), ("vendor", "Vendor"), ("kind", "Type"), ("status", "Status"), ("ordered_date", "Ordered"),
            ("expected_date", "Expected"), ("received_date", "Received"), ("amount", "Amount"), ("billed_amount", "Billed by vendor"),
            ("deal_id", "For deal"), ("id", "Record ID")],
+    "job": [("number", "Job number"), ("name", "Job"), ("customer", "Owner"), ("status", "Status"), ("contract_value", "Original contract"),
+            ("budget_cost", "Budget cost"), ("estimate_at_completion", "Estimate at completion"), ("start_date", "Start"),
+            ("end_date", "Finish"), ("pm", "Project manager"), ("retainage_pct", "Retainage %"), ("deal_id", "CRM deal"), ("id", "Record ID")],
     "project": [("number", "Project number"), ("name", "Project"), ("customer", "Client"), ("billing_type", "Billing"),
                 ("status", "Status"), ("contract_value", "Contract value"), ("budget_hours", "Budget hours"),
                 ("percent_complete", "Percent complete (PM)"), ("start_date", "Start"), ("end_date", "End"), ("pm", "Project manager"),
@@ -327,6 +330,26 @@ def demo_record(system: str, obj: str, rec_id: str, scope):
         rel = "<h3>Lines</h3><ul class=\"list\">" + "".join(
             f'<li>{esc(x["description"])}<span class="amt">{ui.num(x["qty"])} × {money(x["unit_price"])}</span></li>' for x in lines) + "</ul>"
         return r, "Purchasing", "po", rel
+    if (system, obj) == ("jobcost", "job"):
+        r = db.one("""SELECT j.*, a.name AS customer, e.name AS pm FROM jc.jobs j LEFT JOIN crm.accounts a ON a.id = j.account_id
+                      LEFT JOIN hr.employees e ON e.id = j.pm_id WHERE j.id = %(i)s""", {"i": rec_id})
+        if not r or not ok(r["branch_code"]):
+            return None
+        cos = db.query("SELECT number, description, amount, status, submitted_date FROM jc.change_orders WHERE job_id = %(i)s ORDER BY submitted_date",
+                       {"i": rec_id})
+        apps = db.query("SELECT period, gross_billed, retainage_held, retainage_released FROM jc.pay_apps WHERE job_id = %(i)s ORDER BY period",
+                        {"i": rec_id})
+
+        def released(a):
+            return f" · {money(a['retainage_released'])} released" if a["retainage_released"] else ""
+        rel = ("<h3>Change orders</h3><ul class=\"list\">" + "".join(
+            f'<li>CO {esc(c["number"])}: {esc(c["description"])}<span class="amt">{money(c["amount"])} · {esc(c["status"])}</span></li>'
+            for c in cos) + "</ul>") if cos else ""
+        rel += "<h3>Pay applications</h3><ul class=\"list\">" + "".join(
+            f'<li>{a["period"]:%B %Y}<span class="amt">{money(a["gross_billed"])} billed · {money(a["retainage_held"])} retainage held'
+            f'{released(a)}</span></li>'
+            for a in apps) + "</ul>"
+        return r, "Job cost", "job", rel
     if (system, obj) == ("projects", "project"):
         r = db.one("""SELECT p.*, a.name AS customer, e.name AS pm FROM psa.projects p LEFT JOIN crm.accounts a ON a.id = p.account_id
                       LEFT JOIN hr.employees e ON e.id = p.pm_id WHERE p.id = %(i)s""", {"i": rec_id})
@@ -501,3 +524,60 @@ def projects_page(request):
   {_table(["Project", "Office", "Unbilled", "Since", "Age"], wrows, "All hourly work is billed.", (2, 3, 4))}
   {ui.how(metrics.HOW["unbilled_wip"])}</section>"""
     return ui.page(request, "Projects", body, "Projects", subtitle="Projects, budgets and time, from the project and time system")
+
+
+# ---------------------------------------------------------------- job cost (construction)
+
+def jobcost_page(request):
+    scope = _scope(request)
+    s = metrics.wip_summary(scope)
+    jobs = metrics.wip_jobs(scope)
+    tiles = "".join([
+        ui.tile("Backlog", money(s["backlog"], True), f'{int(s["active"])} active jobs', None, metrics.HOW["backlog_jobs"]),
+        ui.tile("Margin on active jobs", pct(s["projected_margin"], 1),
+                f'<span class="delta {"bad" if (s["projected_margin"] or 0) < (s["original_margin"] or 0) else "good"}">'
+                f'bid at {pct(s["original_margin"], 1)}</span>', "#fade", metrics.HOW["fade"]),
+        ui.tile("Under-billed", money(-s["under"], True), f'{money(s["over"], True)} over-billed', "#wip", metrics.HOW["over_under"]),
+        ui.tile("Retainage held", money(s["retainage"], True), "owed back by owners", None, metrics.HOW["retainage"]),
+        ui.tile("Change orders waiting", money(s["pending"], True), f'{int(s["pending_n"])} not yet signed by owners', "#changes",
+                metrics.HOW["pending_changes"]),
+    ])
+    pm = metrics.fade_by("pm", scope)
+    fade_bars = ui.hbars([{"label": r["key"], "value": max(0, (r["projected_margin"] or 0) * 100), "shown": pct(r["projected_margin"], 1),
+                           "sub": f'bid {pct(r["original_margin"], 1)} · {r["jobs"]} jobs'} for r in sorted(pm, key=lambda r: r["projected_margin"] or 0)],
+                         label="Projected margin by project manager", top=25)
+    ou = sorted(jobs, key=lambda j: float(j["over_under"]))
+    ou_bars = ui.hbars([{"label": j["name"][:42], "title": j["name"], "value": abs(float(j["over_under"])),
+                         "shown": money(j["over_under"], True), "sub": "under" if j["over_under"] < 0 else "over",
+                         "dim": j["over_under"] >= 0} for j in (ou[:5] + ou[-3:]) if abs(float(j["over_under"])) > 1000],
+                       label="Biggest over- and under-billed jobs")
+
+    def row(j):
+        fade = (j["original_margin"] or 0) - (j["projected_margin"] or 0)
+        warn = '<span class="pill bad">loss</span>' if (j["projected_margin"] or 0) < 0 else (
+            '<span class="pill warn">fading</span>' if fade > 0.03 else "")
+        return (f'<tr><td class="wrap">{ui.source_link("jc_job", j["id"], j["name"])} {warn}<div class="meta">{esc(j["number"])} · '
+                f'{esc(j["pm_name"] or "")} · {esc(j["branch"])}</div></td>'
+                f'<td class="n">{money(j["contract"], True)}</td><td class="n">{pct(j["pct_complete"], 0)}</td>'
+                f'<td class="n">{money(j["earned"], True)}</td><td class="n">{money(j["billed"], True)}</td>'
+                f'<td class="n">{money(j["over_under"], True)}</td><td class="n">{pct(j["original_margin"], 1)}</td>'
+                f'<td class="n">{pct(j["projected_margin"], 1)}</td></tr>')
+    pending = sorted((j for j in jobs if j["pending_n"]), key=lambda j: j["oldest_pending"])
+    prow = [f'<tr><td class="wrap">{ui.source_link("jc_job", j["id"], j["name"])}<div class="meta">{esc(j["pm_name"] or "")}</div></td>'
+            f'<td class="n">{j["pending_n"]}</td><td class="n">{money(j["pending_changes"])}</td><td class="n">{ui.date(j["oldest_pending"])}</td></tr>'
+            for j in pending]
+    body = f"""<div class="tiles">{tiles}</div>
+<div class="cols even" id="fade">
+  <section class="card"><div class="card-head"><h2>Margin by project manager</h2><span class="muted">Projected today, active jobs</span></div>
+    {fade_bars}{ui.how(metrics.HOW["fade"])}</section>
+  <section class="card"><div class="card-head"><h2>Over and under billing</h2><span class="muted">Grey = over-billed</span></div>
+    {ou_bars}{ui.how(metrics.HOW["over_under"])}</section>
+</div>
+<section class="card" id="wip"><div class="card-head"><h2>Work in progress</h2><span class="muted">Active jobs, as of the end of last month</span></div>
+  {_table(["Job", "Contract", "Complete", "Earned", "Billed", "Over / (under)", "Bid margin", "Projected"], [row(j) for j in jobs],
+          "No active jobs.", (1, 2, 3, 4, 5, 6, 7))}
+  {ui.how(metrics.HOW["wip"])}</section>
+<section class="card" id="changes"><div class="card-head"><h2>Change orders waiting on owners</h2><span class="muted">Oldest first</span></div>
+  {_table(["Job", "Waiting", "Amount", "Oldest submitted"], prow, "Nothing waiting.", (1, 2, 3))}
+  {ui.how(metrics.HOW["pending_changes"])}</section>"""
+    return ui.page(request, "Job cost", body, "Job cost", subtitle="Jobs, costs and billing from the job-cost system", wide=True)

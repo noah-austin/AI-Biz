@@ -32,3 +32,11 @@ icon = "doc"
 url = "https://services.demo.sanfordoperations.com/guest"
 blurb = "An engineering and consulting firm: utilization, realization, project budgets, unbilled work and people."
 shows = ["Billable utilization by office", "Projects burning budget too fast", "Hours written down by client type", "Time nobody has billed"]
+
+[[demos]]
+industry = "Construction"
+company = "Mesquite Ridge Constructors"
+icon = "blocks"
+url = "https://construction.demo.sanfordoperations.com/guest"
+blurb = "A commercial general contractor: the work-in-progress report every morning, margin fade, billing, change orders and crews."
+shows = ["Margin fade by project manager", "Over- and under-billed jobs", "Change orders stuck with owners", "A job about to lose money"]

@@ -19,7 +19,7 @@ def _is_guest(request) -> bool:
 
 def _record(a: dict) -> str:
     for key, kind in (("job_id", "fsm_job"), ("item_id", "inv_item"), ("employee_id", "hr_employee"), ("po_id", "ap_po"),
-                      ("project_id", "psa_project")):
+                      ("project_id", "psa_project"), ("jc_job_id", "jc_job")):
         if a.get(key):
             return ui.source_link(kind, a[key], a["title"])
     if a.get("deal_id"):
