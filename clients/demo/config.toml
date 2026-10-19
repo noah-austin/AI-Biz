@@ -118,3 +118,15 @@ value = 400000
 metric = "win_rate_dollars"
 period = "weekly"
 value = 36
+[[goals]]
+metric = "emergency_on_time"
+period = "weekly"
+value = 90
+[[goals]]
+metric = "first_time_fix"
+period = "weekly"
+value = 85
+[[goals]]
+metric = "overtime_pct"
+period = "weekly"
+value = 8

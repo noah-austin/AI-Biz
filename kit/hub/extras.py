@@ -18,6 +18,9 @@ def _is_guest(request) -> bool:
 
 
 def _record(a: dict) -> str:
+    for key, kind in (("job_id", "fsm_job"), ("item_id", "inv_item"), ("employee_id", "hr_employee"), ("po_id", "ap_po")):
+        if a.get(key):
+            return ui.source_link(kind, a[key], a["title"])
     if a.get("deal_id"):
         return ui.source_link("crm_deal", a["deal_id"], a["title"])
     if a.get("invoice_id"):
@@ -43,6 +46,16 @@ def alerts_page(request) -> str:
                  ("Big win / big loss", f"A deal of {money(r['big_win'], True)}+ is won, or {money(r['big_loss'], True)}+ is lost."),
                  ("Invoice late", f"An unpaid invoice passes {late} days past due ({r['late_days'][-1]} is urgent)."),
                  ("Billing behind pace", f"A branch has billed under {r['billing_pace']:.0%} of last year's figure for the month so far.")]
+    apps = get_settings().apps
+    if "field_service" in apps:
+        rule_rows.append(("Emergency call late", f"A technician reaches an emergency call {r['emergency_late_hours']} or more hours after it came in."))
+    if "inventory" in apps:
+        rule_rows.append(("Out of stock", "A critical part runs out at a warehouse (urgent)."))
+    if "purchasing" in apps:
+        rule_rows.append(("Delivery late", f"An open purchase order of {money(r['late_po_min'], True)} or more passes its expected date."))
+    if "people" in apps:
+        rule_rows += [("License expiring", f"A license or certification runs out within {r['license_days']} days; expired is urgent."),
+                      ("Overtime high", f"A branch's overtime goes above {r['overtime_pct']:.0%} of hours worked in a week.")]
     rules_html = "".join(f"<tr><th scope=row>{esc(k)}</th><td>{esc(v)}</td></tr>" for k, v in rule_rows)
     kinds = {}
     for a in found:

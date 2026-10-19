@@ -271,7 +271,7 @@ def build_certifications(g, employees, as_of):
             if years:
                 # Renewed on time until now, so the current one runs out sometime in the next term.
                 expires = issued + dt.timedelta(days=365 * years)
-                while expires < as_of - dt.timedelta(days=30):
+                while expires < as_of:
                     issued, expires = expires, expires + dt.timedelta(days=365 * years)
             out.append({"Id": f"CRT-{n:05d}", "EmployeeId": e["Id"], "Certification": name, "IssuedDate": issued.isoformat(),
                         "ExpiresDate": expires.isoformat() if expires else None})
@@ -399,32 +399,40 @@ def build_inventory(g, parts, as_of):
                       "PreferredVendorId": vendor_name[vend], "Critical": critical, "Active": True})
     locations = []
     for code, city, *_ in g.BRANCHES:
+        city = "Houston South" if code == "HOU-06" else city   # the Pasadena branch goes by Houston South everywhere
         locations.append({"Id": f"WH-{code}", "Name": f"{city} warehouse", "Kind": "Warehouse", "BranchCode": code})
         locations.append({"Id": f"VAN-{code[:3]}{code[-1]}", "Name": f"{city} service vans", "Kind": "Van stock", "BranchCode": code})
-    last_use = {}
+    loc_branch = {l["Id"]: l["BranchCode"] for l in locations}
+    last_use, used_91 = {}, {}   # last day each location used a part; each branch's use in the last 13 weeks
+    since = (as_of - dt.timedelta(days=91)).isoformat()
     for p in parts:
         key = (p["LocationId"], p["Sku"])
         if p["UsedDate"] > last_use.get(key, ""):
             last_use[key] = p["UsedDate"]
+        if p["UsedDate"] >= since:
+            bkey = (loc_branch[p["LocationId"]], p["Sku"])
+            used_91[bkey] = used_91.get(bkey, 0) + p["Qty"]
+    legacy_at = {"REF-22": ("WH-DAL-01", "WH-HOU-05", "WH-SAT-04"), "CTL-PNU": ("WH-DAL-01", "WH-FTW-02"), "CMP-REC": ("WH-HOU-05",)}
     stock = []
     for loc in locations:
-        size = next(b[2] for b in g.BRANCHES if b[0] == loc["BranchCode"])
         for sku, desc, cat, cost, weekly, vend, critical in ITEMS:
             r = g.rng_for("stock", loc["Id"], sku)
-            wk = weekly * size
+            wk = used_91.get((loc["BranchCode"], sku), 0) / 13
             rp = rq = None
             if loc["Kind"] == "Warehouse":
-                rp, rq = max(1, round(wk * 2)), max(2, round(wk * 4))
                 if weekly == 0:
-                    rp, rq = 0, 0
-                on_hand = rp + r.randint(0, rq) if r.random() > 0.12 else r.randint(0, max(0, rp - 1))
-                if weekly == 0:
-                    on_hand = r.randint(3, 14) if sku != "CMP-REC" else 2   # legacy parts nobody uses any more
+                    if loc["Id"] not in legacy_at.get(sku, ()):
+                        continue
+                    rp, rq, on_hand = 0, 0, r.randint(2, 9) if sku != "CMP-REC" else 1   # legacy parts nobody uses any more
+                else:
+                    rp, rq = max(1, round(wk * 3)), max(2, round(wk * 6))
+                    low = r.random() < 0.08
+                    on_hand = rp + r.randint(0, rq) if not low else r.randint(1 if critical else 0, max(1, rp - 1))
             else:
-                on_hand = r.randint(0, max(1, round(wk * 1.2)))
                 if weekly == 0:
                     continue
-            if weekly == 0 and loc["Kind"] == "Warehouse":
+                on_hand = r.randint(0, max(1, round(wk * 0.8)))
+            if weekly == 0:
                 last = (as_of - dt.timedelta(days=r.randint(220, 640))).isoformat()
             else:
                 last = last_use.get((loc["Id"], sku))
@@ -447,10 +455,10 @@ def build_inventory(g, parts, as_of):
             day = m + dt.timedelta(days=r.randint(1, 25))
             if day > as_of:
                 continue
-            for _ in range(r.randint(3, 7)):
+            for _ in range(r.randint(3, 6)):
                 sku = r.choice([it[0] for it in ITEMS if it[4] > 0])
-                shrink = 0.75 if loc["BranchCode"] != "HOU-06" else 0.9
-                qty = -r.randint(1, 4) if r.random() < shrink else r.randint(1, 2)
+                shrink = 0.62 if loc["BranchCode"] != "HOU-06" else 0.85
+                qty = -r.randint(1, 2) if r.random() < shrink else r.randint(1, 2)
                 adjustments.append({"Id": f"ADJ-{n:05d}", "Date": day.isoformat(), "LocationId": loc["Id"], "Sku": sku,
                                     "Qty": qty, "Reason": "Cycle count" if r.random() < 0.85 else "Damaged"})
                 n += 1

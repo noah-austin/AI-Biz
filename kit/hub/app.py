@@ -15,7 +15,7 @@ from starlette.concurrency import run_in_threadpool
 from .. import db
 from ..ai import chat, usage as ai_usage
 from ..config import get_settings
-from . import auth, extras, google, pages, ui
+from . import auth, extras, google, ops, pages, ui
 
 log = logging.getLogger("hub")
 settings = get_settings()  # fail loudly at start-up if anything is missing
@@ -184,6 +184,15 @@ if "analytics" in APPS:
     def deals_csv(request: Request):
         return Response(pages.deals_csv(request), media_type="text/csv",
                         headers={"Content-Disposition": 'attachment; filename="deals.csv"'})
+
+if "field_service" in APPS:
+    app.get("/jobs", response_class=HTMLResponse)(_html(ops.jobs_page))
+if "inventory" in APPS:
+    app.get("/inventory", response_class=HTMLResponse)(_html(ops.inventory_page))
+if "purchasing" in APPS:
+    app.get("/purchasing", response_class=HTMLResponse)(_html(ops.purchasing_page))
+if "people" in APPS:
+    app.get("/people", response_class=HTMLResponse)(_html(ops.people_page))
 
 if "practice" in APPS:
     from ..hub import forms

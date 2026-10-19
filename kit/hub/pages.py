@@ -116,10 +116,14 @@ def home(request):
 
     changes = _changes_card(metrics.recent_changes(t, 7, scope), t)
     issues = cleanup.run_checks(scope, limit=0)
-    issue_bars = ui.hbars([{"label": CHECK_SHORT.get(c["check"].key, c["check"].title), "title": c["check"].title, "value": c["count"], "shown": f'{c["count"]:,}',
-                            "sub": money(c["amount"], True), "link": f'/cleanup#{c["check"].key}'}
-                           for c in sorted(issues, key=lambda c: -c["count"]) if c["count"]], label="Records to fix by check")
+    flagged = sorted((c for c in issues if c["count"]), key=lambda c: -c["count"])
+    issue_bars = ui.hbars([{"label": CHECK_SHORT.get(c["check"].key, c["check"].title), "title": c["check"].title, "value": c["count"],
+                            "shown": f'{c["count"]:,}', "sub": money(c["amount"], True) if c["amount"] else "",
+                            "link": f'/cleanup#{c["check"].key}'} for c in flagged[:8]], label="Records to fix by check")
+    if len(flagged) > 8:
+        issue_bars += f'<p class="meta" style="margin:6px 6px 0"><a href="/cleanup">and {len(flagged) - 8} more checks →</a></p>'
     stages = _stage_bars(t, scope)
+    across = _across_the_business(t, scope)
     fresh = metrics.freshness()
     if fresh and fresh.get("latest"):
         local = fresh["latest"].astimezone(ZoneInfo(get_settings().tz))
@@ -150,6 +154,7 @@ def home(request):
     {cumulative}{goal_line}</section>
 </div>
 {changes}
+{across}
 <div class="cols even">
   <section class="card"><div class="card-head"><h2>Open pipeline by stage</h2><a href="/deals?status=open">See the deals</a></div>
     {stages}</section>
@@ -183,6 +188,28 @@ def _changes_card(ch, t):
       {group("New deals", ch["created"], ch["totals"]["created"], see_all=metrics.deals_link(status="all", created_from=ch["since"], created_to=t, sort="created"))}
       </div>
       {ui.how("Won and lost are by close date, the same rule as bookings. 'Pushed to a later month' comes from the CRM's change history, which we keep even where the CRM drops it.")}</section>"""
+
+
+def _across_the_business(t, scope) -> str:
+    """One tile per operations area this install has, each opening its page."""
+    apps, tiles = get_settings().apps, []
+    if "field_service" in apps:
+        j = metrics.jobs_summary(t - dt.timedelta(days=29), t, scope)
+        tiles.append(ui.tile("Emergency calls on time", pct(j["emergency_on_time"], 0), f'{ui.num(j["completed"])} jobs done, last 30 days', "/jobs"))
+    if "inventory" in apps:
+        i = metrics.inventory_summary(t, scope)
+        tiles.append(ui.tile("Inventory", money(i["value"], True), f'turns {i["turns"]:.1f}× a year · {int(i["below_reorder"])} to reorder'
+                             if i["turns"] else f'{int(i["below_reorder"])} to reorder', "/inventory"))
+    if "purchasing" in apps:
+        b = metrics.purchasing_summary(t, scope)
+        tiles.append(ui.tile("Vendors on time", pct(b["on_time_delivery"], 0), f'{money(b["open_amount"], True)} on open orders', "/purchasing"))
+    if "people" in apps:
+        h = metrics.people_summary(t, scope)
+        tiles.append(ui.tile("Headcount", ui.num(h["headcount"]), f'{h["open_roles"]} open roles · overtime {pct(h["overtime_pct"], 0)}', "/people"))
+    if not tiles:
+        return ""
+    return (f'<section class="card"><div class="card-head"><h2>Across the business</h2><span class="muted">Field service, stock, '
+            f'vendors and people, from their own systems</span></div><div class="tiles flat">{"".join(tiles)}</div></section>')
 
 
 def _stage_bars(t, scope) -> str:
@@ -242,7 +269,7 @@ def scorecard(request):
 <div class="scroll" data-scroll-end><table class="data scorecard"><thead><tr><th class="sticky">Measure</th>{head}<th class="n">Weeks on goal</th></tr></thead>
 <tbody>{"".join(rows)}</tbody></table></div></section>"""
     return ui.page(request, "Weekly scorecard", body, "Scorecard",
-                   subtitle="Fills itself in from the CRM and accounting every hour. Weeks run Monday to Sunday.", wide=True)
+                   subtitle="Fills itself in from the company's systems every hour. Weeks run Monday to Sunday.", wide=True)
 
 
 # ---------------------------------------------------------------- deals
@@ -608,7 +635,10 @@ def invoices(request):
 
 CHECK_SHORT = {"placeholder_close": "Placeholder close date", "duplicates": "Possible duplicates", "stale_open": "Stale open deals",
                "missing_margin": "No margin entered", "lost_no_reason": "No loss reason", "won_not_billed": "Won, not billed",
-               "unlinked_customer": "Unlinked customer", "unmapped_branch": "Unknown branch"}
+               "unlinked_customer": "Unlinked customer", "unmapped_branch": "Unknown branch",
+               "job_not_invoiced": "Job not invoiced", "job_left_tech": "Job on a leaver", "expired_license_booked": "Expired license",
+               "missing_timesheet": "Missing timesheet", "no_manager": "No manager", "negative_stock": "Negative stock",
+               "item_no_cost": "Part with no cost", "po_not_billed": "No vendor bill", "duplicate_vendor": "Duplicate vendor"}
 
 
 def cleanup_page(request):
@@ -617,7 +647,10 @@ def cleanup_page(request):
     total = sum(r["count"] for r in results)
     short = {"placeholder_close": "Placeholder", "duplicates": "Duplicates", "stale_open": "Stale open",
              "missing_margin": "No margin", "lost_no_reason": "No loss reason", "won_not_billed": "Not billed",
-             "unlinked_customer": "Unlinked", "unmapped_branch": "Unknown branch"}
+             "unlinked_customer": "Unlinked", "unmapped_branch": "Unknown branch", "job_not_invoiced": "Not invoiced",
+             "job_left_tech": "On a leaver", "expired_license_booked": "Expired license", "missing_timesheet": "Timesheet",
+             "no_manager": "No manager", "negative_stock": "Negative stock", "item_no_cost": "No cost", "po_not_billed": "No bill",
+             "duplicate_vendor": "Dup. vendor"}
     active = [r["check"] for r in results if r["count"]]
     branches = cleanup.by_branch(results)
     top = max([b["checks"].get(c.key, 0) or 0 for b in branches for c in active] or [0]) or 1
@@ -633,7 +666,7 @@ def cleanup_page(request):
         + "".join(heat(b["checks"].get(c.key, 0)) for c in active) + "</tr>"
         for b in branches)
     by_check = ui.hbars([{"label": CHECK_SHORT.get(r["check"].key, r["check"].title), "title": r["check"].title, "value": r["count"], "shown": f'{r["count"]:,}',
-                          "sub": money(r["amount"], True), "link": f'#{r["check"].key}'}
+                          "sub": money(r["amount"], True) if r["amount"] else "", "link": f'#{r["check"].key}'}
                          for r in sorted(results, key=lambda r: -r["count"]) if r["count"]], label="Records to fix by check")
     summary = (f'<div><section class="card"><div class="card-head"><h2>What needs fixing</h2>'
                f'<span class="muted">Records, and the dollars on them</span></div>{by_check}</section>'
@@ -654,7 +687,7 @@ def cleanup_page(request):
         status = ui.status_pill("ok") if not r["count"] else f'<span class="count">{r["count"]} · {money(r["amount"], True)}</span>'
         blocks.append(f"""<details class="check" id="{c.key}"{' open' if r["count"] and len(blocks) < 1 else ''}>
 <summary><strong>{esc(c.title)}</strong>{status}</summary>
-<p>{esc(c.why)} <strong>Fix:</strong> {esc(c.fix)} <span class="muted">({'CRM' if c.system == 'crm' else 'Accounting'})</span></p>{table}</details>""")
+<p>{esc(c.why)} <strong>Fix:</strong> {esc(c.fix)} <span class="muted">({esc(cleanup.SYSTEMS.get(c.system, c.system))})</span></p>{table}</details>""")
     body = f"""<p class="lead">{total} records to fix. They get fixed in the source systems, not patched over here, so every report
 gets more accurate. Each record opens in its own system, and the owner column says who should fix it.</p>
 {summary}<section class="card">{"".join(blocks)}</section>"""
@@ -752,7 +785,7 @@ FIELD_LABELS = {
 def _fmt_field(key, v):
     if v is None or v == "":
         return '<span class="muted">(blank)</span>'
-    if key in ("amount", "amount_paid"):
+    if key in ("amount", "amount_paid", "billable_amount", "billed_amount", "standard_cost"):
         return money(v)
     if isinstance(v, bool):
         return "Yes" if v else "No"
@@ -802,7 +835,11 @@ def demo_source(request, system: str, obj: str, rec_id: str):
             r = None
         system_name, kind = "Accounting", "customer"
     else:
-        r, system_name, kind = None, "", ""
+        from .ops import SOURCE_FIELDS, demo_record
+        found = demo_record(system, obj, rec_id, scope)
+        r, system_name, kind, related = found if found else (None, "", "", "")
+        if found:
+            FIELD_LABELS.setdefault(kind, SOURCE_FIELDS[kind])
     if not r:
         return ui.page(request, "Record not found", '<section class="card">That record isn\'t there, or you don\'t have access to it.</section>')
     kv = "".join(f"<dt>{esc(label)}</dt><dd>{_fmt_field(key, r.get(key))}</dd>" for key, label in FIELD_LABELS[kind])
@@ -819,6 +856,6 @@ def demo_source(request, system: str, obj: str, rec_id: str):
                  f'<th>Field</th><th>From</th><th>To</th></tr></thead><tbody>{h}</tbody></table></div>') if hist else ""
     title = r.get("name") or r.get("number") or rec_id
     body = f"""<div class="fake-src"><div class="fake-src-head"><span class="pill warn">Stand-in {esc(system_name)}</span>
-<span class="muted">With a real client, this link opens the record in their own system (Salesforce, HubSpot, QuickBooks and so on).</span></div>
+<span class="muted">With a real client, this link opens the record in their own system (Salesforce, QuickBooks, ServiceTitan, ADP and so on).</span></div>
 <dl class="kv">{kv}</dl>{related}{hist_html}</div>"""
     return ui.page(request, f"{kind.capitalize()}: {title}", body, subtitle=f"{system_name} record")

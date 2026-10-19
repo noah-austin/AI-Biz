@@ -17,6 +17,10 @@ DEFAULTS = {
     "billing_pace": 0.85,      # a branch billing below this share of last year's month-to-date is an alert
     "billing_min": 50_000,     # ...if last year's month-to-date was at least this much
     "closing_days": 7,         # the brief lists deals due to close within this many days
+    "emergency_late_hours": 8,  # an emergency call reached this many hours late or more is an alert
+    "overtime_pct": 0.15,      # a branch whose overtime last week was above this share of hours worked is an alert
+    "license_days": 30,        # a license or certification expiring within this many days is an alert
+    "late_po_min": 5_000,      # an open purchase order this big that's past its expected date is an alert
 }
 
 
@@ -79,8 +83,50 @@ def alerts(t: dt.date, scope=None, days: int = 7) -> list[dict]:
                         "title": f'{b["branch"]} is at {b["share"]:.0%} of last year\'s billing for the month so far',
                         "detail": f'{metrics_money(b["this_year"])} vs {metrics_money(b["last_year"])} by this date last year',
                         "amount": None, "branch": b["branch"]})
+    out += ops_alerts(t, scope, since)
     order = {"critical": 0, "warning": 1, "good": 2}
     out.sort(key=lambda a: (a["date"] or t, -order[a["severity"]], a.get("amount") or 0), reverse=True)
+    return out
+
+
+def ops_alerts(t: dt.date, scope, since: dt.date) -> list[dict]:
+    """Alerts from the operations systems, for the ones this install has switched on."""
+    apps, r, p, out = get_settings().apps, rules(), {"since": since, "t": t, "scope": scope}, []
+    if "field_service" in apps:
+        for j in db.query(f"""SELECT id, number, account_name, branch, response_hours, arrived_date FROM rpt.jobs
+                              WHERE priority = 'Emergency' AND arrived_date BETWEEN %(since)s AND %(t)s
+                                AND response_hours >= %(h)s {_scope(scope)}""", dict(p, h=r["emergency_late_hours"])):
+            out.append({"date": j["arrived_date"], "severity": "warning", "kind": "Emergency call late",
+                        "title": f'{j["account_name"]}: reached after {float(j["response_hours"]):.1f} hours',
+                        "detail": f'{j["branch"]} · job {j["number"]} · the promise is 4 hours', "amount": None, "job_id": j["id"]})
+    if "inventory" in apps:
+        for s_ in db.query(f"""SELECT sku, description, branch FROM rpt.stock WHERE critical AND location_kind = 'Warehouse'
+                               AND on_hand <= 0 AND reorder_point > 0 {_scope(scope)}""", p):
+            out.append({"date": t, "severity": "critical", "kind": "Out of stock", "title": f'{s_["description"]} is out at {s_["branch"]}',
+                        "detail": "A critical part: jobs that need it will wait", "amount": None, "item_id": s_["sku"]})
+    if "people" in apps:
+        for c in db.query(f"""SELECT employee_id, employee_name, branch, certification, expires_date, status FROM rpt.certifications
+                              WHERE is_active AND expires_date BETWEEN %(since)s - 30 AND %(t)s + %(d)s {_scope(scope)}""",
+                          dict(p, d=r["license_days"])):
+            expired = c["status"] == "Expired"
+            out.append({"date": t if not expired else c["expires_date"], "severity": "critical" if expired else "warning",
+                        "kind": "License expired" if expired else "License expiring",
+                        "title": f'{c["employee_name"]}: {c["certification"]} {"expired" if expired else "expires"} {c["expires_date"]:%b %-d}',
+                        "detail": c["branch"], "amount": None, "employee_id": c["employee_id"]})
+        last_monday = t - dt.timedelta(days=t.weekday() + 7)
+        for b in db.query(f"""SELECT branch, sum(overtime_hours) AS ot, sum(worked_hours) AS worked FROM rpt.timesheets
+                              WHERE week_start = %(w)s {_scope(scope)} GROUP BY 1""", dict(p, w=last_monday)):
+            share = _f(b["ot"]) / _f(b["worked"]) if _f(b["worked"]) else 0
+            if share > r["overtime_pct"]:
+                out.append({"date": last_monday + dt.timedelta(days=6), "severity": "warning", "kind": "Overtime high",
+                            "title": f'{b["branch"]}: overtime was {share:.0%} of hours last week',
+                            "detail": f'{_f(b["ot"]):,.0f} overtime hours, week of {last_monday:%b %-d}', "amount": None, "branch": None})
+    if "purchasing" in apps:
+        for po in db.query(f"""SELECT id, number, vendor, branch, amount, expected_date, days_late FROM rpt.purchase_orders
+                               WHERE is_open AND days_late > 0 AND amount >= %(m)s {_scope(scope)}""", dict(p, m=r["late_po_min"])):
+            out.append({"date": max(since, po["expected_date"] + dt.timedelta(days=1)), "severity": "warning", "kind": "Delivery late",
+                        "title": f'{po["vendor"]}: PO {po["number"]} is {po["days_late"]} days late',
+                        "detail": f'{po["branch"]} · expected {po["expected_date"]:%b %-d}', "amount": _f(po["amount"]), "po_id": po["id"]})
     return out
 
 
@@ -159,6 +205,36 @@ def daily_brief(t: dt.date, scope=None) -> list[dict]:
     behind = [a for a in found if a["kind"] == "Billing behind pace"]
     for a in behind[:2]:
         lines.append({"text": a["title"] + ".", "link": metrics.invoices_link(branch=a["branch"])})
+    return lines + ops_brief(t, scope)
+
+
+def ops_brief(t: dt.date, scope=None) -> list[dict]:
+    """Morning-brief lines from the operations systems this install has switched on."""
+    apps, lines = get_settings().apps, []
+    if "inventory" in apps:
+        out = db.query(f"""SELECT description, branch FROM rpt.stock WHERE critical AND location_kind = 'Warehouse' AND on_hand <= 0
+                           AND reorder_point > 0 {_scope(scope)}""", {"scope": scope})
+        if out:
+            lines.append({"text": f'Out of stock: {"; ".join(f"{o["description"]} at {o["branch"]}" for o in out[:3])}. '
+                                  f'Both are critical parts, so jobs needing them will wait.' if len(out) == 2 else
+                                  f'{len(out)} critical part{"s are" if len(out) != 1 else " is"} out of stock at a warehouse.',
+                          "link": "/inventory#reorder"})
+    if "field_service" in apps:
+        month = metrics.jobs_by_branch(t - dt.timedelta(days=29), t, scope)
+        worst = min((b for b in month if b["em_reached"] >= 10 and b["emergency_on_time"] is not None),
+                    key=lambda b: b["emergency_on_time"], default=None)
+        if worst and worst["emergency_on_time"] < 0.85:
+            lines.append({"text": f'{worst["branch"]} reached {worst["emergency_on_time"]:.0%} of emergency calls within 4 hours in the '
+                                  f'last 30 days ({int(worst["em_on_time"])} of {int(worst["em_reached"])}), against a 90% goal.', "link": "/jobs"})
+        unbilled = metrics.jobs_not_invoiced(t, scope)
+        if unbilled:
+            lines.append({"text": f'{len(unbilled)} completed jobs are still not invoiced after 14 days '
+                                  f'({metrics_money(sum(_f(j["billable_amount"]) for j in unbilled))}).', "link": "/cleanup#job_not_invoiced"})
+    if "people" in apps:
+        expired = [c for c in metrics.cert_problems(scope) if c["status"] == "Expired"]
+        if expired:
+            lines.append({"text": f'{len(expired)} technician{"s" if len(expired) != 1 else ""} working on an expired license: '
+                                  f'{", ".join(c["employee_name"] for c in expired[:3])}.', "link": "/people#certs"})
     return lines
 
 

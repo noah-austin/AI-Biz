@@ -405,3 +405,8 @@ td.heat { font-variant-numeric: tabular-nums; }
 @media (max-width: 640px) { .cellbar { display: none; } }
 .cols.top { align-items: start; }
 .cellbar + span, td .amt60 { display: inline-block; min-width: 72px; }
+.subtabs { display: flex; gap: 4px; margin: 0 0 10px; overflow-x: auto; scrollbar-width: none; }
+.subtabs a { font-size: 13.5px; padding: 5px 10px; border-radius: 999px; color: var(--ink-2); border: 1px solid var(--border); white-space: nowrap; }
+.subtabs a:hover { background: var(--card-2); text-decoration: none; }
+.subtabs a[aria-current="page"] { background: var(--ink); color: var(--card); border-color: var(--ink); font-weight: 600; }
+.tiles.flat { margin-bottom: 0; } .tiles.flat .tile { background: var(--card-2); border-color: transparent; }

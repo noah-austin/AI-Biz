@@ -21,18 +21,37 @@ PRACTICE_NAV = [
     ("/money", "Money", False),
     ("/agents", "Agents", False),
 ]
-NAV = [  # path, label, admin only
-    ("/", "Home", False),
-    ("/scorecard", "Scorecard", False),
-    ("/deals?status=open", "Pipeline", False),
-    ("/winloss", "Win / loss", False),
-    ("/receivables", "Receivables", False),
-    ("/forecast", "Forecast", False),
-    ("/alerts", "Alerts", False),
-    ("/agent-work", "AI agents", False),
-    ("/cleanup", "Data checks", False),
-    ("/health", "Health", True),
+NAV = [  # path, label, admin only, group (pages in a group share one menu item and show tabs), app it needs
+    ("/", "Home", False, None, "analytics"),
+    ("/scorecard", "Scorecard", False, None, "analytics"),
+    ("/deals?status=open", "Pipeline", False, "Sales", "analytics"),
+    ("/winloss", "Win / loss", False, "Sales", "analytics"),
+    ("/forecast", "Forecast", False, "Sales", "analytics"),
+    ("/receivables", "Receivables", False, None, "analytics"),
+    ("/jobs", "Field service", False, "Operations", "field_service"),
+    ("/inventory", "Inventory", False, "Operations", "inventory"),
+    ("/purchasing", "Purchasing", False, "Operations", "purchasing"),
+    ("/people", "People", False, None, "people"),
+    ("/alerts", "Alerts", False, None, "analytics"),
+    ("/agent-work", "AI agents", False, None, "analytics"),
+    ("/cleanup", "Data checks", False, None, "analytics"),
+    ("/health", "Health", True, None, None),
 ]
+
+
+def nav_items(apps) -> list[tuple]:
+    return [n for n in NAV if n[4] is None or n[4] in apps]
+
+
+def subtabs(active: str) -> str:
+    """Tabs for the other pages in the active page's group, under the page title."""
+    items = nav_items(get_settings().apps)
+    group = next((n[3] for n in items if n[1] == active), None)
+    sibs = [n for n in items if group and n[3] == group]
+    if len(sibs) < 2:
+        return ""
+    return '<nav class="subtabs" aria-label="' + esc(group) + '">' + "".join(
+        f'<a href="{n[0]}"{" aria-current=page" if n[1] == active else ""}>{esc(n[1])}</a>' for n in sibs) + "</nav>"
 
 
 def esc(v) -> str:
@@ -133,10 +152,11 @@ def chat_available(user) -> bool:
     return usage.is_configured("chat") or user.get("role") == "admin"
 
 
-def hbars(items: list[dict], label="Bar chart") -> str:
+def hbars(items: list[dict], label="Bar chart", top=None) -> str:
     """Horizontal bars that read at a glance. Each item: label, value (sizes the bar), shown (the text),
-    and optionally sub, link, title and dim (a grey bar, for gaps like "not entered")."""
-    top = max([float(i["value"] or 0) for i in items] or [0]) or 1
+    and optionally sub, link, title and dim (a grey bar, for gaps like "not entered").
+    top: the value of a full-length bar (100 for percentages); by default the largest value."""
+    top = top or max([float(i["value"] or 0) for i in items] or [0]) or 1
     rows = []
     for i in items:
         width = max(0.0, 100 * float(i["value"] or 0) / top)
@@ -180,11 +200,20 @@ def page(request, title: str, body: str, active: str = "", subtitle: str = "", w
     user = getattr(request.state, "user", None)
     nav = []
     apps = settings.apps
-    items = (PRACTICE_NAV if "practice" in apps else []) + (
-        [n for n in NAV if n[1] != "Health" and not ("practice" in apps and n[0] == "/")] if "analytics" in apps else [])
-    items.append(NAV[-1])  # Health
-    for path, label, admin_only in items:
+    items = [(p, l, a, None) for p, l, a in PRACTICE_NAV] if "practice" in apps else []
+    if "analytics" in apps:
+        items += [n[:4] for n in nav_items(apps) if n[1] != "Health" and not ("practice" in apps and n[0] == "/")]
+    items.append(NAV[-1][:4])  # Health
+    groups_done = set()
+    for path, label, admin_only, group in items:
         if admin_only and (not user or user["role"] != "admin"):
+            continue
+        if group:
+            if group in groups_done:
+                continue
+            groups_done.add(group)
+            here = any(n[1] == active for n in items if n[3] == group)
+            nav.append(f'<a href="{path}"{" aria-current=page" if here else ""}>{esc(group)}</a>')
             continue
         cur = ' aria-current="page"' if active == label else ""
         nav.append(f'<a href="{path}"{cur}>{esc(label)}</a>')
@@ -222,7 +251,7 @@ def page(request, title: str, body: str, active: str = "", subtitle: str = "", w
   <nav>{"".join(nav)}</nav>{ASK_BUTTON if user and chat_on else ""}{who}
 </div></header>
 <main class="{'wide' if wide else ''}">
-<div class="page-head"><h1>{esc(title)}</h1>{f'<p class="subtitle">{subtitle}</p>' if subtitle else ''}</div>
+<div class="page-head">{subtabs(active)}<h1>{esc(title)}</h1>{f'<p class="subtitle">{subtitle}</p>' if subtitle else ''}</div>
 {body}
 </main>
 {ASK_PANEL if user and chat_on else ""}

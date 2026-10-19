@@ -16,9 +16,14 @@ class Check:
     title: str
     why: str
     fix: str
-    system: str          # "crm" or "accounting"
+    system: str          # which system it's fixed in: a key of SYSTEMS
     link: str            # key into config [links]
     sql: str             # returns id, label, detail, amount, branch_code, branch, owner_name
+    app: str = "analytics"   # only run for installs with this app (and so this system) switched on
+
+
+SYSTEMS = {"crm": "CRM", "accounting": "Accounting", "fieldservice": "Field service", "inventory": "Inventory",
+           "purchasing": "Purchasing", "hr": "HR and payroll"}
 
 
 def _s(col="branch_code"):
@@ -84,12 +89,85 @@ CHECKS = [
           """SELECT id, name AS label, 'Branch code ' || coalesce(branch_code, '(blank)') AS detail, amount, branch_code,
                     branch, owner_name
              FROM rpt.deals WHERE region = 'Unmapped' AND %(scope)s IS NULL ORDER BY amount DESC NULLS LAST"""),
+    Check("job_not_invoiced", "Completed job not invoiced after 14 days",
+          "Work that's done but never billed is revenue that quietly disappears.",
+          "Raise the invoice, or note on the job why it isn't billable.", "fieldservice", "fsm_job",
+          f"""SELECT id, 'Job ' || number || ' · ' || coalesce(account_name, 'no customer') AS label,
+                     job_type || ', completed ' || to_char(completed_date, 'Mon FMDD, YYYY') AS detail, billable_amount AS amount,
+                     branch_code, branch, 'Service coordinator' AS owner_name
+              FROM rpt.jobs WHERE status = 'Completed' AND billable AND invoice_number IS NULL
+                AND completed_date <= core.local_today() - 14 {_s()} ORDER BY billable_amount DESC NULLS LAST""", "field_service"),
+    Check("job_left_tech", "Job booked to someone who has left",
+          "Nobody will turn up: the customer waits and the call is missed.",
+          "Reassign the job to a current technician.", "fieldservice", "fsm_job",
+          f"""SELECT id, 'Job ' || number || ' · ' || coalesce(account_name, '') AS label,
+                     'Booked to ' || technician_name || ' for ' || to_char(scheduled_date, 'Mon FMDD') || ', who has left' AS detail,
+                     billable_amount AS amount, branch_code, branch, 'Service coordinator' AS owner_name
+              FROM rpt.jobs WHERE is_open AND technician_id IS NOT NULL AND NOT technician_active {_s()}
+              ORDER BY scheduled_date""", "field_service"),
+    Check("expired_license_booked", "Technician with an expired license still booked on jobs",
+          "Working without a current license is a compliance and insurance risk.",
+          "Renew the license, or move their jobs until it's renewed.", "hr", "hr_employee",
+          f"""SELECT c.employee_id AS id, c.employee_name AS label,
+                     c.certification || ' expired ' || to_char(c.expires_date, 'Mon FMDD, YYYY') || ', ' ||
+                     (SELECT count(*) FROM rpt.jobs j WHERE j.technician_id = c.employee_id AND j.is_open) || ' open jobs' AS detail,
+                     NULL::numeric AS amount, c.branch_code, c.branch, 'Branch lead technician' AS owner_name
+              FROM rpt.certifications c WHERE c.is_active AND c.status = 'Expired' AND c.certification LIKE 'State HVAC%%'
+                AND EXISTS (SELECT 1 FROM rpt.jobs j WHERE j.technician_id = c.employee_id AND j.is_open) {_s('c.branch_code')}""", "people"),
+    Check("missing_timesheet", "No timesheet for last week",
+          "Payroll can't run correctly, and overtime and utilization are understated.",
+          "Submit and approve last week's timesheet.", "hr", "hr_employee",
+          f"""SELECT e.id, e.name AS label, e.title || ', week of ' ||
+                     to_char(date_trunc('week', core.local_today())::date - 7, 'Mon FMDD') AS detail,
+                     NULL::numeric AS amount, e.branch_code, e.branch, coalesce(e.manager_name, 'HR') AS owner_name
+              FROM rpt.employees e
+              WHERE e.is_active AND e.pay_type = 'Hourly' AND e.hire_date <= date_trunc('week', core.local_today())::date - 7
+                AND NOT EXISTS (SELECT 1 FROM hr.timesheets t WHERE t.employee_id = e.id
+                                AND t.week_start = date_trunc('week', core.local_today())::date - 7) {_s('e.branch_code')}""", "people"),
+    Check("no_manager", "Employee with no manager",
+          "Nobody approves their time off or timesheets, and they drop out of team reports.",
+          "Set their manager in HR.", "hr", "hr_employee",
+          f"""SELECT id, name AS label, title || ', hired ' || to_char(hire_date, 'Mon FMDD, YYYY') AS detail, NULL::numeric AS amount,
+                     branch_code, branch, 'HR' AS owner_name
+              FROM rpt.employees WHERE is_active AND manager_id IS NULL AND title <> 'President' {_s()}""", "people"),
+    Check("negative_stock", "Negative stock on hand",
+          "Parts were used before they were received, so stock and reorder points are wrong.",
+          "Count the shelf and post the missing receipt or a count correction.", "inventory", "inv_item",
+          f"""SELECT sku AS id, description AS label, location || ': ' || on_hand || ' on hand' AS detail, NULL::numeric AS amount,
+                     branch_code, branch, 'Parts clerk' AS owner_name
+              FROM rpt.stock WHERE on_hand < 0 {_s()}""", "inventory"),
+    Check("item_no_cost", "Part with no standard cost",
+          "It's left out of inventory value and job costs.",
+          "Enter the standard cost on the item.", "inventory", "inv_item",
+          """SELECT i.id, i.description AS label, coalesce((SELECT sum(on_hand) FROM inv.stock s WHERE s.sku = i.id), 0) || ' on hand' AS detail,
+                    NULL::numeric AS amount, NULL AS branch_code, NULL AS branch, 'Purchasing' AS owner_name
+             FROM inv.items i WHERE i.standard_cost IS NULL AND %(scope)s IS NULL""", "inventory"),
+    Check("po_not_billed", "Received over 30 days ago, no vendor bill",
+          "The cost is real but missing from the books, so margins look better than they are.",
+          "Ask the vendor for the bill, or match it if it's already in.", "purchasing", "ap_po",
+          f"""SELECT id, 'PO ' || number || ' · ' || vendor AS label, kind || ', received ' || to_char(received_date, 'Mon FMDD, YYYY') AS detail,
+                     amount, branch_code, branch, 'AP team' AS owner_name
+              FROM rpt.purchase_orders WHERE status = 'Received' AND received_date <= core.local_today() - 30 {_s()}
+              ORDER BY amount DESC""", "purchasing"),
+    Check("duplicate_vendor", "Possible duplicate vendor",
+          "Spend is split across two records, and the same bill can be paid twice.",
+          "Merge the vendors and make the older record inactive.", "purchasing", "ap_vendor",
+          """SELECT b.id, b.name AS label, 'Looks like ' || a.name AS detail,
+                    (SELECT sum(amount) FROM ap.purchase_orders p WHERE p.vendor_id = b.id) AS amount,
+                    NULL AS branch_code, NULL AS branch, 'AP team' AS owner_name
+             FROM ap.vendors a JOIN ap.vendors b ON a.id < b.id
+                  AND regexp_replace(lower(a.name), '[^a-z]| inc$|inc$|llc$', '', 'g') = regexp_replace(lower(b.name), '[^a-z]|inc$|llc$', '', 'g')
+             WHERE %(scope)s IS NULL""", "purchasing"),
 ]
 
 
 def run_checks(scope=None, limit=200) -> list[dict]:
+    from .config import get_settings
+    apps = get_settings().apps
     out = []
     for c in CHECKS:
+        if c.app not in apps:
+            continue
         rows = db.query(c.sql, {"scope": scope})
         out.append({"check": c, "count": len(rows), "amount": sum(float(r["amount"] or 0) for r in rows),
                     "rows": rows[:limit], "all_rows": rows})
@@ -101,11 +179,11 @@ def counts(scope=None) -> dict:
 
 
 def by_branch(results) -> list[dict]:
-    """How many records each branch has to fix, across all checks (accounting items have no branch)."""
+    """How many records each branch has to fix, across all checks. Items with no branch are grouped by the system they're in."""
     tally = {}
     for r in results:
         for row in r["all_rows"]:
-            name = row.get("branch") or "Accounting"
+            name = row.get("branch") or SYSTEMS.get(r["check"].system, "Other")
             t = tally.setdefault(name, {"branch": name, "count": 0, "checks": {}})
             t["count"] += 1
             t["checks"][r["check"].key] = t["checks"].get(r["check"].key, 0) + 1

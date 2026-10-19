@@ -35,7 +35,8 @@ FROM hr.timesheets t JOIN rpt.employees e ON e.id = t.employee_id;
 
 -- One row per field-service job. Response = arrival minus when the call came in.
 -- On time: Emergency within 4 hours, Urgent within 24 hours, Routine on its scheduled day.
--- First-time fix: a completed repair (not itself a return visit) with no return visit logged against it.
+-- fixed_first_time: a completed repair (not itself a return visit) with no return visit logged against it (per job;
+-- the first-time fix rate itself is worked out from return visits in kit/metrics.py).
 CREATE VIEW rpt.jobs AS
 SELECT w.id, w.number, w.account_id, a.name AS account_name, a.segment,
        w.branch_code, coalesce(b.name, w.branch_code) AS branch, coalesce(b.region, 'Unmapped') AS region,

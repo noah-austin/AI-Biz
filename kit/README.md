@@ -7,7 +7,7 @@ The reusable system we install for each client: data in one place, tools on top,
 |---|---|---|
 | Settings | `config.py`, `clients/<name>/config.toml`, `.env` | Business settings per client; secrets in a root-only `.env`. Missing settings stop start-up. |
 | Database | `schema/*.sql` | Standard tables (`crm.*`, `acct.*`), kit tables (`core.*`), report views (`rpt.*`). Safe to re-run. |
-| Connectors | `connectors/` | Each source system maps into the standard tables. Today: the demo CRM and demo accounting. |
+| Connectors | `connectors/` | Each source system maps into the standard tables (`schema/010_sources.sql`, `011_ops_sources.sql`). Today: the demo CRM, accounting, field service, inventory, purchasing and HR/payroll. |
 | Sync | `sync.py` | Hourly copy. Upsert, then prune with a safety limit (refuses 0-row pulls and deletions over 10%). History tables only grow. Results go to `core.sync_state`. |
 | Business rules | `metrics.py`, `cleanup.py` | Every number, computed once. Pages (and the AI, later) call these, so figures always match. |
 | Watch and forecast | `watch.py`, `hub/extras.py` | Alerts (lines set per client under `[watch]` in config.toml), the daily brief, payment reminder drafts, weekly update, meeting prep, and the quarterly forecast with saved calls (`core.forecast_calls`). |
@@ -39,6 +39,10 @@ Passwords per user by default. Google sign-in (Workspace) switches on with `[aut
 `apps` in a client's `config.toml` picks what the hub shows: `["analytics"]` (default: the CRM/accounting pages,
 for clients and the demo), `["practice"]` (the built-in tracker, for our own company hub), or both. The Ask AI chat
 gets the matching tools.
+
+Operations pages switch on per system: add `"field_service"`, `"inventory"`, `"purchasing"` and/or `"people"` to `apps` once that
+system is connected. Each brings its page (under Operations, or People), its data checks, alerts, brief lines and,
+for field service and people, rows on the weekly scorecard.
 
 ## The AI layer
 - **Ask AI** (button in the header of every page): questions in plain English. Claude answers by calling the

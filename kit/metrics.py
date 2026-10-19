@@ -205,14 +205,17 @@ def ar_aging(scope=None) -> dict:
 
 # ---------- weekly scorecard ----------
 
-SCORECARD = [  # key, label, format, higher_is_better, how
-    ("new_deals", "New deals created", "count", True, "new_pipeline"),
-    ("new_pipeline", "New pipeline created", "money", True, "new_pipeline"),
-    ("bookings", "Bookings (won)", "money", True, "bookings"),
-    ("win_rate_dollars", "Win rate by $, trailing 90 days", "pct", True, "win_rate"),
-    ("billed_4wk", "Billed, past 31 days", "money", True, "billed_4wk"),
-    ("collected", "Cash collected", "money", True, "collected"),
-    ("ar_over_60", "AR over 60 days past due", "money", False, "ar_over_60"),
+SCORECARD = [  # key, label, format, higher_is_better, how, app it needs
+    ("new_deals", "New deals created", "count", True, "new_pipeline", "analytics"),
+    ("new_pipeline", "New pipeline created", "money", True, "new_pipeline", "analytics"),
+    ("bookings", "Bookings (won)", "money", True, "bookings", "analytics"),
+    ("win_rate_dollars", "Win rate by $, trailing 90 days", "pct", True, "win_rate", "analytics"),
+    ("billed_4wk", "Billed, past 31 days", "money", True, "billed_4wk", "analytics"),
+    ("collected", "Cash collected", "money", True, "collected", "analytics"),
+    ("ar_over_60", "AR over 60 days past due", "money", False, "ar_over_60", "analytics"),
+    ("emergency_on_time", "Emergency calls reached in 4 hours", "pct", True, "emergency_on_time", "field_service"),
+    ("first_time_fix", "First-time fix", "pct", True, "first_time_fix", "field_service"),
+    ("overtime_pct", "Overtime, % of hours worked", "pct", False, "overtime", "people"),
 ]
 
 
@@ -261,10 +264,29 @@ def scorecard(t: dt.date, weeks=13, scope=None) -> dict:
         "collected": collected, "ar_over_60": ar60,
         "win_rate_dollars": {w: (100 * a / b if b else None) for w, (a, b) in win.items()},
     }
+    from .config import get_settings
+    apps = get_settings().apps
+    if "field_service" in apps:
+        jobs = {r["w"]: r for r in db.query(f"""
+            SELECT {wk.format(col='arrived_date')} AS w, count(*) FILTER (WHERE on_time) AS ok, count(*) AS n FROM rpt.jobs
+            WHERE priority = 'Emergency' AND arrived_date BETWEEN %(first)s AND %(t)s {_scope(scope)} GROUP BY 1""", p)}
+        series["emergency_on_time"] = {w: 100 * r["ok"] / r["n"] for w, r in jobs.items() if r["n"]}
+        fix = {r["w"]: r for r in db.query(f"""
+            SELECT {wk.format(col='completed_date')} AS w, count(*) FILTER (WHERE fixed_first_time IS NOT NULL) AS repairs,
+                   count(*) FILTER (WHERE is_callback AND status = 'Completed') AS back FROM rpt.jobs
+            WHERE completed_date BETWEEN %(first)s AND %(t)s {_scope(scope)} GROUP BY 1""", p)}
+        series["first_time_fix"] = {w: 100 * (1 - r["back"] / r["repairs"]) for w, r in fix.items() if r["repairs"]}
+    if "people" in apps:
+        ot = {r["w"]: r for r in db.query(f"""
+            SELECT week_start AS w, sum(overtime_hours) AS ot, sum(worked_hours) AS worked FROM rpt.timesheets
+            WHERE week_start BETWEEN %(first)s AND %(t)s {_scope(scope)} GROUP BY 1""", p)}
+        series["overtime_pct"] = {w: 100 * float(r["ot"] or 0) / float(r["worked"]) for w, r in ot.items() if r["worked"]}
     goals = {r["metric"]: float(r["value"]) for r in
              db.query("SELECT metric, value FROM core.goals WHERE period = 'weekly'")}
     rows = []
-    for key, label, fmt, higher_better, how in SCORECARD:
+    for key, label, fmt, higher_better, how, app in SCORECARD:
+        if app not in apps:
+            continue
         goal = goals.get(key)
         if scope and goal is not None and fmt != "pct":
             goal = None  # company goals don't split by branch; hide rather than mislead
@@ -394,3 +416,266 @@ def overdue_customers(scope=None, limit=15) -> list[dict]:
                         FROM rpt.invoices WHERE is_open {_scope(scope)}
                         GROUP BY 1, 2 HAVING sum(balance) FILTER (WHERE days_past_due > 0) > 0
                         ORDER BY over_60 DESC, unpaid DESC LIMIT {int(limit)}""", {"scope": scope})
+
+
+# ---------- operations: field service, inventory, purchasing, people ----------
+
+HOW.update({
+    "jobs_completed": "Field-service jobs marked Completed, by the day they were completed. Canceled jobs don't count.",
+    "emergency_on_time": "Emergency calls reached within 4 hours of the call coming in ÷ emergency calls reached, by arrival date.",
+    "first_time_fix": "100% minus return visits as a share of repairs: return visits completed in the period ÷ repairs "
+                      "completed in the period (not counting the return visits themselves). Counting both in the same period "
+                      "means recent weeks don't look better just because their return visits haven't happened yet.",
+    "response": "Average hours from the call coming in to the technician arriving, emergency calls only.",
+    "not_invoiced": "Completed billable jobs (repairs and installs) finished more than 14 days ago with no invoice number "
+                    "in the field-service app. Maintenance visits are covered by the contract and aren't billed per visit.",
+    "utilization": "Hours on completed jobs ÷ hours worked (regular + overtime, from payroll), technicians only, over the "
+                   "last 4 complete weeks. Travel and shop time make up the rest.",
+    "inventory_value": "On hand × standard cost, for every warehouse and van. Negative balances count as zero; parts with no "
+                       "standard cost are left out (see Data checks).",
+    "turns": "Cost of parts used on jobs in the last 12 months ÷ today's inventory value. Higher means stock moves faster.",
+    "below_reorder": "Warehouse stock at or below its reorder point. Vans are restocked from the warehouse, so they're not listed.",
+    "dead_stock": "Parts on hand that haven't been used on a job in 180 days, at standard cost.",
+    "shrinkage": "Cycle-count and damage corrections in the last 90 days, at standard cost. Negative means stock went missing.",
+    "spend": "Purchase orders placed in the last 12 months, by order date. Canceled orders don't count.",
+    "on_time_delivery": "Orders received on or before their expected date ÷ orders received, last 90 days by received date. "
+                        "Orders with no expected date are left out.",
+    "received_not_billed": "Orders received more than 30 days ago with no vendor bill yet: money owed that isn't in the books.",
+    "price_change": "For each part, the quantity-weighted average price paid in the last 90 days against the same 90 days a "
+                    "year earlier. Only parts bought in both periods.",
+    "headcount": "People on payroll today: hired on or before today and not yet past their last day.",
+    "turnover": "People who left in the last 12 months ÷ average headcount (the average of the 12 month-end counts).",
+    "overtime": "Overtime hours ÷ hours worked (regular + overtime), hourly staff, last 4 complete weeks.",
+    "open_roles": "Job openings not yet filled, with days since each was opened.",
+    "certs": "Certifications and licenses held by people on payroll: expired, or running out within 30 days.",
+})
+
+
+def _weeks_back(t: dt.date, weeks: int):
+    """The last `weeks` complete Monday-to-Sunday weeks before this one: (first Monday, last Sunday)."""
+    this_monday = t - dt.timedelta(days=t.weekday())
+    return this_monday - dt.timedelta(weeks=weeks), this_monday - dt.timedelta(days=1)
+
+
+def jobs_summary(start, end, scope=None) -> dict:
+    p = {"s": start, "e": end, "scope": scope}
+    r = db.one(f"""
+        SELECT count(*) FILTER (WHERE status = 'Completed' AND completed_date BETWEEN %(s)s AND %(e)s) AS completed,
+               count(*) FILTER (WHERE priority = 'Emergency' AND arrived_date BETWEEN %(s)s AND %(e)s) AS em_reached,
+               count(*) FILTER (WHERE priority = 'Emergency' AND arrived_date BETWEEN %(s)s AND %(e)s AND on_time) AS em_on_time,
+               avg(response_hours) FILTER (WHERE priority = 'Emergency' AND arrived_date BETWEEN %(s)s AND %(e)s) AS em_response,
+               count(*) FILTER (WHERE fixed_first_time IS NOT NULL AND completed_date BETWEEN %(s)s AND %(e)s) AS repairs,
+               count(*) FILTER (WHERE is_callback AND status = 'Completed' AND completed_date BETWEEN %(s)s AND %(e)s) AS return_visits
+        FROM rpt.jobs WHERE true {_scope(scope)}""", p)
+    r = {k: float(v) if v is not None else None for k, v in r.items()}
+    r["emergency_on_time"] = _ratio(r["em_on_time"], r["em_reached"])
+    r["first_time_fix"] = 1 - r["return_visits"] / r["repairs"] if r["repairs"] else None
+    return r
+
+
+def jobs_by_week(t: dt.date, weeks=12, scope=None) -> list[dict]:
+    """Complete weeks only, so the chart doesn't end on a half-finished week."""
+    first, last = _weeks_back(t, weeks)
+    rows = db.query(f"""
+        SELECT w::date AS week,
+               (SELECT count(*) FROM rpt.jobs j WHERE j.status = 'Completed' AND j.completed_date BETWEEN w::date AND w::date + 6
+                  {_scope(scope, 'j.branch_code')}) AS completed,
+               (SELECT count(*) FROM rpt.jobs j WHERE j.is_callback AND j.completed_date BETWEEN w::date AND w::date + 6
+                  {_scope(scope, 'j.branch_code')}) AS return_visits
+        FROM generate_series(%(f)s::date, %(l)s::date - 6, interval '7 days') AS w ORDER BY 1""", {"f": first, "l": last, "scope": scope})
+    return [{"week": r["week"], "completed": r["completed"], "return_visits": r["return_visits"]} for r in rows]
+
+
+def jobs_by_branch(start, end, scope=None) -> list[dict]:
+    rows = db.query(f"""
+        SELECT branch, count(*) FILTER (WHERE status = 'Completed' AND completed_date BETWEEN %(s)s AND %(e)s) AS completed,
+               count(*) FILTER (WHERE priority = 'Emergency' AND arrived_date BETWEEN %(s)s AND %(e)s) AS em_reached,
+               count(*) FILTER (WHERE priority = 'Emergency' AND arrived_date BETWEEN %(s)s AND %(e)s AND on_time) AS em_on_time,
+               avg(response_hours) FILTER (WHERE priority = 'Emergency' AND arrived_date BETWEEN %(s)s AND %(e)s) AS em_response,
+               count(*) FILTER (WHERE fixed_first_time IS NOT NULL AND completed_date BETWEEN %(s)s AND %(e)s) AS repairs,
+               count(*) FILTER (WHERE is_callback AND status = 'Completed' AND completed_date BETWEEN %(s)s AND %(e)s) AS return_visits
+        FROM rpt.jobs WHERE true {_scope(scope)} GROUP BY 1 ORDER BY 1""", {"s": start, "e": end, "scope": scope})
+    for r in rows:
+        r["emergency_on_time"] = _ratio(r["em_on_time"], r["em_reached"])
+        r["first_time_fix"] = 1 - r["return_visits"] / r["repairs"] if r["repairs"] else None
+    return rows
+
+
+def jobs_not_invoiced(t: dt.date, scope=None) -> list[dict]:
+    return db.query(f"""SELECT id, number, account_name, branch, job_type, completed_date, billable_amount, technician_name
+                        FROM rpt.jobs WHERE status = 'Completed' AND billable AND invoice_number IS NULL
+                          AND completed_date <= %(t)s - 14 {_scope(scope)}
+                        ORDER BY billable_amount DESC NULLS LAST""", {"t": t, "scope": scope})
+
+
+def utilization(t: dt.date, weeks=4, scope=None) -> list[dict]:
+    """Per technician: hours on completed jobs ÷ hours worked, over the last `weeks` complete weeks."""
+    first, last = _weeks_back(t, weeks)
+    return db.query(f"""
+        WITH worked AS (SELECT employee_id, sum(worked_hours) AS worked FROM rpt.timesheets
+                        WHERE is_technician AND week_start BETWEEN %(f)s AND %(l)s GROUP BY 1),
+             onjob AS (SELECT technician_id, sum(labor_hours) AS on_jobs FROM rpt.jobs
+                       WHERE status = 'Completed' AND completed_date BETWEEN %(f)s AND %(l)s GROUP BY 1)
+        SELECT e.id, e.name, e.title, e.branch, e.branch_code, coalesce(o.on_jobs, 0) AS on_jobs, w.worked,
+               coalesce(o.on_jobs, 0) / nullif(w.worked, 0) AS utilization
+        FROM worked w JOIN rpt.employees e ON e.id = w.employee_id LEFT JOIN onjob o ON o.technician_id = w.employee_id
+        WHERE true {_scope(scope, 'e.branch_code')} ORDER BY utilization DESC NULLS LAST""", {"f": first, "l": last, "scope": scope})
+
+
+def inventory_summary(t: dt.date, scope=None) -> dict:
+    p = {"t": t, "scope": scope}
+    s = db.one(f"""SELECT coalesce(sum(value), 0) AS value, coalesce(sum(value) FILTER (WHERE is_dead), 0) AS dead_value,
+                          count(*) FILTER (WHERE is_dead) AS dead_rows,
+                          count(*) FILTER (WHERE below_reorder) AS below_reorder,
+                          count(*) FILTER (WHERE critical AND location_kind = 'Warehouse' AND on_hand <= 0 AND reorder_point > 0) AS critical_out,
+                          coalesce(sum(value) FILTER (WHERE location_kind = 'Van stock'), 0) AS van_value
+                   FROM rpt.stock WHERE true {_scope(scope)}""", p)
+    used = db.one(f"""SELECT coalesce(sum(cost), 0) AS c FROM rpt.part_usage WHERE used_date BETWEEN %(t)s - 364 AND %(t)s
+                      {_scope(scope)}""", p)["c"]
+    shrink = db.one(f"""SELECT coalesce(sum(a.qty * i.standard_cost), 0) AS v FROM inv.adjustments a
+                        JOIN inv.items i ON i.id = a.sku JOIN inv.locations l ON l.id = a.location_id
+                        WHERE a.adj_date BETWEEN %(t)s - 89 AND %(t)s {_scope(scope, 'l.branch_code')}""", p)["v"]
+    out = {k: float(v) for k, v in s.items()}
+    out["used_12m"] = float(used)
+    out["turns"] = _ratio(used, out["value"])
+    out["shrinkage_90d"] = float(shrink)
+    return out
+
+
+def stock_value_by(dim: str, scope=None) -> list[dict]:
+    if dim not in ("branch", "category", "location_kind"):
+        raise ValueError("unsupported dimension")
+    return db.query(f"""SELECT {dim} AS key, sum(value) AS value, sum(value) FILTER (WHERE is_dead) AS dead
+                        FROM rpt.stock WHERE true {_scope(scope)} GROUP BY 1 ORDER BY 2 DESC NULLS LAST""", {"scope": scope})
+
+
+def reorder_list(scope=None) -> list[dict]:
+    """Warehouse stock at or below its reorder point, critical parts first, with any open order for it."""
+    return db.query(f"""
+        SELECT s.location_id, s.branch, s.branch_code, s.sku, s.description, s.category, s.critical, s.on_hand, s.reorder_point,
+               s.reorder_qty, s.vendor, s.standard_cost * s.reorder_qty AS order_value,
+               (SELECT string_agg(DISTINCT l.po_number, ', ') FROM rpt.po_lines l
+                 WHERE l.sku = s.sku AND l.branch_code = s.branch_code AND l.status = 'Open') AS on_order
+        FROM rpt.stock s WHERE s.below_reorder {_scope(scope, 's.branch_code')}
+        ORDER BY s.critical DESC, s.on_hand <= 0 DESC, s.on_hand - s.reorder_point, s.branch""", {"scope": scope})
+
+
+def dead_stock(scope=None) -> list[dict]:
+    return db.query(f"""SELECT location, branch, sku, description, on_hand, value, last_issued_date FROM rpt.stock
+                        WHERE is_dead {_scope(scope)} ORDER BY value DESC NULLS LAST""", {"scope": scope})
+
+
+def purchasing_summary(t: dt.date, scope=None) -> dict:
+    r = db.one(f"""
+        SELECT coalesce(sum(amount) FILTER (WHERE status <> 'Canceled' AND ordered_date BETWEEN %(t)s - 364 AND %(t)s), 0) AS spend,
+               coalesce(sum(amount) FILTER (WHERE is_open), 0) AS open_amount, count(*) FILTER (WHERE is_open) AS open_count,
+               count(*) FILTER (WHERE is_open AND days_late > 0) AS late_open,
+               count(*) FILTER (WHERE on_time IS NOT NULL AND received_date BETWEEN %(t)s - 89 AND %(t)s) AS received,
+               count(*) FILTER (WHERE on_time AND received_date BETWEEN %(t)s - 89 AND %(t)s) AS received_on_time,
+               coalesce(sum(amount) FILTER (WHERE status = 'Received' AND received_date <= %(t)s - 30), 0) AS not_billed,
+               count(*) FILTER (WHERE status = 'Received' AND received_date <= %(t)s - 30) AS not_billed_count
+        FROM rpt.purchase_orders WHERE true {_scope(scope)}""", {"t": t, "scope": scope})
+    r = {k: float(v) for k, v in r.items()}
+    r["on_time_delivery"] = _ratio(r["received_on_time"], r["received"])
+    return r
+
+
+def vendor_scorecard(t: dt.date, scope=None) -> list[dict]:
+    rows = db.query(f"""
+        SELECT vendor_id, vendor, vendor_category,
+               coalesce(sum(amount) FILTER (WHERE status <> 'Canceled' AND ordered_date BETWEEN %(t)s - 364 AND %(t)s), 0) AS spend,
+               count(*) FILTER (WHERE status <> 'Canceled' AND ordered_date BETWEEN %(t)s - 364 AND %(t)s) AS orders,
+               count(*) FILTER (WHERE on_time IS NOT NULL AND received_date BETWEEN %(t)s - 89 AND %(t)s) AS received,
+               count(*) FILTER (WHERE on_time AND received_date BETWEEN %(t)s - 89 AND %(t)s) AS on_time,
+               avg(days_late) FILTER (WHERE NOT on_time AND received_date BETWEEN %(t)s - 89 AND %(t)s) AS avg_days_late
+        FROM rpt.purchase_orders WHERE true {_scope(scope)} GROUP BY 1, 2, 3 ORDER BY 4 DESC""", {"t": t, "scope": scope})
+    for r in rows:
+        r["on_time_delivery"] = _ratio(r["on_time"], r["received"])
+    return rows
+
+
+def price_changes(t: dt.date, scope=None, limit=12) -> list[dict]:
+    return db.query(f"""
+        WITH now_ AS (SELECT sku, max(description) AS description, max(vendor) AS vendor, sum(amount) / sum(qty) AS price
+                      FROM rpt.po_lines WHERE sku IS NOT NULL AND status <> 'Canceled'
+                        AND ordered_date BETWEEN %(t)s - 89 AND %(t)s {_scope(scope)} GROUP BY 1),
+             then_ AS (SELECT sku, sum(amount) / sum(qty) AS price FROM rpt.po_lines
+                       WHERE sku IS NOT NULL AND status <> 'Canceled'
+                         AND ordered_date BETWEEN %(t)s - 454 AND %(t)s - 365 {_scope(scope)} GROUP BY 1)
+        SELECT n.sku, n.description, n.vendor, th.price AS price_then, n.price AS price_now,
+               n.price / th.price - 1 AS change
+        FROM now_ n JOIN then_ th ON th.sku = n.sku ORDER BY change DESC LIMIT {int(limit)}""", {"t": t, "scope": scope})
+
+
+def people_summary(t: dt.date, scope=None) -> dict:
+    p = {"t": t, "scope": scope}
+    h = db.one(f"""SELECT count(*) FILTER (WHERE hire_date <= %(t)s AND (termination_date IS NULL OR termination_date >= %(t)s)) AS headcount,
+                          count(*) FILTER (WHERE is_technician AND hire_date <= %(t)s AND (termination_date IS NULL OR termination_date >= %(t)s)) AS technicians,
+                          count(*) FILTER (WHERE termination_date BETWEEN %(t)s - 364 AND %(t)s) AS exits_12m,
+                          count(*) FILTER (WHERE termination_date BETWEEN %(t)s - 364 AND %(t)s AND termination_type = 'Voluntary') AS quits_12m,
+                          count(*) FILTER (WHERE hire_date BETWEEN %(t)s - 364 AND %(t)s) AS hires_12m
+                   FROM rpt.employees WHERE true {_scope(scope)}""", p)
+    months = headcount_by_month(t, 12, scope)
+    avg_hc = sum(m["headcount"] for m in months) / len(months) if months else None
+    reqs = db.one(f"""SELECT count(*) AS n, avg(%(t)s - opened_date) AS avg_days FROM hr.requisitions
+                      WHERE status = 'Open' {_scope(scope)}""", p)
+    first, last = _weeks_back(t, 4)
+    ot = db.one(f"""SELECT sum(overtime_hours) AS ot, sum(worked_hours) AS worked FROM rpt.timesheets
+                    WHERE week_start BETWEEN %(f)s AND %(l)s {_scope(scope)}""", dict(p, f=first, l=last))
+    certs = db.one(f"""SELECT count(*) FILTER (WHERE status = 'Expired') AS expired, count(*) FILTER (WHERE status = 'Expiring') AS expiring
+                       FROM rpt.certifications WHERE is_active {_scope(scope)}""", p)
+    out = {k: float(v) for k, v in h.items()}
+    out.update({"turnover": _ratio(h["exits_12m"], avg_hc), "open_roles": reqs["n"],
+                "avg_days_open": float(reqs["avg_days"]) if reqs["avg_days"] is not None else None,
+                "overtime_pct": _ratio(ot["ot"] or 0, ot["worked"]), "certs_expired": certs["expired"],
+                "certs_expiring": certs["expiring"]})
+    return out
+
+
+def headcount_by_month(t: dt.date, months=12, scope=None) -> list[dict]:
+    """Headcount at each month-end (the last one is today), with hires and exits in that month."""
+    ends = []
+    m = t.replace(day=1)
+    for _ in range(months):
+        ends.append(m - dt.timedelta(days=1))
+        m = (m - dt.timedelta(days=1)).replace(day=1)
+    ends = sorted(ends)[1:] + [t]
+    rows = db.query(f"""
+        SELECT e AS month_end,
+               (SELECT count(*) FROM rpt.employees x WHERE x.hire_date <= e AND (x.termination_date IS NULL OR x.termination_date >= e)
+                  {_scope(scope, 'x.branch_code')}) AS headcount,
+               (SELECT count(*) FROM rpt.employees x WHERE x.hire_date BETWEEN date_trunc('month', e)::date AND e
+                  {_scope(scope, 'x.branch_code')}) AS hires,
+               (SELECT count(*) FROM rpt.employees x WHERE x.termination_date BETWEEN date_trunc('month', e)::date AND e
+                  {_scope(scope, 'x.branch_code')}) AS exits
+        FROM unnest(%(ends)s::date[]) AS e ORDER BY 1""", {"ends": ends, "scope": scope})
+    return rows
+
+
+def overtime_by_branch(t: dt.date, weeks=4, scope=None) -> list[dict]:
+    first, last = _weeks_back(t, weeks)
+    rows = db.query(f"""SELECT branch, sum(overtime_hours) AS ot, sum(worked_hours) AS worked FROM rpt.timesheets
+                        WHERE week_start BETWEEN %(f)s AND %(l)s {_scope(scope)} GROUP BY 1 ORDER BY 1""",
+                    {"f": first, "l": last, "scope": scope})
+    for r in rows:
+        r["overtime_pct"] = _ratio(r["ot"] or 0, r["worked"])
+    return rows
+
+
+def headcount_by_branch(t: dt.date, scope=None) -> list[dict]:
+    return db.query(f"""SELECT branch, count(*) AS headcount, count(*) FILTER (WHERE is_technician) AS technicians
+                        FROM rpt.employees WHERE hire_date <= %(t)s AND (termination_date IS NULL OR termination_date >= %(t)s)
+                        {_scope(scope)} GROUP BY 1 ORDER BY 2 DESC""", {"t": t, "scope": scope})
+
+
+def cert_problems(scope=None) -> list[dict]:
+    return db.query(f"""SELECT id, employee_id, employee_name, title, branch, certification, expires_date, days_left, status
+                        FROM rpt.certifications WHERE is_active AND status IN ('Expired', 'Expiring') {_scope(scope)}
+                        ORDER BY expires_date""", {"scope": scope})
+
+
+def open_roles(t: dt.date, scope=None) -> list[dict]:
+    return db.query(f"""SELECT r.id, r.title, r.department, coalesce(b.name, r.branch_code) AS branch, r.opened_date,
+                               %(t)s - r.opened_date AS days_open, r.reason, r.applicants
+                        FROM hr.requisitions r LEFT JOIN core.branches b ON b.code = r.branch_code
+                        WHERE r.status = 'Open' {_scope(scope, 'r.branch_code')} ORDER BY r.opened_date""", {"t": t, "scope": scope})
