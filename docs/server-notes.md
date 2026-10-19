@@ -37,6 +37,10 @@ How our own server is set up (from `docs/server-setup.md`, Part 2). No secrets h
 - Restart one: `sudo systemctl restart hub-company`
 
 ## Deploy and roll back
+The live sites run from `~/AI-Biz`, so build in the separate working copy `~/AI-Biz-dev` (git worktree on its own
+branch, with its own `.env` pointing at the `hub_test` database) and only bring finished, tested work across:
+`git merge --ff-only <branch>` in `~/AI-Biz`, push, then update. Editing `~/AI-Biz` directly changes what the
+live demo's hourly sync reads straight away.
 1. Push the change, run the tests, then on the server: `cd ~/AI-Biz && sudo ops/install.sh update`. It pulls, upgrades each database, restarts each service and prints its health.
 2. If something's wrong: `git revert <bad commit>`, push, and run `update` again.
 
