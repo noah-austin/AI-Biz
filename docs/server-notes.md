@@ -17,6 +17,7 @@ How our own server is set up (from `docs/server-setup.md`, Part 2). No secrets h
 | Distribution demo (Bramblewood) | https://distribution.demo.sanfordoperations.com | 8003 | `hub-distribution` | `hub_distribution` |
 | Professional services demo (Kestrel Ridge) | https://services.demo.sanfordoperations.com | 8004 | `hub-services` | `hub_services` |
 | Construction demo (Mesquite Ridge) | https://construction.demo.sanfordoperations.com | 8005 | `hub-construction` | `hub_construction` |
+| Manufacturing demo (Cottonwood) | https://manufacturing.demo.sanfordoperations.com | 8006 | `hub-manufacturing` | `hub_manufacturing` |
 | Website | https://sanfordoperations.com (www redirects) | 8000 | `hub-website` | writes enquiries into `hub_company` |
 
 Demos: the website's "See a live demo" goes to https://sanfordoperations.com/demo, a picker listing each industry's demo
