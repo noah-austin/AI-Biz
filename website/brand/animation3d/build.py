@@ -12,7 +12,7 @@ FILM_CSS = """
 .film { position:relative; width:1920px; height:1080px; overflow:hidden; background:#f5efe4; color:#2a2622;
   font-family:'Inter', system-ui, Arial, sans-serif; transform-origin:0 0 }
 .film canvas { position:absolute; left:0; top:0; width:1920px; height:1080px }
-.lt { position:absolute; left:96px; bottom:84px; width:1100px; padding:26px 34px 28px 40px; opacity:0;
+.lt { position:absolute; left:96px; bottom:84px; max-width:1200px; padding:26px 34px 28px 40px; opacity:0;
   background:rgba(245,239,228,.9); border-radius:6px; box-shadow:0 12px 40px rgba(42,38,34,.18) }
 .lt i { position:absolute; left:0; top:0; bottom:0; width:8px; background:#8f6f3e; border-radius:6px 0 0 6px }
 .c1 { font-family:'Playfair Display', Playfair, Georgia, serif; font-weight:700; font-size:56px; line-height:1.1 }
