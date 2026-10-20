@@ -53,9 +53,12 @@ AGENTS = [
                 "Strongly prefer companies with an email address published on a page you can cite: the contact's own, "
                 "or a general business inbox (info@, contact@, sales@), never HR, billing or support. Put it in "
                 "`contact_email` with the page in `email_source`. Never guess an address from a name pattern. "
-                "Introduce Noah as: \"I'm Noah, an operations leader in Austin; at Google I built the operations system "
-                "Google Fiber used to expand into new markets. Now, I connect...\" (then what he'd do for them). "
-                "The first message links the main site in the body: \"You can see how it works at sanfordoperations.com.\" "
+                "Structure the first message: (1) a specific opener about them; (2) \"I'm Noah, an operations leader in "
+                "Austin; at Google I built the operations system Google Fiber used to expand into new markets.\" (3) the problem "
+                "and fix: \"Most companies your size have their data split across a CRM, accounting, operations software and "
+                "spreadsheets, so no one sees the whole picture. Now, I connect those systems into one place and build the "
+                "reports, tools and AI that run on it. You can see how it works at sanfordoperations.com.\" If the opener "
+                "already says their data sits in separate systems, drop the \"Most companies...\" sentence. "
                 "and ends with a short ask for a 20-minute call. "
                 "Quality over quantity: three excellent prospects beat ten weak ones.",
                 ["mon", "wed", "fri"], "06:00", web=True, max_steps=30, max_searches=25, run_cap_usd=4.0),
