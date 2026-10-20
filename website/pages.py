@@ -30,7 +30,7 @@ def _version(name: str) -> str:
 
 
 VIDEO = ([f"video/explainer-{cut}{end}" for cut in ("wide", "tall") for end in (".mp4", ".jpg", "-end.jpg")]
-         + [f"video/overview-{cut}{end}" for cut in ("wide", "tall") for end in (".mp4", ".jpg")])
+         + [f"video/tour-{cut}{end}" for cut in ("wide", "tall") for end in (".mp4", ".jpg")])
 ASSET_V = {name: _version(name) for name in ("site.css", *VIDEO)}
 
 
@@ -109,12 +109,12 @@ def explainer() -> str:
 
 
 def overview_video() -> str:
-    """The overview video (website/brand/demo-video/combined.py): played on request, a tall cut on phones."""
+    """The tour of the demo hub (website/brand/demo-video/combined.py): played on request, a tall cut on phones."""
     u = lambda name: f"/static/{name}?v={ASSET_V[name]}"
-    label = "Video: how Sanford Operations brings a company's data together, then a click-through of a demo company's hub."
+    label = "Video: a tour of a demo company's hub: its home page, weekly scorecard, Ask AI and AI agents."
     return '<div class="overview">' + "".join(
-        f'<video class="overview-video {cut}" controls playsinline preload="none" poster="{u(f"video/overview-{cut}.jpg")}" '
-        f'aria-label="{label}"><source src="{u(f"video/overview-{cut}.mp4")}" type="video/mp4"></video>' for cut in ("wide", "tall")) + "</div>"
+        f'<video class="overview-video {cut}" controls playsinline preload="none" poster="{u(f"video/tour-{cut}.jpg")}" '
+        f'aria-label="{label}"><source src="{u(f"video/tour-{cut}.mp4")}" type="video/mp4"></video>' for cut in ("wide", "tall")) + "</div>"
 
 
 def cta_row(primary=("Book a call", "/contact?interest=call"), secondary=("What we build →", "/what-we-build")) -> str:
@@ -295,7 +295,7 @@ def what_we_build() -> str:
 </div></section>
 
 <section class="band"><div class="wrap">
-  {sec_head("See it working", "From scattered systems to a working hub", "Under a minute: the idea, then a click-through of a demo company's hub.")}
+  {sec_head("Take the tour", "See the hub at work", "30 seconds inside a demo company's hub: the home page, the weekly scorecard, Ask AI and the agents' morning work.")}
   {overview_video()}
   <p class="fine center">Bluestem Facility Services is a fictional demo company with made-up data.</p>
 </div></section>

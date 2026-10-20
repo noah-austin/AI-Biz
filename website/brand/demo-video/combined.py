@@ -1,10 +1,14 @@
-"""The overview video: the explainer's story, then a click-through of the demo hub, in a wide and a tall (phone) cut.
+"""Two videos from the demo walkthrough, each in a wide and a tall (phone) cut.
+
+- The tour (What we build page): its own title card, then straight into the demo hub. About 30 seconds. It opens
+  differently from the home page explainer on purpose, so visitors don't take it for the same video.
+- The overview (LinkedIn, follow-up emails): the explainer's story, then the same demo. About 52 seconds.
 
     python build.py                     # writes capture.html (the demo scene)
-    python combined.py EXPLAINER_FRAMES_DIR WORK_DIR
+    python combined.py EXPLAINER_FRAMES_DIR WORK_DIR [ffmpeg]
 
 EXPLAINER_FRAMES_DIR holds the explainer's frames from ../animation (frames.py at 30 fps) in wide/ and tall/.
-Writes ../../static/video/overview-{wide,tall}.mp4 (+ posters) and sanford-overview.mp4 (full quality, for LinkedIn).
+Writes ../../static/video/tour-{wide,tall}.mp4 (+ posters) and sanford-overview.mp4 here (full quality).
 
 The tall cut films the same scene with a "camera" that follows the action, so the text stays readable on a phone,
 and puts the captions above it in bigger type. The edit is the same in both cuts (EDIT below).
@@ -23,6 +27,8 @@ EXPLAINER_END = 20.9          # the explainer plays to "Then we build on it." (t
 END_CARD = (22.4, 26.0)       # the explainer's end card closes both cuts
 # scene time ranges of the demo, played at the given speed; the alerts screen (38-44.7 s) is left out
 EDIT = [(12.5, 38.0, 1.25), (44.75, 54.6, 1.25)]
+TOUR = [(15.0, 38.0, 1.25), (44.75, 54.6, 1.25)]   # the tour starts on the hub's home page
+TITLE_SECONDS = 2.8
 
 # the demo scene's captions (same text and times as scene.html), shown above the camera in the tall cut
 CAPS = [[11.6, 15.0, "Then we build on it.", "Here’s what that looks like, for a demo company."],
@@ -79,7 +85,36 @@ def tall_page() -> Path:
     return path
 
 
-def render_demo(cut: str, work: Path) -> list[Path]:
+def render_title(cut: str, work: Path) -> Path:
+    """The tour's opening card, as one still in the brand's style (the end card is the explainer's)."""
+    w, h = {"wide": (1920, 1080), "tall": (1080, 1620)}[cut]
+    big = {"wide": 96, "tall": 84}[cut]
+    seal = (HERE.parents[1] / "static" / "brand" / "seal.svg").as_uri()
+    fonts = (HERE / "capture.html").read_text().split("<style>", 1)[1].split("body{", 1)[0]   # the embedded @font-faces
+    page = f"""<!doctype html><html><head><meta charset="utf-8"><style>{fonts}
+body {{ margin:0; width:{w}px; height:{h}px; background:#f4efe3; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:26px; text-align:center; font-family:'Inter', Arial, sans-serif; color:#2a2622 }}
+.e {{ font-size:{big * 0.3:.0f}px; font-weight:600; letter-spacing:.2em; text-transform:uppercase; color:#8f6f3e }}
+.t {{ font-family:'Playfair Display', Playfair, Georgia, serif; font-weight:700; font-size:{big}px; line-height:1.1; padding:0 60px }}
+.s {{ font-size:{big * 0.36:.0f}px; color:#4f4842; max-width:{w - 160}px; line-height:1.4; text-wrap:balance }}
+</style></head><body><img src="{seal}" width="{big * 1.6:.0f}" height="{big * 1.6:.0f}" alt="">
+<div class="e">Sanford Operations</div><div class="t">A tour of the hub</div>
+<div class="s">Bluestem Facility Services, a fictional company with made-up data.</div></body></html>"""
+    src = work / f"title-{cut}.html"
+    src.write_text(page)
+    out = work / f"title-{cut}.png"
+    with sync_playwright() as p:
+        b = p.chromium.launch()
+        pg = b.new_page(viewport={"width": w, "height": h})
+        pg.goto(src.resolve().as_uri())
+        pg.evaluate("document.fonts.ready")
+        pg.wait_for_timeout(300)
+        pg.screenshot(path=str(out))
+        b.close()
+    return out
+
+
+def render_demo(cut: str, work: Path, edit=EDIT, name="demo") -> list[Path]:
     page = HERE / "capture.html" if cut == "wide" else tall_page()
     size = {"wide": (1920, 1080), "tall": (1080, 1620)}[cut]
     call = "renderAt" if cut == "wide" else "renderTall"
@@ -90,8 +125,8 @@ def render_demo(cut: str, work: Path) -> list[Path]:
         pg.add_init_script("window.CAPTURE = true")
         pg.goto(page.resolve().as_uri())
         pg.wait_for_function("window.sceneReady === true")
-        for n, (a, z, speed) in enumerate(EDIT):
-            d = work / f"demo-{cut}-{n}"
+        for n, (a, z, speed) in enumerate(edit):
+            d = work / f"{name}-{cut}-{n}"
             d.mkdir(parents=True, exist_ok=True)
             frames = round((z - a) / speed * FPS)
             for i in range(frames):
@@ -125,11 +160,32 @@ def assemble(cut: str, explainer: Path, demo: list[Path], out: Path, crf: int, w
     subprocess.run(cmd, check=True)
 
 
+def assemble_tour(cut: str, title: Path, demo: list[Path], explainer: Path, out: Path, crf: int, width: int | None):
+    """title card -> crossfade -> demo part 1 -> crossfade -> demo part 2 -> crossfade -> end card."""
+    ff = sys.argv[3] if len(sys.argv) > 3 else "ffmpeg"
+    d1 = len(list(demo[0].glob("*.png"))) / FPS
+    d2 = len(list(demo[1].glob("*.png"))) / FPS
+    scale = f",scale={width}:-2:flags=lanczos" if width else ""
+    norm = f"fps={FPS},format=yuv420p,settb=AVTB"
+    t1 = TITLE_SECONDS
+    graph = (f"[0:v]setpts=PTS-STARTPTS,{norm}[t];[1:v]setpts=PTS-STARTPTS,{norm}[a];[2:v]setpts=PTS-STARTPTS,{norm}[b];"
+             f"[3:v]trim=start={END_CARD[0]}:end={END_CARD[1]},setpts=PTS-STARTPTS,{norm}[e];"
+             f"[t][a]xfade=transition=fade:duration=0.5:offset={t1 - 0.5:.3f}[ta];"
+             f"[ta][b]xfade=transition=fade:duration=0.3:offset={t1 - 0.5 + d1 - 0.3:.3f}[tab];"
+             f"[tab][e]xfade=transition=fade:duration=0.5:offset={t1 - 0.5 + d1 - 0.3 + d2 - 0.5:.3f}{scale}[v]")
+    seq = lambda d: ["-framerate", str(FPS), "-i", str(d / "f%04d.png")]
+    cmd = [ff, "-loglevel", "error", "-y", "-loop", "1", "-framerate", str(FPS), "-t", str(t1), "-i", str(title),
+           *seq(demo[0]), *seq(demo[1]), *seq(explainer), "-filter_complex", graph, "-map", "[v]", "-c:v", "libx264",
+           "-preset", "veryslow", "-tune", "animation", "-crf", str(crf), "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(out)]
+    subprocess.run(cmd, check=True)
+
+
 if __name__ == "__main__":
     frames, work = Path(sys.argv[1]), Path(sys.argv[2])
+    work.mkdir(parents=True, exist_ok=True)
     for cut, width in (("wide", 1280), ("tall", 720)):
-        demo = render_demo(cut, work)
-        assemble(cut, frames / cut, demo, STATIC / f"overview-{cut}.mp4", 28, width)
-        if cut == "wide":
-            assemble(cut, frames / cut, demo, HERE / "sanford-overview.mp4", 20, None)
+        tour = render_demo(cut, work, TOUR, "tour")
+        assemble_tour(cut, render_title(cut, work), tour, frames / cut, STATIC / f"tour-{cut}.mp4", 28, width)
+        if cut == "wide" and "--overview" in sys.argv:   # the longer LinkedIn cut; only when asked
+            assemble(cut, frames / cut, render_demo(cut, work), HERE / "sanford-overview.mp4", 20, None)
         print(cut, "done")
