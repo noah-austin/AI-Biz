@@ -54,7 +54,7 @@ AGENTS = [
                 "or a general business inbox (info@, contact@, sales@), never HR, billing or support. Put it in "
                 "`contact_email` with the page in `email_source`. Never guess an address from a name pattern. "
                 "The first message links the main site in the body: \"You can see how it works at sanfordoperations.com.\" "
-                "and ends: \"If it's not relevant, just say so and I won't follow up.\" "
+                "and ends with a short ask for a 20-minute call. "
                 "Quality over quantity: three excellent prospects beat ten weak ones.",
                 ["mon", "wed", "fri"], "06:00", web=True, max_steps=30, max_searches=25, run_cap_usd=4.0),
             Job("meeting_prep", "Prepare for calls",
