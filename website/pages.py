@@ -109,9 +109,9 @@ def explainer() -> str:
 
 
 def overview_video() -> str:
-    """The tour of the demo hub (website/brand/demo-video/combined.py): played on request, a tall cut on phones."""
+    """The tour (website/brand/demo-video/combined.py): systems into one place, then the tools on a demo hub. Played on request, a tall cut on phones."""
     u = lambda name: f"/static/{name}?v={ASSET_V[name]}"
-    label = "Video: a tour of a demo company's hub: its home page, weekly scorecard, Ask AI and AI agents."
+    label = "Video: a company's systems connected into one data hub, then a tour of the tools built on it: home page, weekly scorecard, Ask AI and AI agents."
     return '<div class="overview">' + "".join(
         f'<video class="overview-video {cut}" controls playsinline preload="none" poster="{u(f"video/tour-{cut}.jpg")}" '
         f'aria-label="{label}"><source src="{u(f"video/tour-{cut}.mp4")}" type="video/mp4"></video>' for cut in ("wide", "tall")) + "</div>"
@@ -295,7 +295,7 @@ def what_we_build() -> str:
 </div></section>
 
 <section class="band"><div class="wrap">
-  {sec_head("Take the tour", "See the hub at work", "30 seconds inside a demo company's hub: the home page, the weekly scorecard, Ask AI and the agents' morning work.")}
+  {sec_head("Take the tour", "See it come together", "Under a minute: how we connect your systems into one place, then the tools we build on it, shown on a demo company's hub.")}
   {overview_video()}
   <p class="fine center">Bluestem Facility Services is a fictional demo company with made-up data.</p>
 </div></section>

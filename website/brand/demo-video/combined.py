@@ -27,17 +27,22 @@ EXPLAINER_END = 20.9          # the explainer plays to "Then we build on it." (t
 END_CARD = (22.4, 26.0)       # the explainer's end card closes both cuts
 # scene time ranges of the demo, played at the given speed; the alerts screen (38-44.7 s) is left out
 EDIT = [(12.5, 38.0, 1.25), (44.75, 54.6, 1.25)]
-TOUR = [(15.0, 38.0, 1.25), (44.75, 54.6, 1.25)]   # the tour starts on the hub's home page
+# the tour: the walkthrough's own opening (systems -> hub -> browser), then the demo; ranges that meet play on unbroken
+TOUR = [(3.3, 15.0, 1.15), (15.0, 38.0, 1.25), (44.75, 54.6, 1.25)]
+# the tour's opening captions, as three steps (replacing scene.html's first three captions in this cut only)
+TOUR_STEPS = [["1. We connect your systems.", "CRM, accounting, ERP, field service, payroll, spreadsheets. Read-only."],
+              ["2. Everything lands in one place.", "Your data hub: one database you own, updated every hour."],
+              ["3. Then we build the tools.", "Here’s what that looks like for a demo company."]]
 TITLE_SECONDS = 2.8
 
 # the demo scene's captions (same text and times as scene.html), shown above the camera in the tall cut
-CAPS = [[11.6, 15.0, "Then we build on it.", "Here’s what that looks like, for a demo company."],
+CAPS = [[3.4, 7.2, *TOUR_STEPS[0]], [7.6, 11.2, *TOUR_STEPS[1]], [11.6, 15.0, *TOUR_STEPS[2]],
         [15.4, 22.6, "One home page for the whole business.", "The numbers that matter, updated every hour."],
         [23.0, 30.2, "The weekly scorecard fills itself in.", "Green means the goal was hit. Nobody types it up."],
         [30.6, 38.2, "Ask questions in plain English.", "Answers come straight from your own data."],
         [45.0, 53.6, "AI agents do the daily legwork.", "They prepare the work. A person approves anything that goes out."]]
 # camera: [scene time, centre x, centre y, zoom] in film pixels (the film is 1920 x 1080; the camera is 1008 x 1284)
-CAM = [[12.5, 960, 621, 0.593], [14.4, 960, 621, 0.593],
+CAM = [[3.3, 960, 600, 0.75], [11.4, 960, 600, 0.75], [13.2, 960, 621, 0.593], [14.4, 960, 621, 0.593],   # opening: systems fly into the hub
        [15.6, 545, 640, 1.5], [18.6, 545, 640, 1.5], [19.8, 1330, 640, 1.5], [21.6, 1330, 640, 1.5],      # home: tiles, chart, last 7 days
        [22.6, 700, 600, 1.3],                                                                             # click Scorecard
        [23.6, 520, 640, 1.5], [24.6, 520, 640, 1.5], [26.2, 1010, 640, 1.5], [28.8, 1010, 640, 1.5],     # weeks fill in
@@ -98,7 +103,7 @@ body {{ margin:0; width:{w}px; height:{h}px; background:#f4efe3; display:flex; f
 .t {{ font-family:'Playfair Display', Playfair, Georgia, serif; font-weight:700; font-size:{big}px; line-height:1.1; padding:0 60px }}
 .s {{ font-size:{big * 0.36:.0f}px; color:#4f4842; max-width:{w - 160}px; line-height:1.4; text-wrap:balance }}
 </style></head><body><img src="{seal}" width="{big * 1.6:.0f}" height="{big * 1.6:.0f}" alt="">
-<div class="e">Sanford Operations</div><div class="t">A tour of the hub</div>
+<div class="e">Sanford Operations</div><div class="t">From scattered data to working tools</div>
 <div class="s">Bluestem Facility Services, a fictional company with made-up data.</div></body></html>"""
     src = work / f"title-{cut}.html"
     src.write_text(page)
@@ -125,14 +130,21 @@ def render_demo(cut: str, work: Path, edit=EDIT, name="demo") -> list[Path]:
         pg.add_init_script("window.CAPTURE = true")
         pg.goto(page.resolve().as_uri())
         pg.wait_for_function("window.sceneReady === true")
-        for n, (a, z, speed) in enumerate(edit):
-            d = work / f"{name}-{cut}-{n}"
-            d.mkdir(parents=True, exist_ok=True)
-            frames = round((z - a) / speed * FPS)
-            for i in range(frames):
+        if name == "tour":   # the opening captions read as three steps in this cut
+            pg.evaluate("""steps => [...document.querySelectorAll('#stage .cap')].slice(0, 3).forEach((c, i) => {
+                c.querySelector('.cap1').textContent = steps[i][0]; c.querySelector('.cap2').textContent = steps[i][1]; })""", TOUR_STEPS)
+        n, last_end, i0 = -1, None, 0
+        for a, z, speed in edit:
+            if a != last_end:   # a new piece of the edit (otherwise carry straight on in the same folder)
+                n, i0 = n + 1, 0
+                d = work / f"{name}-{cut}-{n}"
+                d.mkdir(parents=True, exist_ok=True)
+                dirs.append(d)
+            for i in range(round((z - a) / speed * FPS)):
                 pg.evaluate(f"{call}({a + i * speed / FPS})")
-                pg.screenshot(path=str(d / f"f{i:04d}.png"))
-            dirs.append(d)
+                pg.screenshot(path=str(d / f"f{i0 + i:04d}.png"))
+            i0 += round((z - a) / speed * FPS)
+            last_end = z
         b.close()
     return dirs
 
