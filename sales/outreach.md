@@ -3,7 +3,7 @@
 Keep them short, personal and specific. Only claim what you can show; swap in real results as clients come in. Never tell the story of a specific company you've worked with or for. Change the first line for every person. Never paste the same message to 50 people.
 
 ## LinkedIn connection note (300 characters max)
-> Hi [Name], I'm an operations leader (COO, chief of staff) helping companies like [their company] get all their data in one place and put it to work. I'd value connecting, no pitch.
+> Hi [Name], I'm an ex-Google operations leader helping companies like [their company] get all their data in one place and put it to work. I'd value connecting, no pitch.
 
 ## LinkedIn message after they accept
 > Thanks for connecting, [Name]. Quick question, as one operator to another: how does your leadership team get its weekly numbers today? In my experience someone rebuilds it in Excel every Monday, and half the meeting goes on arguing about whose number is right. What fixes it is getting every system into one place, then building the scorecard, tools and AI on top. Happy to show you what that looked like if it's useful. Either way, no pressure.

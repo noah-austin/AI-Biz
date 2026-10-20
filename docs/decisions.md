@@ -9,7 +9,7 @@
 | Commitment | Side project to start | Keeping the current job while landing the first 1–2 clients. |
 
 | Reference company | Can be named; no referral | Noah is cleared to do this work and reuse what's needed. Settled; don't re-raise. Keep their figures out of everything. |
-| Noah's background | Business operations (COO / chief of staff) | Sell as an operator to COOs and CFOs. |
+| Noah's background | Operations expert; five years as an operations leader at Google, where he built the operations system Google Fiber used to expand into new territories. Current employer never named. (Corrected 2026-10-20: not a COO.) | Sell as an operator to COOs and CFOs. |
 | Network | No warm leads | Go-to-market leans on referral partners, the demo and content. |
 | Location | Texas | Texas LLC. |
 | Time | 20 hours a week | |

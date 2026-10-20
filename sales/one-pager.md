@@ -23,7 +23,7 @@ We connect the systems your company already runs on into one place. Then we buil
 4. **Run & Grow (monthly).** We keep it accurate, add what you need next, and review it with your leadership every month.
 
 ## Why us
-- **Operators, not a software vendor.** We come from running companies, as COO and chief of staff.
+- **Operators, not a software vendor.** Founded by an ex-Google operations leader who built the operations system Google Fiber used to expand into new territories.
 - **Built around you.** No off-the-shelf package, and nothing gets replaced: we build on the systems you already have.
 - **Your data, your choice.** On your own server or hosted by us. Either way the data is yours, with no per-seat licences and no lock-in.
 - **Safe by design.** Read-only access to your systems. Everyone sees only what they should. Backed up every night.

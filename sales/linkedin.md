@@ -18,10 +18,10 @@ Edit your profile, then paste each piece into the matching box.
 
 **Profile banner:** `website/brand/linkedin/profile-banner.png` (1584 × 396). Profile → the camera icon on the banner → Upload. The lower left stays clear for your photo.
 
-**Headline (option A, recommended)** (153/220 characters)
+**Headline (option A, recommended)** (151/220 characters)
 
 ```
-Founder, Sanford Operations · I bring a company’s data into one place, then build the reports, tools and AI agents on top · Former COO and chief of staff
+Founder, Sanford Operations · I bring a company’s data into one place, then build the reports, tools and AI agents on top · Ex-Google operations leader
 ```
 
 Only the first 60 or so characters show next to your name in the feed, so it starts with what you do now.
@@ -32,7 +32,7 @@ Only the first 60 or so characters show next to your name in the feed, so it sta
 Helping COOs, CFOs and owners run on one set of numbers · Data in one place, reports that build themselves, AI agents that do real work · Founder, Sanford Operations
 ```
 
-**About** (1485/2600 characters)
+**About** (1572/2600 characters)
 
 ```
 I help leaders of small and mid-size companies get all their data in one place, and then put it to work.
@@ -47,7 +47,7 @@ At Sanford Operations, we connect the systems a company already runs on into one
 • AI that answers questions from your own data
 • AI agents that do real work: daily briefs, drafted updates, meeting prep and follow-ups. A person approves anything that goes out.
 
-I come from operations, as a COO and chief of staff, so I start from how the company runs, not from the technology. We add to the systems you already have, match your existing reports to the cent before building anything new, and you own everything we build.
+I spent five years as an operations leader at Google, where I built the operations system Google Fiber used to expand into new territories. So I start from how the company runs, not from the technology. We add to the systems you already have, match your existing reports to the cent before building anything new, and you own everything we build.
 
 If your numbers live in too many places, I’d be glad to hear how you run things: hello@sanfordoperations.com
 
@@ -146,7 +146,7 @@ We connect the systems a company already uses into one database it owns, with ev
 
 How we work: a conversation, a custom proposal with a fixed quote, the build, then ongoing support as you grow. We add to what you have, start with read-only access, and match your existing reports to the cent before building anything new. Your data stays yours, on your own server or hosted by us, with no per-seat licenses.
 
-We come from running companies, as COO and chief of staff. We work with COOs, CFOs, owners and operations leaders in any industry, across the US.
+Founded by an ex-Google operations leader who built Google Fiber's operations system. We work with COOs, CFOs, owners and operations leaders in any industry, across the US.
 
 See a live demo or book a call: sanfordoperations.com
 ```
@@ -332,7 +332,7 @@ For connecting with COOs, CFOs and owners. Change the first line for every perso
 **Connection note** (180/300 characters)
 
 ```
-Hi [Name], I’m an operations leader (COO, chief of staff) helping companies like [their company] get all their data in one place and put it to work. I’d value connecting, no pitch.
+Hi [Name], I’m an ex-Google operations leader helping companies like [their company] get all their data in one place and put it to work. I’d value connecting, no pitch.
 ```
 
 Replace [Name] and [their company] before sending.

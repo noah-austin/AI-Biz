@@ -61,7 +61,7 @@ No prices or timelines are published. Internal planning guesses only: a build ar
 - **AI only works when it can see the company's data.** We build that foundation first, so our AI and agents actually work. A general consultant's agents can't see across systems; ours can.
 - **The foundation brings recurring revenue.** Once leadership runs on it and agents do daily work on it, the monthly fee lasts for years. One-off AI projects end.
 - **The market is big enough.** Hundreds of thousands of small and mid-size US companies run on several systems with no data team. We need 5–10 clients.
-- **Our edge:** operators (COO / chief of staff) selling to operators. A tech shop can't sell "your company runs on one set of numbers" with the same credibility.
+- **Our edge:** an operator (ex-Google operations leader) selling to operators. A tech shop can't sell "your company runs on one set of numbers" with the same credibility.
 
 ## 6. Who we sell to
 - **Buyer:** COO, CFO, owner or president of a small or mid-size company, **any industry, anywhere in the US**, that runs on several systems and has no data team.

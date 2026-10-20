@@ -82,7 +82,7 @@ def _org_jsonld() -> str:
     data = {"@context": "https://schema.org", "@type": "ProfessionalService", "name": c["name"], "url": c["url"],
             "email": c["email"], "logo": f'{c["url"]}/static/brand/mark-512.png', "image": f'{c["url"]}/static/brand/og-card.jpg',
             "slogan": c["tagline"], "founder": {"@type": "Person", "name": c["owner"]},
-            "areaServed": "US", "address": {"@type": "PostalAddress", "addressRegion": "TX", "addressCountry": "US"},
+            "areaServed": "US", "address": {"@type": "PostalAddress", "addressLocality": "Austin", "addressRegion": "TX", "addressCountry": "US"},
             "description": "Brings a company's data together in one place, then builds the reports, tools and AI agents it makes possible."}
     return '<script type="application/ld+json">' + json.dumps(data).replace("<", "\\u003c") + "</script>"
 
@@ -163,7 +163,7 @@ def home() -> str:
              ("refresh", "Run & Grow", "We keep it running and add what's next, every month.")]
     step_html = "".join(f'<li><span class="step-ico">{v.icon(i)}</span><small>Step {n}</small><h3>{t}</h3><p>{d}</p></li>'
                         for n, (i, t, d) in enumerate(steps, 1))
-    why = [("people", "Operators, not a vendor", "We come from running companies, as COO and chief of staff."),
+    why = [("people", "Operators, not a vendor", "Founded by an ex-Google operations leader who built Google Fiber's operations system."),
            ("blocks", "Built around you", "No off-the-shelf package. None of your systems get replaced."),
            ("server", "Your data, your choice", "Your own server or hosted by us. No per-seat licenses."),
            ("shield", "Safe by design", "Read-only access, nightly backups, and everyone sees only what they should.")]
@@ -398,14 +398,16 @@ def about() -> str:
 </div></section>
 <section><div class="wrap split about-split">
   <div class="prose">
-    <p>We come from business operations, as COO and chief of staff: the people responsible for the numbers a company
-    runs on. We've lived with data spread across a CRM, an accounting system and a pile of spreadsheets, with reports
-    rebuilt by hand every week. We've also seen what changes once it's all in one place: tools, reports and AI that
-    weren't possible while everything was scattered.</p>
+    <p>{esc(c["name"])} was founded by {esc(c["owner"])}, an operations expert who spent five years as an operations
+    leader at Google. There he built the operations system Google Fiber used to expand and deploy into new territories.</p>
+    <p>We come from operations: the people responsible for the numbers a company runs on. We know what it's like when data
+    is spread across a CRM, an accounting system and a pile of spreadsheets, with reports rebuilt by hand every week. And
+    we've seen what changes once it's all in one place: tools, reports and AI that weren't possible while everything was
+    scattered.</p>
     <p>Most companies don't need more software. They need a foundation that connects what they already have, and someone
     who understands how the business runs to build on it.</p>
-    <p>We work with companies in any industry, across the US, that run on several systems and don't have a data team of
-    their own. {esc(c["name"])} was founded by {esc(c["owner"])}.</p>
+    <p>We work from Austin, Texas, with companies in any industry across the US that run on several systems and don't
+    have a data team of their own.</p>
   </div>
   <div class="about-seal"><picture><source srcset="/static/brand/seal-reversed.svg" media="(prefers-color-scheme: dark)"><img src="/static/brand/seal.svg" alt="" width="280" height="280"></picture></div>
 </div></section>
