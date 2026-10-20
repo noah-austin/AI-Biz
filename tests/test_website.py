@@ -162,3 +162,28 @@ def test_what_we_build_offers_the_tour_video_on_request(site):
     assert html.count('class="overview-video') == 2 and 'preload="none"' in html and "autoplay" not in html.split('class="overview"')[1].split("</div>")[0]
     for name in ("tour-wide.mp4", "tour-tall.mp4", "tour-wide.jpg", "tour-tall.jpg"):
         assert client.get(f"/static/video/{name}").status_code == 200, name
+
+
+def test_visits_are_counted_without_cookies_and_bots_are_left_out(site):
+    client, _ = site
+    time.sleep(0.3)                                  # let counts from earlier tests finish saving
+    db.execute("DELETE FROM practice.site_hits")
+    person = {"user-agent": "Mozilla/5.0 (iPhone) Safari", "referer": "https://www.linkedin.com/feed/"}
+    r = client.get("/what-we-build?from=email", headers=person)
+    assert "set-cookie" not in r.headers
+    client.get("/", headers={"user-agent": "Googlebot/2.1"})                                   # a bot: not counted
+    client.get("/static/video/tour-wide.mp4", headers={**person, "range": "bytes=0-1023"})    # pressed play on the tour
+    client.get("/static/site.css", headers=person)                                             # files aren't visits
+    client.get("/static/video/tour-wide.jpg", headers=person)                                  # nor is the video's poster
+    for _ in range(50):
+        if db.one("SELECT count(*) AS n FROM practice.site_hits")["n"] >= 2:
+            break
+        time.sleep(0.05)
+    hits = db.query("SELECT kind, path, ref_host, source, visitor FROM practice.site_hits ORDER BY kind DESC")   # saved in the background
+    assert [(h["kind"], h["path"]) for h in hits] == [("view", "/what-we-build"), ("tour_play", "/static/video/tour-wide.mp4")]
+    assert hits[0]["ref_host"] == "www.linkedin.com" and hits[0]["source"] == "email" and len(hits[0]["visitor"]) == 16
+    from kit.practice import website
+    s = website.stats(30)
+    assert s["visitors_today"] == 1 and s["tour_plays"] == 1 and s["pages"][0]["path"] == "/what-we-build"
+    assert {r["source"] for r in s["sources"]} == {"Your link: email"}
+    db.execute("DELETE FROM practice.site_hits")

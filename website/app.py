@@ -57,6 +57,37 @@ _recent: dict[str, deque] = defaultdict(deque)
 _lock = threading.Lock()
 
 
+BOT = re.compile(r"bot|crawl|spider|slurp|preview|monitor|uptime|curl|wget|python|httpx|go-http|java/|headless|"
+                 r"lighthouse|facebookexternalhit|embedly|whatsapp|skype|bingpreview|scanner|probe", re.I)
+SOURCE = re.compile(r"^[A-Za-z0-9_.-]{1,40}$")
+
+
+def _hit(kind: str, request: Request) -> None:
+    """Count one visit: the page, where the visitor came from and a one-way code that changes daily. No cookies."""
+    ua = request.headers.get("user-agent", "")
+    if not ua or BOT.search(ua):
+        return
+    from urllib.parse import urlsplit
+    ref = urlsplit(request.headers.get("referer", "")).hostname or ""
+    own = urlsplit(pages.cfg()["url"]).hostname or ""
+    if ref == own or ref.endswith("." + own):
+        ref = ""
+    src = request.query_params.get("from") or request.query_params.get("utm_source") or ""
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
+    day = time.strftime("%Y-%m-%d", time.gmtime())
+    row = {"k": kind, "p": request.url.path[:200], "r": ref[:120] or None, "s": src if SOURCE.match(src) else None,
+           "v": hashlib.sha256(f"{SECRET}|{day}|{ip}|{ua}".encode()).hexdigest()[:16]}
+
+    def save():
+        try:
+            with psycopg2.connect(os.environ["DATABASE_URL"]) as conn, conn.cursor() as cur:
+                cur.execute("INSERT INTO practice.site_hits (kind, path, ref_host, source, visitor) "
+                            "VALUES (%(k)s, %(p)s, %(r)s, %(s)s, %(v)s)", row)
+        except psycopg2.Error:
+            log.warning("could not count a visit", exc_info=True)   # counting must never break a page
+    threading.Thread(target=save, daemon=True).start()
+
+
 @app.middleware("http")
 async def headers(request: Request, call_next):
     head = request.method == "HEAD"  # uptime monitors and link checkers ask with HEAD: answer as for GET, without the body
@@ -70,6 +101,13 @@ async def headers(request: Request, call_next):
         response.headers.setdefault("Cache-Control", "public, max-age=31536000, immutable" if versioned else "public, max-age=86400")
     if head:
         return Response(status_code=response.status_code, headers=dict(response.headers))
+    if request.method == "GET" and response.status_code in (200, 206):
+        path = request.url.path
+        if (path.startswith("/static/video/tour-") and path.endswith(".mp4")
+                and request.headers.get("range", "bytes=0-").startswith("bytes=0-")):
+            _hit("tour_play", request)   # the tour only loads when someone presses play
+        elif response.headers.get("content-type", "").startswith("text/html") and response.status_code == 200:
+            _hit("view", request)
     return response
 
 

@@ -493,6 +493,9 @@ def privacy() -> str:
 <p><strong>What we collect.</strong> Only what you type into the contact form (name, email, company, role, company
 size, the systems you use and your message), plus basic server logs. We store a one-way scrambled version of your IP
 address with your message, only to block spam; it can't be turned back into the address.</p>
+<p><strong>Visit counts.</strong> To see how many people use the site, we count page visits without cookies: the page,
+the site you came from, and a one-way code that changes every day, so it can't identify you or follow you from one day
+to the next.</p>
 <p><strong>Why.</strong> To reply to your inquiry and, if you ask us to, to work with you. Nothing else.</p>
 <p><strong>Who sees it.</strong> Only {esc(c["name"])}, plus the companies that host this site and run our email,
 which handle it on our behalf. We don't sell, rent or share it, and we don't use advertising or

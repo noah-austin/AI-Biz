@@ -294,7 +294,7 @@ def describe_call(name: str, args: dict) -> str:
               "weekly_scorecard": "Reading the scorecard", "recent_changes": "Checking what changed",
               "where_we_sell_best": "Comparing where we win", "receivables": "Checking receivables",
               "data_problems": "Checking the clean-up list", "run_sql": "Running a custom query",
-              "practice_overview": "Checking today's numbers", "find_companies": "Looking through your contacts",
+              "practice_overview": "Checking today's numbers", "website_stats": "Checking website visits", "find_companies": "Looking through your contacts",
               "company_history": "Reading the history", "pipeline_report": "Looking at the pipeline",
               "time_report": "Adding up hours", "money_report": "Checking the money"}
     return labels.get(name, "Working")
@@ -303,6 +303,11 @@ def describe_call(name: str, args: dict) -> str:
 # ---------------------------------------------------------------- practice app tools
 
 PRACTICE_TOOLS = [
+    {"name": "website_stats",
+     "description": "Visits to the public website (counted without cookies): visitors today, yesterday, last 7 and 30 "
+                    "days, visitors per day, most-read pages, where visitors came from, tour video plays and enquiries.",
+     "input_schema": {"type": "object", "properties": {"days": {"type": "integer", "minimum": 1, "maximum": 365}},
+                      "additionalProperties": False}},
     {"name": "practice_overview",
      "description": "Today's headline numbers for the consulting practice: revenue and cash this year vs goal, monthly "
                     "recurring revenue, pipeline (total and weighted), conversations this month vs target, hours this week "
@@ -337,6 +342,9 @@ PRACTICE_TOOLS = [
 def run_practice(name: str, args: dict) -> dict:
     from ..practice import metrics as pm
     t = metrics.today()
+    if name == "website_stats":
+        from ..practice import website
+        return {**website.stats(int(args.get("days") or 30)), "link": "/website"}
     if name == "practice_overview":
         o = pm.overview(t)
         return {**o, "follow_ups": [dict(r, link=f"/companies/{r['id']}") for r in pm.follow_ups(t)], "link": "/"}

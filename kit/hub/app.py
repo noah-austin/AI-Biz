@@ -250,6 +250,8 @@ if "practice" in APPS:
     from ..ai import usage as _usage
     app.get("/inbox", response_class=HTMLResponse)(_html(pin.inbox_page))
     app.get("/agents", response_class=HTMLResponse)(_html(pin.agents_page))
+    from ..practice import website as pweb
+    app.get("/website", response_class=HTMLResponse)(_html(pweb.page))
 
     @app.post("/tasks")
     async def task_create(request: Request):

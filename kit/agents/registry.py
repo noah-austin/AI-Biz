@@ -100,7 +100,8 @@ AGENTS = [
                 "actually said before. Skip any that already have a pending drafted message (`recent_items`).\n"
                 "2. Call `write_brief` once with: the 3 things that matter most today (a new website enquiry always "
                 "comes first: reply within one business day), follow-ups due, tasks due, anything waiting in the "
-                "inbox, and one line on progress to the goal. Under 200 words.",
+                "inbox, one line on website visits (`website_stats`: visitors yesterday and last 7 days, tour plays) "
+                "and one line on progress to the goal. Under 200 words.",
                 WEEKDAYS, "06:45", max_steps=14),
             Job("weekly_review", "Weekly review",
                 "Write the Monday review. Read `weekly_scorecard`, `practice_overview`, `pipeline_report` and "

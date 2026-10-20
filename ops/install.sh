@@ -208,6 +208,8 @@ GRANT USAGE ON SCHEMA practice TO $role;
 GRANT INSERT ON practice.inbound_leads TO $role;
 GRANT SELECT (ip_hash, created_at) ON practice.inbound_leads TO $role;
 GRANT USAGE ON SEQUENCE practice.inbound_leads_id_seq TO $role;
+GRANT INSERT ON practice.site_hits TO $role;
+GRANT USAGE ON SEQUENCE practice.site_hits_id_seq TO $role;
 SQL
     local hub_host; hub_host="$(grep -h '^[a-z0-9.-]* {' "$CADDY_SITES/$hub.caddy" 2>/dev/null | sed 's/ {//' || true)"
     umask 077

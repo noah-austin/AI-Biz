@@ -30,6 +30,7 @@ PRACTICE_NAV = [
     ("/time", "Time", False),
     ("/money", "Money", False),
     ("/agents", "Agents", False),
+    ("/website", "Website", False),
 ]
 NAV = [  # path, label, admin only, group (pages in a group share one menu item and show tabs), app it needs
     ("/", "Home", False, None, "analytics"),
