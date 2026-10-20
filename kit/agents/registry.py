@@ -53,6 +53,8 @@ AGENTS = [
                 "Strongly prefer companies with an email address published on a page you can cite: the contact's own, "
                 "or a general business inbox (info@, contact@, sales@), never HR, billing or support. Put it in "
                 "`contact_email` with the page in `email_source`. Never guess an address from a name pattern. "
+                "Introduce Noah as: \"I'm Noah, an operations leader in Austin; at Google I built the operations system "
+                "Google Fiber used to expand into new markets. Now, I connect...\" (then what he'd do for them). "
                 "The first message links the main site in the body: \"You can see how it works at sanfordoperations.com.\" "
                 "and ends with a short ask for a 20-minute call. "
                 "Quality over quantity: three excellent prospects beat ten weak ones.",
