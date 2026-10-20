@@ -26,13 +26,12 @@ Everything on screen is a function of time (`renderAt(t)` in `scene.html`); capt
 
 ## The tour and the overview
 
-`combined.py` makes two videos from this walkthrough's demo part (the alerts screen left out, the demo at 1.25×), each
-closing on the explainer's end card:
-- **The tour** (about 40 s): its own title card, "From scattered data to working tools", then this walkthrough's opening
+`combined.py` makes two videos from this walkthrough's demo part (played at 1.25×), each closing on the explainer's end card:
+- **The tour** (about 47 s, every screen including alerts): its own title card, "From scattered data to working tools", then this walkthrough's opening
   with its captions as three steps (we connect your systems; everything lands in one place; then we build the tools),
   then the demo. It plays on the What we build page (`website/static/video/tour-{wide,tall}.mp4`). It deliberately
   looks different from the home page explainer, so visitors don't take it for the same video.
-- **The overview** (about 52 s): the explainer's story first, then the demo. `sanford-overview.mp4` here, full quality,
+- **The overview** (about 52 s): the explainer's story first, then the demo without the alerts screen. `sanford-overview.mp4` here, full quality,
   for LinkedIn and follow-up emails. Rebuilt only with `--overview`.
 
 The tall cuts film the same scene with a camera that follows the action (`CAM`), with the captions above it in bigger

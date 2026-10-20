@@ -25,10 +25,10 @@ STATIC = HERE.parents[1] / "static" / "video"
 FPS = 30
 EXPLAINER_END = 20.9          # the explainer plays to "Then we build on it." (then fades)
 END_CARD = (22.4, 26.0)       # the explainer's end card closes both cuts
-# scene time ranges of the demo, played at the given speed; the alerts screen (38-44.7 s) is left out
+# the overview (LinkedIn): scene time ranges of the demo, at the given speed; it leaves out the alerts screen (38-44.7 s)
 EDIT = [(12.5, 38.0, 1.25), (44.75, 54.6, 1.25)]
 # the tour: the walkthrough's own opening (systems -> hub -> browser), then the demo; ranges that meet play on unbroken
-TOUR = [(3.3, 15.0, 1.15), (15.0, 38.0, 1.25), (44.75, 54.6, 1.25)]
+TOUR = [(3.3, 15.0, 1.15), (15.0, 54.6, 1.25)]
 # the tour's opening captions, as three steps (replacing scene.html's first three captions in this cut only)
 TOUR_STEPS = [["1. We connect your systems.", "CRM, accounting, ERP, field service, payroll, spreadsheets. Read-only."],
               ["2. Everything lands in one place.", "Your data hub: one database you own, updated every hour."],
@@ -40,6 +40,7 @@ CAPS = [[3.4, 7.2, *TOUR_STEPS[0]], [7.6, 11.2, *TOUR_STEPS[1]], [11.6, 15.0, *T
         [15.4, 22.6, "One home page for the whole business.", "The numbers that matter, updated every hour."],
         [23.0, 30.2, "The weekly scorecard fills itself in.", "Green means the goal was hit. Nobody types it up."],
         [30.6, 38.2, "Ask questions in plain English.", "Answers come straight from your own data."],
+        [38.6, 44.6, "Alerts reach the right person.", "When something needs attention, the right leader hears about it."],
         [45.0, 53.6, "AI agents do the daily legwork.", "They prepare the work. A person approves anything that goes out."]]
 # camera: [scene time, centre x, centre y, zoom] in film pixels (the film is 1920 x 1080; the camera is 1008 x 1284)
 CAM = [[3.3, 960, 600, 0.75], [11.4, 960, 600, 0.75], [13.2, 960, 621, 0.593], [14.4, 960, 621, 0.593],   # opening: systems fly into the hub
@@ -47,6 +48,7 @@ CAM = [[3.3, 960, 600, 0.75], [11.4, 960, 600, 0.75], [13.2, 960, 621, 0.593], [
        [22.6, 700, 600, 1.3],                                                                             # click Scorecard
        [23.6, 520, 640, 1.5], [24.6, 520, 640, 1.5], [26.2, 1010, 640, 1.5], [28.8, 1010, 640, 1.5],     # weeks fill in
        [30.6, 1480, 620, 1.5], [38.0, 1480, 620, 1.5],                                                    # Ask AI panel
+       [38.9, 585, 640, 1.25], [41.1, 585, 640, 1.25], [41.9, 1600, 700, 1.4], [44.0, 1600, 700, 1.4],    # alerts, then the phone
        [44.75, 592, 640, 1.3], [48.4, 592, 640, 1.3], [49.4, 1390, 640, 1.3], [54.6, 1390, 640, 1.3]]    # brief, then approval
 
 TALL = """<style>
@@ -173,22 +175,25 @@ def assemble(cut: str, explainer: Path, demo: list[Path], out: Path, crf: int, w
 
 
 def assemble_tour(cut: str, title: Path, demo: list[Path], explainer: Path, out: Path, crf: int, width: int | None):
-    """title card -> crossfade -> demo part 1 -> crossfade -> demo part 2 -> crossfade -> end card."""
+    """title card -> crossfade -> the demo piece(s), crossfaded where the edit cuts -> crossfade -> end card."""
     ff = sys.argv[3] if len(sys.argv) > 3 else "ffmpeg"
-    d1 = len(list(demo[0].glob("*.png"))) / FPS
-    d2 = len(list(demo[1].glob("*.png"))) / FPS
+    lengths = [len(list(d.glob("*.png"))) / FPS for d in demo]
     scale = f",scale={width}:-2:flags=lanczos" if width else ""
     norm = f"fps={FPS},format=yuv420p,settb=AVTB"
-    t1 = TITLE_SECONDS
-    graph = (f"[0:v]setpts=PTS-STARTPTS,{norm}[t];[1:v]setpts=PTS-STARTPTS,{norm}[a];[2:v]setpts=PTS-STARTPTS,{norm}[b];"
-             f"[3:v]trim=start={END_CARD[0]}:end={END_CARD[1]},setpts=PTS-STARTPTS,{norm}[e];"
-             f"[t][a]xfade=transition=fade:duration=0.5:offset={t1 - 0.5:.3f}[ta];"
-             f"[ta][b]xfade=transition=fade:duration=0.3:offset={t1 - 0.5 + d1 - 0.3:.3f}[tab];"
-             f"[tab][e]xfade=transition=fade:duration=0.5:offset={t1 - 0.5 + d1 - 0.3 + d2 - 0.5:.3f}{scale}[v]")
+    n = len(demo)
+    graph = [f"[{i}:v]setpts=PTS-STARTPTS,{norm}[s{i}]" for i in range(n + 1)]
+    graph.append(f"[{n + 1}:v]trim=start={END_CARD[0]}:end={END_CARD[1]},setpts=PTS-STARTPTS,{norm}[s{n + 1}]")
+    t, prev = TITLE_SECONDS, "s0"
+    for i in range(1, n + 2):   # each join: 0.5 s into and out of the cards, 0.3 s between demo pieces
+        d = 0.5 if i in (1, n + 1) else 0.3
+        graph.append(f"[{prev}][s{i}]xfade=transition=fade:duration={d}:offset={t - d:.3f}[j{i}]")
+        t, prev = t - d + (lengths[i - 1] if i <= n else 0), f"j{i}"
+    graph[-1] = graph[-1].replace(f"[j{n + 1}]", f"{scale}[v]")
     seq = lambda d: ["-framerate", str(FPS), "-i", str(d / "f%04d.png")]
-    cmd = [ff, "-loglevel", "error", "-y", "-loop", "1", "-framerate", str(FPS), "-t", str(t1), "-i", str(title),
-           *seq(demo[0]), *seq(demo[1]), *seq(explainer), "-filter_complex", graph, "-map", "[v]", "-c:v", "libx264",
-           "-preset", "veryslow", "-tune", "animation", "-crf", str(crf), "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(out)]
+    cmd = [ff, "-loglevel", "error", "-y", "-loop", "1", "-framerate", str(FPS), "-t", str(TITLE_SECONDS), "-i", str(title),
+           *[x for d in demo for x in seq(d)], *seq(explainer), "-filter_complex", ";".join(graph), "-map", "[v]",
+           "-c:v", "libx264", "-preset", "veryslow", "-tune", "animation", "-crf", str(crf), "-pix_fmt", "yuv420p",
+           "-movflags", "+faststart", str(out)]
     subprocess.run(cmd, check=True)
 
 

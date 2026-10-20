@@ -111,7 +111,7 @@ def explainer() -> str:
 def overview_video() -> str:
     """The tour (website/brand/demo-video/combined.py): systems into one place, then the tools on a demo hub. Played on request, a tall cut on phones."""
     u = lambda name: f"/static/{name}?v={ASSET_V[name]}"
-    label = "Video: a company's systems connected into one data hub, then a tour of the tools built on it: home page, weekly scorecard, Ask AI and AI agents."
+    label = "Video: a company's systems connected into one data hub, then a tour of the tools built on it: home page, weekly scorecard, Ask AI, alerts and AI agents."
     return '<div class="overview">' + "".join(
         f'<video class="overview-video {cut}" controls playsinline preload="none" poster="{u(f"video/tour-{cut}.jpg")}" '
         f'aria-label="{label}"><source src="{u(f"video/tour-{cut}.mp4")}" type="video/mp4"></video>' for cut in ("wide", "tall")) + "</div>"
