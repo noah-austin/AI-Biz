@@ -49,6 +49,9 @@ CHANGE_TOOLS = [
      "company). done: finished.",
      "input_schema": _schema({"id": {"type": "integer"}, "action": {"type": "string", "enum": ["approve", "dismiss", "sent", "done"]}},
                              ["id", "action"])},
+    {"name": "restore_item", "description": "Bring back an Inbox item that was dismissed, so it waits for a decision again. "
+     "Optionally replace its draft: a prospect's first message, or a message's or post's text.",
+     "input_schema": _schema({"id": {"type": "integer"}, "first_message": STR}, ["id"])},
     {"name": "decide_enquiry", "description": "Act on a website enquiry. add: add it to the pipeline. dismiss: drop it.",
      "input_schema": _schema({"id": {"type": "integer"}, "action": {"type": "string", "enum": ["add", "dismiss"]}}, ["id", "action"])},
     {"name": "add_company", "description": "Add a company to the pipeline (someone Noah met, a referral...).",
@@ -155,6 +158,11 @@ def run(name: str, args: dict | None = None, run_id: int | None = None, by: str 
         if args["action"] == "sent" and i["kind"] != "message":
             raise ToolError("Only messages can be marked sent.")
         nxt = inbox.decide(int(args["id"]), args["action"])
+        out = {"ok": True, "link": nxt}
+    elif name == "restore_item":
+        nxt = inbox.restore(int(args["id"]), args.get("first_message") or None)
+        if not nxt:
+            raise ToolError(f"No dismissed Inbox item {args['id']}.")
         out = {"ok": True, "link": nxt}
     elif name == "decide_enquiry":
         if not db.one("SELECT 1 AS x FROM practice.inbound_leads WHERE id = %(i)s AND status = 'new'", {"i": args["id"]}):

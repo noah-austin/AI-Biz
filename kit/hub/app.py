@@ -288,11 +288,14 @@ if "practice" in APPS:
 
     @app.post("/inbox/{item_id}/{action}")
     async def inbox_decide(request: Request, item_id: int, action: str):
-        if action not in ("approve", "dismiss", "sent", "done"):
+        if action not in ("approve", "dismiss", "sent", "done", "restore"):
             return _not_found(request)
         if await _form(request) is None:
             return _bad_form(request)
-        nxt = await run_in_threadpool(pin.decide, item_id, action)
+        if action == "restore":
+            nxt = await run_in_threadpool(pin.restore, item_id) or "/inbox"
+        else:
+            nxt = await run_in_threadpool(pin.decide, item_id, action)
         return RedirectResponse(nxt, status_code=303)
 
     @app.post("/agents/{agent}/{job}/run")

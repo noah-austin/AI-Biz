@@ -5,6 +5,8 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
+import psycopg2.extras
+
 from kit import db
 from kit.agents import engine, tools as agent_tools
 from kit.agents.registry import BY_KEY
@@ -104,3 +106,15 @@ def test_schedule_picks_due_jobs_once(clean):
 
 def test_posts_never_mention_clients_rule_is_in_prompt():
     assert "never name or hint at a client" in BY_KEY["social"].job("weekly_posts").instructions.lower()
+
+
+def test_a_dismissed_item_can_be_restored_with_a_corrected_draft(clean):
+    with db.connect() as conn:
+        item = db.one("""INSERT INTO practice.agent_items (agent, kind, title, body, data)
+                         VALUES ('bizdev', 'prospect', 'Restore Test Co', '', %(d)s) RETURNING id""",
+                      {"d": psycopg2.extras.Json({"company": "Restore Test Co", "first_message": "old wording"})}, conn=conn)["id"]
+    inbox.decide(item, "dismiss")
+    assert inbox.restore(item, "new wording") == f"/inbox#item-{item}"
+    row = db.one("SELECT status, data FROM practice.agent_items WHERE id = %(i)s", {"i": item})
+    assert row["status"] == "pending" and row["data"]["first_message"] == "new wording"
+    assert inbox.restore(item) is None                     # only dismissed items come back

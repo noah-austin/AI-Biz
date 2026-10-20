@@ -125,6 +125,14 @@ def inbox_page(request):
             blocks.append(f'<section class="card" id="{kind}"><div class="card-head"><h2>{KIND_LABEL[kind]} '
                           f'<span class="meta">({len(groups[kind])})</span></h2></div>'
                           + "".join(_item(i, token) for i in groups[kind]) + "</section>")
+    gone = db.query("""SELECT * FROM practice.agent_items WHERE status = 'dismissed' AND decided_at > now() - interval '30 days'
+                       ORDER BY decided_at DESC LIMIT 50""")
+    if gone:
+        rows = "".join(f'<li><span>{esc(KIND_LABEL.get(g["kind"], g["kind"]).rstrip("s"))}: <strong>{esc(g["title"])}</strong> '
+                       f'<span class="meta">dismissed {ui.short_date(g["decided_at"].date())}</span></span>'
+                       + _btn(token, "/inbox/%d/restore" % g["id"], "Restore") + "</li>" for g in gone)
+        blocks.append(f'<details class="card dismissed"><summary>Dismissed in the last 30 days ({len(gone)})</summary>'
+                      f'<ul class="dismissed-list">{rows}</ul></details>')
     empty = ("" if items or leads else '<section class="card"><p>Nothing waiting. The agents drop their work here: new prospects, '
              'drafted messages and posts, briefs and suggested tasks. <a href="/agents">See the agents</a>.</p></section>')
     body = (f'<p class="lead">Everything the agents produce waits here. Nothing is sent or posted until you do it yourself.</p>'
@@ -179,6 +187,22 @@ def decide(item_id: int, action: str) -> str:
         db.execute("UPDATE practice.agent_items SET status = %(s)s, decided_at = now() WHERE id = %(i)s",
                    {"s": status, "i": item_id}, conn)
     return nxt
+
+
+def restore(item_id: int, first_message: str | None = None) -> str | None:
+    """Bring back a dismissed item so it waits for a decision again, optionally with a corrected draft.
+    Returns where to go next, or None if there was no such dismissed item."""
+    i = db.one("SELECT kind, data FROM practice.agent_items WHERE id = %(i)s AND status = 'dismissed'", {"i": item_id})
+    if not i:
+        return None
+    data, body = i["data"] or {}, None
+    if first_message and i["kind"] == "prospect":
+        data = {**data, "first_message": first_message}
+    elif first_message and i["kind"] in ("message", "post"):
+        body = first_message
+    db.execute("""UPDATE practice.agent_items SET status = 'pending', decided_at = NULL, data = %(d)s,
+                  body = COALESCE(%(b)s, body) WHERE id = %(i)s""", {"d": psycopg2.extras.Json(data), "b": body, "i": item_id})
+    return f"/inbox#item-{item_id}"
 
 
 def _job_name(agent, job):

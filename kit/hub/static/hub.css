@@ -413,3 +413,6 @@ td.heat { font-variant-numeric: tabular-nums; }
 
 /* Shown inside the website's demo page */
 html.embedded .demo-banner { display: none; }
+.dismissed summary { cursor: pointer; font-weight: 600; }
+.dismissed-list { list-style: none; margin: 10px 0 0; padding: 0; }
+.dismissed-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--grid); }
