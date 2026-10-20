@@ -16,7 +16,7 @@ LOCAL_DAY = "(at AT TIME ZONE core.client_tz())::date"
 def stats(days: int = 30) -> dict:
     """Visitors per day, top pages and where people came from, over the last `days` days (today included)."""
     since = {"d": days - 1}
-    window = f"{LOCAL_DAY} > core.local_today() - %(d)s"
+    window = f"{LOCAL_DAY} >= core.local_today() - %(d)s"   # today and the days - 1 before it
     daily = db.query(f"""SELECT {LOCAL_DAY} AS day, count(DISTINCT visitor) AS visitors, count(*) AS views
                          FROM practice.site_hits WHERE kind = 'view' AND {window} GROUP BY 1 ORDER BY 1""", since)
     by_day = {r["day"]: r for r in daily}

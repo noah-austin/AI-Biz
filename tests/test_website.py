@@ -186,4 +186,6 @@ def test_visits_are_counted_without_cookies_and_bots_are_left_out(site):
     s = website.stats(30)
     assert s["visitors_today"] == 1 and s["tour_plays"] == 1 and s["pages"][0]["path"] == "/what-we-build"
     assert {r["source"] for r in s["sources"]} == {"Your link: email"}
+    one = website.stats(1)                                   # today only
+    assert one["visitors"] == 1 and one["pages"] and one["sources"]
     db.execute("DELETE FROM practice.site_hits")
