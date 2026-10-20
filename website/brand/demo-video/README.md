@@ -23,3 +23,19 @@ ffmpeg -framerate 30 -i frames/f%04d.png -c:v libx264 -crf 18 -pix_fmt yuv420p -
 ```
 
 Everything on screen is a function of time (`renderAt(t)` in `scene.html`); captions and timings are in `CAPS` and the times in `renderAt`.
+
+## The overview video (explainer + demo)
+
+`combined.py` joins the explainer's story (`../animation`, to "Then we build on it.") with this walkthrough's demo part,
+leaving out the alerts screen and playing the demo at 1.25×, then closes on the explainer's end card: about 52 seconds.
+It writes `website/static/video/overview-wide.mp4` and `overview-tall.mp4` (played on the What we build page) and
+`sanford-overview.mp4` here (full quality, for LinkedIn and follow-up emails).
+
+The tall cut films the same scene with a camera that follows the action (`CAM` in `combined.py`), with the captions above
+it in bigger type, so the screens stay readable on a phone.
+
+```bash
+python build.py                                              # capture.html
+# explainer frames at 30 fps in FRAMES/wide and FRAMES/tall (see ../animation/README.md)
+python combined.py FRAMES /tmp/overview-work [path to ffmpeg]
+```

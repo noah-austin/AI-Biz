@@ -498,3 +498,10 @@ main { flex: 1; }
 h1 { overflow-wrap: anywhere; }
 @media (max-width: 340px) { .before .mini-sheet td { padding: 3px; font-size: 10.5px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+
+/* Overview video (What we build): plays on request; the tall cut on phones. */
+.overview { max-width: 1040px; margin: 0 auto; border-radius: 14px; border: 1px solid var(--line); overflow: hidden; background: #f4efe3; }
+.overview-video { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: contain; background: #f4efe3; }
+.overview-video.tall { display: none; aspect-ratio: 2 / 3; }
+@media (max-width: 640px) { .overview-video.wide { display: none; } .overview-video.tall { display: block; } }
+.overview + .fine { margin-top: 14px; }

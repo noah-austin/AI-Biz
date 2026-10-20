@@ -29,7 +29,8 @@ def _version(name: str) -> str:
     return hashlib.sha256((HERE / "static" / name).read_bytes()).hexdigest()[:10]
 
 
-VIDEO = [f"video/explainer-{cut}{end}" for cut in ("wide", "tall") for end in (".mp4", ".jpg", "-end.jpg")]
+VIDEO = ([f"video/explainer-{cut}{end}" for cut in ("wide", "tall") for end in (".mp4", ".jpg", "-end.jpg")]
+         + [f"video/overview-{cut}{end}" for cut in ("wide", "tall") for end in (".mp4", ".jpg")])
 ASSET_V = {name: _version(name) for name in ("site.css", *VIDEO)}
 
 
@@ -107,6 +108,15 @@ def explainer() -> str:
   </div>"""
 
 
+def overview_video() -> str:
+    """The overview video (website/brand/demo-video/combined.py): played on request, a tall cut on phones."""
+    u = lambda name: f"/static/{name}?v={ASSET_V[name]}"
+    label = "Video: how Sanford Operations brings a company's data together, then a click-through of a demo company's hub."
+    return '<div class="overview">' + "".join(
+        f'<video class="overview-video {cut}" controls playsinline preload="none" poster="{u(f"video/overview-{cut}.jpg")}" '
+        f'aria-label="{label}"><source src="{u(f"video/overview-{cut}.mp4")}" type="video/mp4"></video>' for cut in ("wide", "tall")) + "</div>"
+
+
 def cta_row(primary=("Book a call", "/contact?interest=call"), secondary=("What we build →", "/what-we-build")) -> str:
     return (f'<div class="cta-row"><a class="btn" href="{primary[1]}">{esc(primary[0])}</a>'
             f'<a class="btn ghost" href="{secondary[1]}">{esc(secondary[0])}</a></div>')
@@ -177,30 +187,30 @@ def home() -> str:
   <p class="who-note">at companies of 20 to 1,000 people, in any industry, that run on several systems and don't have a data team.</p>
 </div></section>
 
-<section class="explainer-section"><div class="wrap">
-  {sec_head("In under 30 seconds", "What we do", "Your systems come together in your data hub, so they work as one. Then we build reports, tools and AI on top.")}
-  {explainer()}
-</div></section>
-
-<section class="band"><div class="wrap">
-  {sec_head("The difference", "From scattered to one place", "Most companies already have the data. It's just spread across systems that don't talk to each other.")}
+<section><div class="wrap">
+  {sec_head("The problem", "Your data is everywhere. Your answers aren't.", "Most companies already have the data they need. It's spread across systems that don't talk to each other, so reports get rebuilt by hand and two meetings end up with two different numbers.")}
   {v.before_after()}
 </div></section>
 
+<section class="band explainer-section"><div class="wrap">
+  {sec_head("What we do", "Bring it together, then put it to work", "We connect your systems into one data hub that you own. Then we build the reports, tools and AI that weren't possible while everything was scattered. Here it is in under 30 seconds.")}
+  {explainer()}
+</div></section>
+
 <section><div class="wrap">
-  {sec_head("What we build", "One foundation, everything on top", "Every build is custom. These are the pieces we put together for you.")}
+  {sec_head("What you get", "One foundation, everything on top", "With your data in one place, these become possible. Every build is custom: we put together the pieces that fit how you run.")}
   <div class="show-grid">{cards}</div>
-  <p class="fine center">Examples use made-up data.</p>
+  <p class="fine center">Examples use made-up data. <a href="/what-we-build">See everything we build →</a></p>
 </div></section>
 
 <section class="agents-band"><div class="wrap">
-  {sec_head("AI agents", "A day with your agents", "AI assistants, each with one job. They work from your data every day and hand the result to the right person.")}
+  {sec_head("AI agents", "A day with your agents", "Then AI does the routine work. Each agent has one job, works from the same data, and hands the result to the right person.")}
   {v.agent_day()}
   <p class="approve-note">{v.icon("lock")}<span>Agents prepare the work. A person approves anything that goes out.</span></p>
 </div></section>
 
 <section><div class="wrap">
-  {sec_head("How it works", "Four steps, no surprises")}
+  {sec_head("How we work", "Four steps, no surprises", "From a first conversation to a hub that keeps growing with you.")}
   <ol class="flow-steps">{step_html}</ol>
 </div></section>
 
@@ -279,18 +289,25 @@ def what_we_build() -> str:
 <section class="hero slim with-cta"><div class="wrap">
   <p class="eyebrow">What we build</p>
   <h1>Your data in one place, put to work</h1>
-  <p class="lead">Start with your data hub, then add the reports, tools and AI you need, on top of the systems you already use.</p>
+  <p class="lead">Every build starts with your data hub. Reports, tools, AI and AI agents are layered on top, around the
+  systems you already use.</p>
   {cta_row(secondary=("Request a live demo →", "/contact?interest=demo"))}
+</div></section>
+
+<section class="band"><div class="wrap">
+  {sec_head("See it working", "From scattered systems to a working hub", "Under a minute: the idea, then a click-through of a demo company's hub.")}
+  {overview_video()}
+  <p class="fine center">Bluestem Facility Services is a fictional demo company with made-up data.</p>
 </div></section>
 
 <section><div class="wrap">
   <div class="split">
     <div>
-      <p class="eyebrow">The foundation</p>
+      <p class="eyebrow">Layer 1 · The foundation</p>
       <h2>Your data hub</h2>
       <p>We connect the systems your company runs on into one database that you own. It updates on its own and keeps history.
       Every number is defined once, in plain English, so it means the same thing everywhere.</p>
-      <p>Before showing you anything new, we reproduce the reports you already use, to the cent.</p>
+      <p>Before showing you anything new, we reproduce the reports you already use, to the cent. Everything below is built on this.</p>
     </div>
     {v.mock_foundation()}
   </div>
@@ -299,7 +316,7 @@ def what_we_build() -> str:
 </div></section>
 
 <section class="band"><div class="wrap">
-  {sec_head("Reports and tools", "What your team uses every day")}
+  {sec_head("Layer 2 · Reports and tools", "What your team uses every day", "Built on the hub, so every report and tool shows the same numbers.")}
   <div class="show-grid">
     <div class="show-card"><div class="show-visual">{v.mock_scorecard()}</div><h3>A scorecard that fills itself in</h3><p>The weekly numbers leadership runs on.</p></div>
     <div class="show-card"><div class="show-visual">{v.mock_dashboard()}</div><h3>Dashboards and drill-downs</h3><p>By location, team or person, down to every record.</p></div>
@@ -312,8 +329,9 @@ def what_we_build() -> str:
   <div class="split">
     {v.mock_ask()}
     <div>
-      <p class="eyebrow">AI</p>
+      <p class="eyebrow">Layer 3 · AI</p>
       <h2>AI that knows your business</h2>
+      <p>Because the data is clean and defined once, AI can answer from it and show its working.</p>
       <ul class="checks">
         <li><strong>Ask in plain English,</strong> with the numbers shown so you can check them.</li>
         <li><strong>Insights:</strong> what changed this week and why.</li>
@@ -324,7 +342,7 @@ def what_we_build() -> str:
 </div></section>
 
 <section class="agents-band"><div class="wrap">
-  {sec_head("AI agents", "Agents that do the work", "AI assistants, each with one job, working from your data every day.")}
+  {sec_head("Layer 4 · AI agents", "Agents that do the work", "AI assistants, each with one job, working from your data every day.")}
   <div class="split agents-split">
     {v.mock_brief()}
     <div class="agent-list">{agent_html}</div>
@@ -337,8 +355,9 @@ def what_we_build() -> str:
     <div>
       <p class="eyebrow">Pricing</p>
       <h2>How it's priced</h2>
-      <p>Each build is quoted to your company. After our first conversations you get a written proposal with a fixed
-      quote, then a monthly plan keeps it running and adds what's next.</p>
+      <p>You don't have to start with all four layers. Most companies start with the hub and the reports they already
+      run, then add the rest. Each build is quoted to your company: after our first conversations you get a written
+      proposal with a fixed quote, then a monthly plan keeps it running and adds what's next.</p>
       <ul class="factors">{factor_html}</ul>
     </div>
     <div>

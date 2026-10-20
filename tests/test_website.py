@@ -154,3 +154,11 @@ def test_form_errors_point_at_their_fields(site):
     client, site_app = site
     r = post(client, site_app, email="not-an-email")
     assert r.status_code == 400 and 'aria-invalid="true" aria-describedby="err-email" autofocus' in r.text
+
+
+def test_what_we_build_offers_the_overview_video_on_request(site):
+    client, _ = site
+    html = client.get("/what-we-build").text
+    assert html.count('class="overview-video') == 2 and 'preload="none"' in html and "autoplay" not in html.split('class="overview"')[1].split("</div>")[0]
+    for name in ("overview-wide.mp4", "overview-tall.mp4", "overview-wide.jpg", "overview-tall.jpg"):
+        assert client.get(f"/static/video/{name}").status_code == 200, name
