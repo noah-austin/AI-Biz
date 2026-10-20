@@ -1,5 +1,6 @@
 """The Inbox (agents' work waiting for approval) and the Agents page."""
 import datetime as dt
+import re
 
 import psycopg2.extras
 
@@ -13,6 +14,15 @@ from . import metrics as pm
 KIND_LABEL = {"prospect": "New prospects", "message": "Messages to send", "post": "LinkedIn posts",
               "brief": "Briefs", "task": "Suggested tasks", "note": "Notes"}
 ORDER = ["brief", "message", "prospect", "post", "task", "note"]
+
+
+def as_list(v) -> list[str]:
+    """A list field (signals, sources) that may have arrived as one piece of text: split it into items."""
+    if not v:
+        return []
+    if isinstance(v, str):
+        v = re.split(r"\n+|;\s+", v)
+    return [str(x).strip().lstrip("-•").strip() for x in v if str(x).strip().lstrip("-•").strip()]
 
 
 def _btn(token, action, label, cls="btn secondary", confirm=None):
@@ -30,9 +40,9 @@ def _item(i, token):
         facts = " · ".join(esc(x) for x in (d.get("industry"), d.get("size"),
                                             ", ".join(v for v in (d.get("city"), d.get("state")) if v)) if x)
         contact = " · ".join(esc(x) for x in (d.get("contact_name"), d.get("contact_title")) if x) or "Contact: not found yet"
-        signals = "".join(f"<li>{esc(x)}</li>" for x in d.get("signals") or [])
+        signals = "".join(f"<li>{esc(x)}</li>" for x in as_list(d.get("signals")))
         sources = " ".join(f'<a href="{esc(u)}" target="_blank" rel="noopener nofollow">source {n}</a>'
-                           for n, u in enumerate(d.get("sources") or [], 1))
+                           for n, u in enumerate(as_list(d.get("sources")), 1))
         site = f'<a href="{esc(d["website"])}" target="_blank" rel="noopener nofollow">{esc(d["website"])}</a>' if d.get("website") else ""
         body = (f'<p class="meta">{facts}</p><p><strong>{contact}</strong> {site}</p><p>{esc(d.get("why_fit"))}</p>'
                 f'{"<ul class=signals>" + signals + "</ul>" if signals else ""}'
@@ -153,8 +163,8 @@ def decide(item_id: int, action: str) -> str:
             notes = "\n".join(x for x in [
                 f"Found by the business development agent on {i['created_at']:%b %-d, %Y}.",
                 f"Why they fit: {d.get('why_fit')}" if d.get("why_fit") else "",
-                ("Signals: " + "; ".join(d.get("signals") or [])) if d.get("signals") else "",
-                ("Sources: " + " ".join(d.get("sources") or [])) if d.get("sources") else "",
+                ("Signals: " + "; ".join(as_list(d.get("signals")))) if d.get("signals") else "",
+                ("Sources: " + " ".join(as_list(d.get("sources")))) if d.get("sources") else "",
                 f"Angle: {d.get('angle')}" if d.get("angle") else ""] if x)
             row = db.one("""INSERT INTO practice.companies (name, kind, stage, industry, size_note, city, website, contact_name,
                                                            contact_title, source, next_step, next_step_date, notes)

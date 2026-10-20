@@ -118,3 +118,8 @@ def test_a_dismissed_item_can_be_restored_with_a_corrected_draft(clean):
     row = db.one("SELECT status, data FROM practice.agent_items WHERE id = %(i)s", {"i": item})
     assert row["status"] == "pending" and row["data"]["first_message"] == "new wording"
     assert inbox.restore(item) is None                     # only dismissed items come back
+
+
+def test_signals_sent_as_text_still_show_as_a_list():
+    assert inbox.as_list("Acquired X in 2026; 20+ sites\n- New ERP") == ["Acquired X in 2026", "20+ sites", "New ERP"]
+    assert inbox.as_list(["a", " b "]) == ["a", "b"] and inbox.as_list(None) == []

@@ -107,7 +107,9 @@ def run(name: str, args: dict, run_id: int, agent: str) -> str:
         hits += [r for r in proposed if n and (_norm(r["name"]) == n or (w and _norm(r["website"]) == w))]
         out = {"exists": bool(hits), "matches": hits[:5]}
     elif name == "propose_prospect":
-        sources = [s for s in (args.get("sources") or []) if str(s).startswith(("http://", "https://"))]
+        from ..practice.inbox import as_list
+        args["signals"] = as_list(args.get("signals"))   # a list, even if it arrived as one piece of text
+        sources = [s for s in as_list(args.get("sources")) if str(s).startswith(("http://", "https://"))]
         if not sources:
             raise ToolError("Every prospect needs at least one source link (http/https).")
         if json.loads(run("company_exists", {"name": args["company"], "website": args.get("website")}, run_id, agent))["exists"]:
