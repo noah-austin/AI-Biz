@@ -123,3 +123,17 @@ def test_a_dismissed_item_can_be_restored_with_a_corrected_draft(clean):
 def test_signals_sent_as_text_still_show_as_a_list():
     assert inbox.as_list("Acquired X in 2026; 20+ sites\n- New ERP") == ["Acquired X in 2026", "20+ sites", "New ERP"]
     assert inbox.as_list(["a", " b "]) == ["a", "b"] and inbox.as_list(None) == []
+
+
+def test_an_approved_prospect_keeps_its_published_email(clean):
+    with db.connect() as conn:
+        item = db.one("""INSERT INTO practice.agent_items (agent, kind, title, body, data)
+                         VALUES ('bizdev', 'prospect', 'Email Test Co', '', %(d)s) RETURNING id""",
+                      {"d": psycopg2.extras.Json({"company": "Email Test Co", "contact_email": "info@emailtest.example",
+                                                  "email_source": "https://emailtest.example/contact", "subject": "Hello",
+                                                  "first_message": "Hi"})}, conn=conn)["id"]
+    inbox.decide(item, "approve")
+    co = db.one("SELECT id, contact_email, notes FROM practice.companies WHERE name = 'Email Test Co'")
+    assert co["contact_email"] == "info@emailtest.example" and "emailtest.example/contact" in co["notes"]
+    msg = db.one("SELECT data FROM practice.agent_items WHERE company_id = %(c)s AND kind = 'message'", {"c": co["id"]})
+    assert msg["data"]["to"] == "info@emailtest.example" and msg["data"]["subject"] == "Hello"

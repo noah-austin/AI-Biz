@@ -38,6 +38,10 @@ PROPOSE_TOOLS = [
          "city": STR, "state": STR,
          "contact_name": {"type": "string", "description": "Only if a cited public source names them."},
          "contact_title": STR,
+         "contact_email": {"type": "string", "description": "Only an address that appears on a page you cite (the person's, or "
+                           "a general business inbox). Never guessed."},
+         "email_source": {"type": "string", "description": "The page where contact_email appears."},
+         "subject": {"type": "string", "description": "Subject line for the first message, if sent by email."},
          "why_fit": {"type": "string", "description": "2-3 sentences."},
          "signals": {"type": "array", "items": STR, "maxItems": 8},
          "sources": URLS, "angle": STR,

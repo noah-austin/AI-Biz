@@ -39,7 +39,7 @@ def _item(i, token):
     if i["kind"] == "prospect":
         facts = " · ".join(esc(x) for x in (d.get("industry"), d.get("size"),
                                             ", ".join(v for v in (d.get("city"), d.get("state")) if v)) if x)
-        contact = " · ".join(esc(x) for x in (d.get("contact_name"), d.get("contact_title")) if x) or "Contact: not found yet"
+        contact = " · ".join(esc(x) for x in (d.get("contact_name"), d.get("contact_title"), d.get("contact_email")) if x) or "Contact: not found yet"
         signals = "".join(f"<li>{esc(x)}</li>" for x in as_list(d.get("signals")))
         sources = " ".join(f'<a href="{esc(u)}" target="_blank" rel="noopener nofollow">source {n}</a>'
                            for n, u in enumerate(as_list(d.get("sources")), 1))
@@ -165,21 +165,23 @@ def decide(item_id: int, action: str) -> str:
                 f"Why they fit: {d.get('why_fit')}" if d.get("why_fit") else "",
                 ("Signals: " + "; ".join(as_list(d.get("signals")))) if d.get("signals") else "",
                 ("Sources: " + " ".join(as_list(d.get("sources")))) if d.get("sources") else "",
-                f"Angle: {d.get('angle')}" if d.get("angle") else ""] if x)
+                f"Angle: {d.get('angle')}" if d.get("angle") else "",
+                f"Email {d.get('contact_email')} published at {d.get('email_source')}" if d.get("contact_email") else ""] if x)
             row = db.one("""INSERT INTO practice.companies (name, kind, stage, industry, size_note, city, website, contact_name,
-                                                           contact_title, source, next_step, next_step_date, notes)
-                            VALUES (%(n)s, 'prospect', 'lead', %(ind)s, %(size)s, %(city)s, %(web)s, %(cn)s, %(ct)s,
+                                                           contact_title, contact_email, source, next_step, next_step_date, notes)
+                            VALUES (%(n)s, 'prospect', 'lead', %(ind)s, %(size)s, %(city)s, %(web)s, %(cn)s, %(ct)s, %(ce)s,
                                     'Agent research', 'Send first message', core.local_today(), %(notes)s) RETURNING id""",
                          {"n": d.get("company") or i["title"], "ind": d.get("industry"), "size": d.get("size"),
                           "city": ", ".join(v for v in (d.get("city"), d.get("state")) if v) or None,
-                          "web": d.get("website"), "cn": d.get("contact_name"), "ct": d.get("contact_title"), "notes": notes},
+                          "web": d.get("website"), "cn": d.get("contact_name"), "ct": d.get("contact_title"),
+                          "ce": d.get("contact_email") or None, "notes": notes},
                          conn)
             if d.get("first_message"):
                 db.execute("""INSERT INTO practice.agent_items (agent, kind, title, body, data, company_id)
                               VALUES ('bizdev', 'message', %(t)s, %(b)s, %(d)s, %(c)s)""",
                            {"t": f"First message to {d.get('contact_name') or d.get('company')}", "b": d["first_message"],
-                            "d": psycopg2.extras.Json({"channel": "email", "company": d.get("company"),
-                                                                             "reason": "First contact"}),
+                            "d": psycopg2.extras.Json({"channel": "email", "company": d.get("company"), "to": d.get("contact_email"),
+                                                       "subject": d.get("subject"), "reason": "First contact"}),
                             "c": row["id"]}, conn)
             db.execute("UPDATE practice.agent_items SET company_id = %(c)s WHERE id = %(i)s", {"c": row["id"], "i": item_id}, conn)
             nxt = f"/companies/{row['id']}"

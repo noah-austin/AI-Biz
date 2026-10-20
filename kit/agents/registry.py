@@ -50,6 +50,11 @@ AGENTS = [
                 "name and title (only if a public source names them; otherwise leave it blank and say which title to "
                 "look for), why they fit, the signals you found, source links, a suggested angle, and a short, "
                 "specific first message (under 90 words, plain, no hype) that Noah could send by email or LinkedIn. "
+                "Strongly prefer companies with an email address published on a page you can cite: the contact's own, "
+                "or a general business inbox (info@, contact@, sales@), never HR, billing or support. Put it in "
+                "`contact_email` with the page in `email_source`. Never guess an address from a name pattern. "
+                "The first message links the main site in the body: \"You can see how it works at sanfordoperations.com.\" "
+                "and ends: \"If it's not relevant, just say so and I won't follow up.\" "
                 "Quality over quantity: three excellent prospects beat ten weak ones.",
                 ["mon", "wed", "fri"], "06:00", web=True, max_steps=30, max_searches=25, run_cap_usd=4.0),
             Job("meeting_prep", "Prepare for calls",
