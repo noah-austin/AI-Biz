@@ -195,6 +195,9 @@ def decide(item_id: int, action: str) -> str:
                        {"c": i["company_id"], "k": "linkedin" if d.get("channel") == "linkedin" else "email",
                         "s": "Sent: " + (i["body"] or "")[:1500]}, conn)
             db.execute("""UPDATE practice.companies SET stage = CASE WHEN stage = 'lead' THEN 'contacted' ELSE stage END,
+                          next_step = CASE WHEN next_step = 'Send first message' THEN 'Follow up on first message' ELSE next_step END,
+                          next_step_date = CASE WHEN next_step = 'Send first message' THEN core.local_today() + 7
+                                                ELSE next_step_date END,
                           updated_at = now() WHERE id = %(c)s""", {"c": i["company_id"]}, conn)
         db.execute("UPDATE practice.agent_items SET status = %(s)s, decided_at = now() WHERE id = %(i)s",
                    {"s": status, "i": item_id}, conn)

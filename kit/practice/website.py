@@ -11,6 +11,15 @@ HOW = {"visitors": "People, not page views: one person reading three pages on th
        "plays": "People who pressed play on the What we build video (it only loads when someone presses play).",
        "enquiries": "Contact form messages that arrived, from the hub's Inbox."}
 LOCAL_DAY = "(at AT TIME ZONE core.client_tz())::date"
+# Hits that count: tour plays, and page views from a real browser (the page's invisible image arrived with the same token),
+# leaving out email-link "clicks" that come in a burst (3+ visitors within 5 minutes): that's the recipients' email-security
+# scanners checking the link on delivery, not people.
+HITS = """(SELECT h.* FROM practice.site_hits h
+           WHERE h.kind = 'tour_play'
+              OR (h.kind = 'view' AND EXISTS (SELECT 1 FROM practice.site_hits s WHERE s.kind = 'seen' AND s.token = h.token)
+                  AND NOT (h.source = 'email' AND (SELECT count(DISTINCT e.visitor) FROM practice.site_hits e
+                           WHERE e.kind = 'view' AND e.source = 'email'
+                             AND e.at BETWEEN h.at - interval '5 minutes' AND h.at + interval '5 minutes') >= 3))) AS hits"""
 
 
 def stats(days: int = 30) -> dict:
@@ -18,31 +27,35 @@ def stats(days: int = 30) -> dict:
     since = {"d": days - 1}
     window = f"{LOCAL_DAY} >= core.local_today() - %(d)s"   # today and the days - 1 before it
     daily = db.query(f"""SELECT {LOCAL_DAY} AS day, count(DISTINCT visitor) AS visitors, count(*) AS views
-                         FROM practice.site_hits WHERE kind = 'view' AND {window} GROUP BY 1 ORDER BY 1""", since)
+                         FROM {HITS} WHERE kind = 'view' AND {window} GROUP BY 1 ORDER BY 1""", since)
     by_day = {r["day"]: r for r in daily}
     today = db.one("SELECT core.local_today() AS t")["t"]
     series = [{"day": today - dt.timedelta(days=i), "visitors": int(by_day.get(today - dt.timedelta(days=i), {}).get("visitors", 0)),
                "views": int(by_day.get(today - dt.timedelta(days=i), {}).get("views", 0))} for i in range(days - 1, -1, -1)]
 
     def people(where, d):
-        return int(db.one(f"""SELECT count(DISTINCT ({LOCAL_DAY}, visitor)) AS n FROM practice.site_hits
+        return int(db.one(f"""SELECT count(DISTINCT ({LOCAL_DAY}, visitor)) AS n FROM {HITS}
                               WHERE {where} AND {LOCAL_DAY} > core.local_today() - %(d)s""", {"d": d})["n"])
     pages = db.query(f"""SELECT path, count(DISTINCT ({LOCAL_DAY}, visitor)) AS visitors, count(*) AS views
-                         FROM practice.site_hits WHERE kind = 'view' AND {window}
+                         FROM {HITS} WHERE kind = 'view' AND {window}
                          GROUP BY path ORDER BY visitors DESC, views DESC LIMIT 10""", since)
     sources = db.query(f"""SELECT CASE WHEN source IS NOT NULL THEN 'Your link: ' || source
                                        WHEN ref_host IS NULL THEN 'Direct or email app'
                                        ELSE regexp_replace(ref_host, '^(www|m|l|lm)\\.', '') END AS source,
                                   count(DISTINCT ({LOCAL_DAY}, visitor)) AS visitors
-                           FROM practice.site_hits WHERE kind = 'view' AND {window}
+                           FROM {HITS} WHERE kind = 'view' AND {window}
                            GROUP BY 1 ORDER BY visitors DESC LIMIT 10""", since)
+    raw = int(db.one(f"""SELECT count(DISTINCT ({LOCAL_DAY}, visitor)) AS n FROM practice.site_hits
+                          WHERE kind = 'view' AND {window}""", since)["n"])
     enquiries = int(db.one("""SELECT count(*) AS n FROM practice.inbound_leads
                               WHERE (created_at AT TIME ZONE core.client_tz())::date > core.local_today() - %(d)s""", since)["n"])
-    return {"days": days, "today": today, "series": series,
+    out = {"days": days, "today": today, "series": series,
             "visitors_today": people("kind = 'view'", 1), "visitors_7d": people("kind = 'view'", 7),
             "visitors": people("kind = 'view'", days), "views": sum(s["views"] for s in series),
             "tour_plays": people("kind = 'tour_play'", days), "enquiries": enquiries,
             "yesterday": series[-2]["visitors"] if days >= 2 else 0, "pages": pages, "sources": sources}
+    out["filtered"] = max(0, raw - out["visitors"])     # bots and link checkers left out
+    return out
 
 
 def summary_line() -> str:
@@ -80,5 +93,6 @@ def page(request):
   <p class="meta">Links in emails usually show as "Direct or email app". To see clicks from your emails, link to
   sanfordoperations.com/?from=email: they show here as "Your link: email".</p></section>
 </div>
-<p class="meta">Counted by the website itself: no cookies, no third parties. Search engines and other bots are left out.</p>"""
+<p class="meta">Counted by the website itself: no cookies, no third parties. A visit counts only when a real browser shows
+the page; search engines, other bots and email-security link checkers are left out ({s["filtered"]} in the last 30 days).</p>"""
     return ui.page(request, "Website", body, "Website", subtitle="Visits to sanfordoperations.com")

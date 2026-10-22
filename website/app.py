@@ -10,6 +10,7 @@ import hashlib
 import logging
 import os
 import re
+import secrets
 import threading
 import time
 from collections import defaultdict, deque
@@ -62,11 +63,17 @@ BOT = re.compile(r"bot|crawl|spider|slurp|preview|monitor|uptime|curl|wget|pytho
 SOURCE = re.compile(r"^[A-Za-z0-9_.-]{1,40}$")
 
 
-def _hit(kind: str, request: Request) -> None:
-    """Count one visit: the page, where the visitor came from and a one-way code that changes daily. No cookies."""
+SEEN_GIF = bytes.fromhex("47494638396101000100800000000000ffffff21f90401000000002c00000000010001000002024401003b")
+
+
+def _hit(kind: str, request: Request, token: str | None = None) -> str | None:
+    """Count one visit: the page, where the visitor came from and a one-way code that changes daily. No cookies.
+    A page view gets a random token; it only counts once the page's invisible image (/seen.gif) arrives with it."""
     ua = request.headers.get("user-agent", "")
     if not ua or BOT.search(ua):
-        return
+        return None
+    if kind == "view":
+        token = secrets.token_hex(8)
     from urllib.parse import urlsplit
     ref = urlsplit(request.headers.get("referer", "")).hostname or ""
     own = urlsplit(pages.cfg()["url"]).hostname or ""
@@ -76,16 +83,17 @@ def _hit(kind: str, request: Request) -> None:
     ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
     day = time.strftime("%Y-%m-%d", time.gmtime())
     row = {"k": kind, "p": request.url.path[:200], "r": ref[:120] or None, "s": src if SOURCE.match(src) else None,
-           "v": hashlib.sha256(f"{SECRET}|{day}|{ip}|{ua}".encode()).hexdigest()[:16]}
+           "v": hashlib.sha256(f"{SECRET}|{day}|{ip}|{ua}".encode()).hexdigest()[:16], "t": token}
 
     def save():
         try:
             with psycopg2.connect(os.environ["DATABASE_URL"]) as conn, conn.cursor() as cur:
-                cur.execute("INSERT INTO practice.site_hits (kind, path, ref_host, source, visitor) "
-                            "VALUES (%(k)s, %(p)s, %(r)s, %(s)s, %(v)s)", row)
+                cur.execute("INSERT INTO practice.site_hits (kind, path, ref_host, source, visitor, token) "
+                            "VALUES (%(k)s, %(p)s, %(r)s, %(s)s, %(v)s, %(t)s)", row)
         except psycopg2.Error:
             log.warning("could not count a visit", exc_info=True)   # counting must never break a page
     threading.Thread(target=save, daemon=True).start()
+    return token
 
 
 @app.middleware("http")
@@ -107,8 +115,21 @@ async def headers(request: Request, call_next):
                 and request.headers.get("range", "bytes=0-").startswith("bytes=0-")):
             _hit("tour_play", request)   # the tour only loads when someone presses play
         elif response.headers.get("content-type", "").startswith("text/html") and response.status_code == 200:
-            _hit("view", request)
+            token = _hit("view", request)
+            if token:   # add the invisible image that confirms a real browser read the page
+                body = b"".join([chunk async for chunk in response.body_iterator])
+                body = body.replace(b"</main>", f'<img class="seen" src="/seen.gif?t={token}" alt="" width="1" height="1">'
+                                    .encode() + b"</main>", 1)
+                hdrs = {k: v for k, v in response.headers.items() if k.lower() != "content-length"}
+                return Response(content=body, status_code=response.status_code, headers=hdrs)
     return response
+
+
+@app.get("/seen.gif")
+def seen(request: Request, t: str = ""):
+    if re.fullmatch(r"[0-9a-f]{16}", t):
+        _hit("seen", request, t)
+    return Response(SEEN_GIF, media_type="image/gif", headers={"Cache-Control": "no-store"})
 
 
 def _signer():

@@ -57,7 +57,9 @@ def test_approve_prospect_then_send_message(clean):
     assert nxt == f"/companies/{company['id']}" and company["source"] == "Agent research"
     msg = db.one("SELECT id FROM practice.agent_items WHERE kind = 'message' AND company_id = %(c)s", {"c": company["id"]})
     inbox.decide(msg["id"], "sent")
-    assert db.one("SELECT stage FROM practice.companies WHERE id = %(c)s", {"c": company["id"]})["stage"] == "contacted"
+    after = db.one("SELECT stage, next_step, next_step_date - core.local_today() AS days FROM practice.companies WHERE id = %(c)s",
+                   {"c": company["id"]})
+    assert after["stage"] == "contacted" and after["next_step"] == "Follow up on first message" and after["days"] == 7
     assert db.one("SELECT count(*) AS n FROM practice.activities WHERE company_id = %(c)s", {"c": company["id"]})["n"] == 1
 
 

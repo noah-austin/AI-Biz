@@ -165,27 +165,48 @@ def test_what_we_build_offers_the_tour_video_on_request(site):
 
 
 def test_visits_are_counted_without_cookies_and_bots_are_left_out(site):
+    import re as _re
     client, _ = site
     time.sleep(0.3)                                  # let counts from earlier tests finish saving
     db.execute("DELETE FROM practice.site_hits")
     person = {"user-agent": "Mozilla/5.0 (iPhone) Safari", "referer": "https://www.linkedin.com/feed/"}
-    r = client.get("/what-we-build?from=email", headers=person)
+    r = client.get("/what-we-build?from=linkedin", headers=person)
     assert "set-cookie" not in r.headers
-    client.get("/", headers={"user-agent": "Googlebot/2.1"})                                   # a bot: not counted
+    token = _re.search(r'src="/seen.gif\?t=([0-9a-f]{16})"', r.text).group(1)              # the page's invisible image
+    assert client.get(f"/seen.gif?t={token}", headers=person).headers["content-type"] == "image/gif"
+    headless = client.get("/about", headers={"user-agent": "Mozilla/5.0 (X11) Chrome"})      # never loads the image: not counted
+    assert "seen.gif" in headless.text
+    client.get("/", headers={"user-agent": "Googlebot/2.1"})                                   # a declared bot: not counted at all
     client.get("/static/video/tour-wide.mp4", headers={**person, "range": "bytes=0-1023"})    # pressed play on the tour
     client.get("/static/site.css", headers=person)                                             # files aren't visits
     client.get("/static/video/tour-wide.jpg", headers=person)                                  # nor is the video's poster
-    for _ in range(50):
-        if db.one("SELECT count(*) AS n FROM practice.site_hits")["n"] >= 2:
+    for _ in range(60):
+        if db.one("SELECT count(*) AS n FROM practice.site_hits")["n"] >= 4:
             break
         time.sleep(0.05)
-    hits = db.query("SELECT kind, path, ref_host, source, visitor FROM practice.site_hits ORDER BY kind DESC")   # saved in the background
-    assert [(h["kind"], h["path"]) for h in hits] == [("view", "/what-we-build"), ("tour_play", "/static/video/tour-wide.mp4")]
-    assert hits[0]["ref_host"] == "www.linkedin.com" and hits[0]["source"] == "email" and len(hits[0]["visitor"]) == 16
+    hits = db.query("SELECT kind, path, ref_host, source, visitor, token FROM practice.site_hits ORDER BY kind DESC, path")
+    assert [(h["kind"], h["path"]) for h in hits] == [("view", "/about"), ("view", "/what-we-build"), ("tour_play", "/static/video/tour-wide.mp4"),
+                                                      ("seen", "/seen.gif")]
+    view = hits[1]
+    assert view["ref_host"] == "www.linkedin.com" and view["source"] == "linkedin" and len(view["visitor"]) == 16 and view["token"] == token
     from kit.practice import website
     s = website.stats(30)
-    assert s["visitors_today"] == 1 and s["tour_plays"] == 1 and s["pages"][0]["path"] == "/what-we-build"
-    assert {r["source"] for r in s["sources"]} == {"Your link: email"}
+    assert s["visitors_today"] == 1 and s["tour_plays"] == 1 and [p["path"] for p in s["pages"]] == ["/what-we-build"]
+    assert {r["source"] for r in s["sources"]} == {"Your link: linkedin"} and s["filtered"] == 1
     one = website.stats(1)                                   # today only
     assert one["visitors"] == 1 and one["pages"] and one["sources"]
+    db.execute("DELETE FROM practice.site_hits")
+
+
+def test_email_link_checkers_arriving_in_a_burst_are_not_counted():
+    from kit.practice import website
+    db.execute("DELETE FROM practice.site_hits")
+    with db.connect() as conn:
+        for n, minute in enumerate([0, 1, 2, 90]):          # three scanners on delivery, then one person an hour and a half later
+            db.execute("""INSERT INTO practice.site_hits (at, kind, path, source, visitor, token) VALUES
+                          (now() - interval '3 hours' + %(m)s * interval '1 minute', 'view', '/', 'email', %(v)s, %(t)s),
+                          (now() - interval '3 hours' + %(m)s * interval '1 minute', 'seen', '/seen.gif', NULL, %(v)s, %(t)s)""",
+                       {"m": minute, "v": f"v{n}", "t": f"{n:016x}"}, conn)
+    s = website.stats(2)                                    # today and yesterday, so the test holds just after midnight too
+    assert {r["source"]: r["visitors"] for r in s["sources"]} == {"Your link: email": 1} and s["filtered"] == 3
     db.execute("DELETE FROM practice.site_hits")
