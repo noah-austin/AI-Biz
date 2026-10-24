@@ -56,7 +56,7 @@ CAPS = [
     (0.8, 4.8, "Your data lives in many systems.", "Each one only sees its own piece."),
     (5.3, 8.9, "We bring it all together.", "Every system, copied into one place you own."),
     (9.3, 12.8, "Now it works as one.", "See across every system at once."),
-    (13.2, 19.0, "Then we build on it.", "Reports, tools, AI and AI agents."),
+    (13.2, 19.0, "Then we build on it.", "Reports, custom software, AI and AI agents."),
 ]
 # name, detail, scattered rotation
 SYSTEMS = [("CRM", "Deals and customers", -4), ("Accounting", "Invoices and payments", 3), ("ERP", "Jobs and costs", 2),
@@ -68,7 +68,7 @@ EXTRAS = [("Email and files", "Contracts and attachments", 3), ("Inventory", "St
 # name, detail (wide), detail (tall, where it needs to be shorter)
 TOOLS = [
     ("Weekly scorecard", "fills itself in every Monday", ""),
-    ("Forecast", "commit $4.2M · best case $6.8M", "commit $4.2M · best $6.8M"),
+    ("Custom software", "commissions · warehouse · scheduling", "commissions · warehouse"),
     ("Alert", "Westlake deal slipped to December", "Westlake deal slipped"),
     ("Ask AI", "“Which branch is behind on billing?”", "“Who's behind on billing?”"),
     ("AI agents", "Daily brief ready at 6:30 AM", "Daily brief ready, 6:30 AM"),

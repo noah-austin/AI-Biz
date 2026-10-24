@@ -32,7 +32,7 @@ TOUR = [(3.3, 15.0, 1.15), (15.0, 54.6, 1.25)]
 # the tour's opening captions, as three steps (replacing scene.html's first three captions in this cut only)
 TOUR_STEPS = [["1. We connect your systems.", "CRM, accounting, ERP, field service, payroll, spreadsheets. Read-only."],
               ["2. Everything lands in one place.", "Your data hub: one database you own, updated every hour."],
-              ["3. Then we build the tools.", "Here’s what that looks like for a demo company."]]
+              ["3. We build what you need.", "Reports, custom software and AI, on your data."]]
 TITLE_SECONDS = 2.8
 
 # the demo scene's captions (same text and times as scene.html), shown above the camera in the tall cut
@@ -105,7 +105,7 @@ body {{ margin:0; width:{w}px; height:{h}px; background:#f4efe3; display:flex; f
 .t {{ font-family:'Playfair Display', Playfair, Georgia, serif; font-weight:700; font-size:{big}px; line-height:1.1; padding:0 60px }}
 .s {{ font-size:{big * 0.36:.0f}px; color:#4f4842; max-width:{w - 160}px; line-height:1.4; text-wrap:balance }}
 </style></head><body><img src="{seal}" width="{big * 1.6:.0f}" height="{big * 1.6:.0f}" alt="">
-<div class="e">Sanford Operations</div><div class="t">From scattered data to working tools</div>
+<div class="e">Sanford Operations</div><div class="t">From scattered data to custom software</div>
 <div class="s">Bluestem Facility Services, a fictional company with made-up data.</div></body></html>"""
     src = work / f"title-{cut}.html"
     src.write_text(page)
