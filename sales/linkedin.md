@@ -21,7 +21,7 @@ Edit your profile, then paste each piece into the matching box.
 **Headline (option A, recommended)** (151/220 characters)
 
 ```
-Founder, Sanford Operations · I bring a company’s data into one place, then build the reports, tools and AI agents on top · Ex-Google operations leader
+Founder, Sanford Operations · I bring a company’s data into one place, then build the reports, custom software and AI agents on top · Ex-Google operations leader
 ```
 
 Only the first 60 or so characters show next to your name in the feed, so it starts with what you do now.
@@ -68,7 +68,7 @@ The first three lines show before “see more”, so they carry the whole pitch.
 **Experience: description** (474/2000 characters)
 
 ```
-Sanford Operations brings a small or mid-size company’s data together in one place, then builds what that unlocks: reports and a weekly scorecard that build themselves, tools that replace spreadsheets, alerts, AI that answers questions from the company’s own data, and AI agents that do real work.
+Sanford Operations brings a small or mid-size company’s data together in one place, then builds what that unlocks: reports and a weekly scorecard that build themselves, custom software built around how they work (a commission calculator, a warehouse manager, anything that runs on their data), alerts, AI that answers questions from the company’s own data, and AI agents that do real work.
 
 We add to the systems a company already has, start with read-only access, and match existing reports to the cent before building anything new. Clients own everything we build.
 ```
@@ -193,7 +193,7 @@ Image: `website/brand/linkedin/post-launch.png`
 ```
 Sanford Operations is open.
 
-We bring a small or mid-size company’s data into one place, then put it to work with reports, tools, AI and AI agents.
+We bring a small or mid-size company’s data into one place, then put it to work with reports, custom software, AI and AI agents.
 
 See a working hub built on a fictional company’s data, or book a call: sanfordoperations.com
 ```

@@ -1,6 +1,6 @@
 # Sanford Operations
 
-Noah's consulting firm (sanfordoperations.com): we bring a company's data together in one place, then build the reports, tools, AI and AI agents it makes possible.
+Noah's consulting firm (sanfordoperations.com): we bring a company's data together in one place, then build the reports, custom software, AI and AI agents it makes possible.
 
 ## What's here
 - `kit/` — the reusable system: sync, business rules, web hub (see `kit/README.md`).

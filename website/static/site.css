@@ -294,6 +294,8 @@ section:not([class]) + section:not([class]) { padding-top: 0; }
 .split p:not(.eyebrow):not(.lead) { color: var(--ink-2); }
 .split h2 + p { margin-top: 4px; }
 .split.even { align-items: start; }
+.custom-split { margin-top: 64px; }
+.split-h { font-size: 22px; margin-bottom: 8px; }
 .approve-note { display: flex; gap: 10px; align-items: center; justify-content: center; margin: 40px 0 0; font-weight: 550; font-size: 15px; color: var(--ink-2); }
 .approve-note .ico { color: var(--accent-2); }
 .brief ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 13px; }
@@ -506,3 +508,4 @@ h1 { overflow-wrap: anywhere; }
 .overview-video.tall { display: none; aspect-ratio: 2 / 3; }
 @media (max-width: 640px) { .overview-video.wide { display: none; } .overview-video.tall { display: block; } }
 .overview + .fine { margin-top: 14px; }
+.split .chips + p { margin-top: 16px; }

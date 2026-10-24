@@ -45,7 +45,7 @@ def layout(title: str, body: str, path: str = "/", description: str = "", noinde
     c = cfg()
     nav = "".join(f'<a href="{href}"{" aria-current=page" if href == path else ""}>{esc(label)}</a>' for href, label in NAV)
     desc = description or (f"{c['name']} brings a company's data together in one place, then builds the reports, "
-                           "tools and AI agents it makes possible.")
+                           "custom software and AI agents it makes possible.")
     page_title = f"{title} | {c['name']}" if title != c["name"] else f"{c['name']} | Your data in one place, put to work"
     canonical = "" if noindex else f'<link rel="canonical" href="{esc(c["url"])}{esc(path)}">'
     fonts = "".join(f'<link rel="preload" href="/static/fonts/{f}" as="font" type="font/woff2" crossorigin>'
@@ -83,7 +83,7 @@ def _org_jsonld() -> str:
             "email": c["email"], "logo": f'{c["url"]}/static/brand/mark-512.png', "image": f'{c["url"]}/static/brand/og-card.jpg',
             "slogan": c["tagline"], "founder": {"@type": "Person", "name": c["owner"]},
             "areaServed": "US", "address": {"@type": "PostalAddress", "addressLocality": "Austin", "addressRegion": "TX", "addressCountry": "US"},
-            "description": "Brings a company's data together in one place, then builds the reports, tools and AI agents it makes possible."}
+            "description": "Brings a company's data together in one place, then builds the reports, custom software and AI agents it makes possible."}
     return '<script type="application/ld+json">' + json.dumps(data).replace("<", "\\u003c") + "</script>"
 
 
@@ -125,6 +125,8 @@ def cta_row(primary=("Book a call", "/contact?interest=call"), secondary=("What 
 FAQ = [
     ("Do we have to replace our systems?",
      "No. We connect to the systems you already use, read-only, and your team keeps working in them the same way. We add to what you have."),
+    ("Is this a ready-made product?",
+     "No. Everything is built for your company: the hub, the screens and every tool on it, with your rules and your names for things. If it runs on your data, we can build it, from a commission calculator to a warehouse manager, a job-costing tool or a customer portal."),
     ("We already have Power BI or Tableau. Does this still help?",
      "Yes. Those tools are only as good as the data behind them. We build the trusted foundation underneath, and your existing dashboards can read from it too."),
     ("Is our data safe?",
@@ -151,7 +153,7 @@ def home() -> str:
         (v.mock_foundation(), "All your data in one place", "Every system connected into one database you own. Each number defined once."),
         (v.mock_scorecard(), "Reports that build themselves", "The weekly scorecard and monthly review, ready without anyone typing."),
         (v.mock_dashboard(), "Dashboards you can click into", "From the company total down to every record behind it."),
-        (v.mock_tool(), "Tools that replace spreadsheets", "The forecast or tracker someone rebuilds every week, as a simple tool."),
+        (v.mock_tool(), "Custom software", "Tools built for how you work, replacing the spreadsheets someone rebuilds every week."),
         (v.mock_alerts(), "Alerts that come to you", "By email, Teams or phone, as soon as something needs attention."),
         (v.mock_ask(), "AI that knows your business", "Plain-English questions, answered from your own data, with the numbers shown."),
     ]
@@ -164,7 +166,7 @@ def home() -> str:
     step_html = "".join(f'<li><span class="step-ico">{v.icon(i)}</span><small>Step {n}</small><h3>{t}</h3><p>{d}</p></li>'
                         for n, (i, t, d) in enumerate(steps, 1))
     why = [("people", "Operators, not a vendor", "Founded by an ex-Google operations leader who built Google Fiber's operations system."),
-           ("blocks", "Built around you", "No off-the-shelf package. None of your systems get replaced."),
+           ("blocks", "Built around you", "No off-the-shelf package. We build the software you need, around the systems you keep."),
            ("server", "Your data, your choice", "Your own server or hosted by us. No per-seat licenses."),
            ("shield", "Safe by design", "Read-only access, nightly backups, and everyone sees only what they should.")]
     why_html = "".join(f'<div class="why">{v.icon(i)}<h3>{t}</h3><p>{d}</p></div>' for i, t, d in why)
@@ -174,7 +176,7 @@ def home() -> str:
     <p class="eyebrow">For leaders of small and mid-size companies</p>
     <h1>{esc(c["tagline"])}</h1>
     <p class="lead">We connect the systems your company runs on into one place, then build what that makes possible:
-    reports that build themselves, tools, AI and AI agents that do real work.</p>
+    reports that build themselves, custom software for how you work, AI and AI agents that do real work.</p>
     {cta_row()}
     <ul class="trust">{"".join(f"<li>{v.icon('check')}{t}</li>" for t in ("Read-only access", "Your data stays yours", "Fixed quote up front"))}</ul>
   </div>
@@ -193,7 +195,7 @@ def home() -> str:
 </div></section>
 
 <section class="band explainer-section"><div class="wrap">
-  {sec_head("What we do", "Bring it together, then put it to work", "We connect your systems into one data hub that you own. Then we build the reports, tools and AI that weren't possible while everything was scattered. Here it is in under 30 seconds.")}
+  {sec_head("What we do", "Bring it together, then put it to work", "We connect your systems into one data hub that you own. Then we build the reports, software and AI that weren't possible while everything was scattered. Here it is in under 30 seconds.")}
   {explainer()}
 </div></section>
 
@@ -201,6 +203,20 @@ def home() -> str:
   {sec_head("What you get", "One foundation, everything on top", "With your data in one place, these become possible. Every build is custom: we put together the pieces that fit how you run.")}
   <div class="show-grid">{cards}</div>
   <p class="fine center">Examples use made-up data. <a href="/what-we-build">See everything we build →</a></p>
+</div></section>
+
+<section class="band"><div class="wrap">
+  <div class="split">
+    <div>
+      <p class="eyebrow">Custom software</p>
+      <h2>Not a prebuilt dashboard</h2>
+      <p>Everything we build is made for your company: the screens, the tools and the way they work. Your rules, your
+      workflow, your names for things. If it runs on your data, we can build it.</p>
+      {v.custom_chips()}
+      <p class="small muted">And it grows with you: new tools get added as you need them.</p>
+    </div>
+    {v.mock_commission()}
+  </div>
 </div></section>
 
 <section class="agents-band"><div class="wrap">
@@ -289,8 +305,8 @@ def what_we_build() -> str:
 <section class="hero slim with-cta"><div class="wrap">
   <p class="eyebrow">What we build</p>
   <h1>Your data in one place, put to work</h1>
-  <p class="lead">Every build starts with your data hub. Reports, tools, AI and AI agents are layered on top, around the
-  systems you already use.</p>
+  <p class="lead">Every build starts with your data hub. On top we build what your company needs: reports, custom
+  software, AI and AI agents, around the systems you already use. Nothing is off the shelf.</p>
   {cta_row(secondary=("Request a live demo →", "/contact?interest=demo"))}
 </div></section>
 
@@ -316,11 +332,21 @@ def what_we_build() -> str:
 </div></section>
 
 <section class="band"><div class="wrap">
-  {sec_head("Layer 2 · Reports and tools", "What your team uses every day", "Built on the hub, so every report and tool shows the same numbers.")}
+  {sec_head("Layer 2 · Reports and software", "What your team uses every day", "Built on the hub, so every report and tool shows the same numbers.")}
   <div class="show-grid">
     <div class="show-card"><div class="show-visual">{v.mock_scorecard()}</div><h3>A scorecard that fills itself in</h3><p>The weekly numbers leadership runs on.</p></div>
     <div class="show-card"><div class="show-visual">{v.mock_dashboard()}</div><h3>Dashboards and drill-downs</h3><p>By location, team or person, down to every record.</p></div>
     <div class="show-card"><div class="show-visual">{v.mock_tool()}</div><h3>Tools that replace spreadsheets</h3><p>Forecasts, trackers and workbooks, on live data.</p></div>
+  </div>
+  <div class="split custom-split">
+    {v.mock_commission()}
+    <div>
+      <h3 class="split-h">Custom software, built for how you work</h3>
+      <p>This isn't a prebuilt dashboard. We build the software your team needs, on the same data: a commission
+      calculator that follows your plan, a warehouse manager, a job-costing tool, a customer portal. Your rules, your
+      workflow, your names for things. If it runs on your data, we can build it.</p>
+      {v.custom_chips()}
+    </div>
   </div>
   <p class="fine center">Examples use made-up data.</p>
 </div></section>
@@ -380,7 +406,7 @@ def what_we_build() -> str:
   <div class="cta-row center"><a class="btn" href="/contact?interest=call">Book a call</a><a class="btn ghost light" href="{esc(cfg()["demo_url"])}">Request a live demo →</a></div>
 </div></section>"""
     return layout("What we build", body, "/what-we-build",
-                  "All your company's data in one place, with reports, tools, AI and AI agents built on top. Custom to your business.")
+                  "All your company's data in one place, with reports, custom software, AI and AI agents built on top. Built for your business.")
 
 
 def about() -> str:

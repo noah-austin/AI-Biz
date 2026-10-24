@@ -4,7 +4,7 @@
 
 ## 1. What the business is
 
-**We bring a company's data together in one place, then build what that unlocks: reports that build themselves, tools that replace spreadsheets, and AI and AI agents that do real work.**
+**We bring a company's data together in one place, then build what that unlocks: reports that build themselves, custom software built around how they work (anything that runs on their data), and AI and AI agents that do real work.**
 
 We add to what a company already has. We don't replace their systems, and we don't sell "fixing" their data. Buyers don't wake up wanting "data consolidation"; they want:
 - a Monday meeting where nobody argues about whose number is right;

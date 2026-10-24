@@ -233,6 +233,26 @@ def mock_tool() -> str:
 <div class="tool-foot"><span>{icon("check")}Saved · everyone sees the same numbers</span><strong>$1.84M</strong></div>""")
 
 
+def mock_commission() -> str:
+    rows = [("Maria G.", "$412K", "6%", "$24,720"), ("Dev P.", "$368K", "5%", "$18,400"),
+            ("Sam R.", "$295K", "5%", "$14,750"), ("Lena K.", "$188K", "4%", "$7,520")]
+    body = "".join(f'<tr><td>{a}</td><td class="num">{b}</td><td><span class="sel">{c}</span></td><td class="num">{d}</td></tr>'
+                   for a, b, c, d in rows)
+    return _window("Commissions · October", f"""<div class="old-file">{icon("sheet")}<s>commissions_oct_FINAL_v3.xlsx</s></div>
+<table class="mini-tool"><tbody>{body}</tbody></table>
+<div class="tool-foot"><span>{icon("check")}From paid invoices · your rules</span><strong>$65,390</strong></div>""")
+
+
+CUSTOM_EXAMPLES = [("dollar", "Commission calculator"), ("box", "Warehouse manager"), ("clipboard", "Job costing"),
+                   ("calendar", "Crew scheduling"), ("doc", "Quote builder"), ("truck", "Dispatch board"),
+                   ("cart", "Inventory reorder"), ("people", "Customer portal"), ("check", "Approvals"),
+                   ("chart", "Budget tracker")]
+
+
+def custom_chips() -> str:
+    return '<div class="chips left">' + "".join(f'<span class="chip">{icon(i)}{t}</span>' for i, t in CUSTOM_EXAMPLES) + "</div>"
+
+
 def mock_alerts() -> str:
     items = [("bell", "Deal slipped a quarter", "Prairie Surgical, $85K, moved to Q1", "now"),
              ("dollar", "Invoice 90 days late", "Permian Logistics, $41K", "9:12"),

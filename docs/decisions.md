@@ -148,6 +148,11 @@
 | One AI assistant | Claude Code on the server, on Noah's Claude subscription, is the one assistant: chat (Claude app, "Biz server"), hub work, prospecting and the agents' jobs on request | Works on the hub only through `bin/hub` (kit/assistant), confirms every change with Noah, and changes the ideal client by chat. Chosen over the API to avoid per-use cost. Scheduled jobs on the subscription are not built yet (needs Noah's OK); until then they need an API key. The hub's web chat stays API-based and optional. |
 | Industry demos | Five fictional demo companies, picked from sanfordoperations.com/demo: facility services (Bluestem), distribution (Bramblewood), professional services (Kestrel Ridge), construction (Mesquite Ridge), manufacturing (Cottonwood) | Each is its own install at <industry>.demo.sanfordoperations.com, built on a shared demo engine (kit/demos) with stories and data problems planted. New kit modules they brought: orders and shipping, projects and time, job cost, production. More industries (healthcare, logistics, property management, multi-unit retail) only if prospects ask. |
 
+## 2026-10-24: custom software
+| Topic | Decision | Notes |
+|---|---|---|
+| What we build on the hub | Say plainly that it's custom software, not a prebuilt dashboard: anything that runs on the client's data (commission calculator, warehouse manager, job costing, scheduling, quote builder, customer portal) | On the home page (new "Not a prebuilt dashboard" section), What we build (Layer 2: reports and software), the FAQ, page descriptions, the prospecting brief and the first-email line ("the reports, custom software and AI that run on it"). |
+
 ## Open questions
 - Texas sales tax treatment of the retainer and hosting: ask a CPA.
 - Hosting price for hosted clients (at cost, or a set monthly fee).

@@ -14,7 +14,7 @@ Keep them short, personal and specific. Only claim what you can show; swap in re
 >
 > How long does it take your team to put together the leadership numbers each week?
 >
-> We bring a company's systems (CRM, accounting, projects, spreadsheets) into one place, then build on top of it: a weekly scorecard that fills itself in, tools that replace spreadsheets, and AI agents that draft the reports and briefs your team spends hours on. Would a 20-minute call to see if it fits [their company] be worth it?
+> We bring a company's systems (CRM, accounting, projects, spreadsheets) into one place, then build on top of it: a weekly scorecard that fills itself in, custom software built for how they work, and AI agents that draft the reports and briefs your team spends hours on. Would a 20-minute call to see if it fits [their company] be worth it?
 >
 > Noah
 
