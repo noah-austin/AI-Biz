@@ -43,7 +43,7 @@ CAPS = [[3.4, 7.2, *TOUR_STEPS[0]], [7.6, 11.2, *TOUR_STEPS[1]], [11.6, 15.0, *T
         [38.6, 44.6, "Alerts reach the right person.", "When something needs attention, the right leader hears about it."],
         [45.0, 53.6, "AI agents do the daily legwork.", "They prepare the work. A person approves anything that goes out."]]
 # camera: [scene time, centre x, centre y, zoom] in film pixels (the film is 1920 x 1080; the camera is 1008 x 1284)
-CAM = [[3.3, 960, 600, 0.75], [11.4, 960, 600, 0.75], [13.2, 960, 621, 0.593], [14.4, 960, 621, 0.593],   # opening: systems fly into the hub
+CAM = [[3.3, 1000, 600, 0.575], [8.9, 1000, 600, 0.575], [9.9, 960, 600, 0.75], [11.4, 960, 600, 0.75],   # wide enough for every card [13.2, 960, 621, 0.593], [14.4, 960, 621, 0.593],   # opening: systems fly into the hub
        [15.6, 545, 640, 1.5], [18.6, 545, 640, 1.5], [19.8, 1330, 640, 1.5], [21.6, 1330, 640, 1.5],      # home: tiles, chart, last 7 days
        [22.6, 700, 600, 1.3],                                                                             # click Scorecard
        [23.6, 520, 640, 1.5], [24.6, 520, 640, 1.5], [26.2, 1010, 640, 1.5], [28.8, 1010, 640, 1.5],     # weeks fill in
