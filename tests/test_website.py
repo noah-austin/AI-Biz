@@ -23,7 +23,7 @@ def token(site_app, age=10):
 
 
 def post(client, site_app, **fields):
-    data = {"token": token(site_app), "name": "Robin Tester", "email": "robin@site-test.example", "interest": "call", **fields}
+    data = {"token": token(site_app), "name": "Robin Tester", "email": "robin@site-test.example", "company": "Site Test Co", "interest": "call", **fields}
     return client.post("/contact", data=data, follow_redirects=False)
 
 
@@ -44,7 +44,7 @@ def test_home_graphics_and_images_are_served(site):
     client, _ = site
     html = client.get("/").text
     assert 'class="hub-diagram wide"' in html and 'class="hub-diagram tall"' in html and "style=" not in html  # the policy blocks inline styles
-    assert html.count('class="faq"') == 8 and 'rel="canonical"' in html
+    assert html.count('class="faq"') == 13 and 'rel="canonical"' in html
     import re
     for src in set(re.findall(r'(?:src|srcset)="(/static/[^"]+)"', html)):
         assert client.get(src).status_code == 200, src
@@ -76,6 +76,8 @@ def test_validation_and_rate_limit(site, monkeypatch):
     client, site_app = site
     monkeypatch.setattr(site_app, "notify", lambda data: None)
     assert post(client, site_app, email="not-an-email").status_code == 400
+    r = post(client, site_app, company="")
+    assert r.status_code == 400 and "Please add your company" in r.text
     assert post(client, site_app, message="http://a http://b http://c").status_code == 400
     site_app._recent.clear()
     db.execute("DELETE FROM practice.inbound_leads WHERE email LIKE '%%@site-test.example'")

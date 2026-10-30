@@ -153,6 +153,15 @@
 |---|---|---|
 | What we build on the hub | Say plainly that it's custom software, not a prebuilt dashboard: anything that runs on the client's data (commission calculator, warehouse manager, job costing, scheduling, quote builder, customer portal) | On the home page (new "Not a prebuilt dashboard" section), What we build (Layer 2: reports and software), the FAQ, page descriptions, the prospecting brief and the first-email line ("the reports, custom software and AI that run on it"). |
 
+## 2026-10-30: website review (ChatGPT audit)
+| Topic | Decision | Notes |
+|---|---|---|
+| Three services | Business intelligence, Custom operational software, AI & workflow automation, all on the data hub | Same names on the home page, What we build (replaces "Layers 1-4") and the FAQ. |
+| What you receive | New section on What we build: deliverables, how numbers are tied out, included vs quoted separately, and that system access depends on each vendor | Vendor access fees are the client's, flagged before signing. |
+| FAQ | Added: first project, how numbers are checked, ownership, ending the work, IT teams, AI mistakes ("How long" folded into "first project") | Ownership: client owns data, database, their custom work and docs; we keep the reusable kit and the hub keeps running on it if we part. |
+| Contact form | Name, email and company required; role, size and systems moved under "Tell us more (optional)" | |
+| Not done (Noah's call) | Paid Data Diagnostic offer, "Discuss a project / See a live demo" buttons, Google non-affiliation line, founder photo, narrower audience | |
+
 ## Open questions
 - Texas sales tax treatment of the retainer and hosting: ask a CPA.
 - Hosting price for hosted clients (at cost, or a set monthly fee).

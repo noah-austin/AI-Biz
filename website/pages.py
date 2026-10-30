@@ -133,13 +133,43 @@ FAQ = [
      "We connect read-only, so nothing in your systems can be changed. It runs on a server in your company's name, or on a separate one we host just for you, with nightly backups, and each person sees only what they should. We sign a confidentiality agreement before any work starts, and the AI runs on business-grade services that don't train on your data."),
     ("How much does it cost?",
      "Every build is quoted to your company: how many systems we connect, how much data there is, and what we build on top. After our first conversations you get a written proposal with a fixed quote. A monthly plan then keeps it running."),
-    ("How long does it take?",
-     "It depends on the scope, and your proposal sets out the timeline. We work in stages, starting by reproducing the reports you already trust, so you see working results early."),
+    ("What does the first project look like?",
+     "A conversation about how you run and where your data lives, then a written proposal with the scope, timeline and a fixed quote. We usually start with two or three systems and the reports you rely on most, so you see working results early, then add custom software and AI in stages."),
+    ("How do you know the numbers are right?",
+     "Before anything new goes live, we rebuild the reports you already trust and compare them line by line. Every difference is traced to its source and explained: a definition you agree on, or a record that needs fixing. Each number is then defined once, in plain English, and used the same way everywhere."),
+    ("Who owns what you build?",
+     "You own your data, the database it lives in, and everything built specifically for you, with its documentation. We keep the general toolkit we reuse across clients, and your hub keeps running on it whether or not we keep working together."),
+    ("What happens if we stop working together?",
+     "You keep everything: the database, your reports and tools, and the documentation to run them or hand them to someone else. We help with the handover, remove our access, and delete any copies of your data we hold."),
+    ("Can you work with our IT team?",
+     "Yes. We go through your security review, use the access they approve (read-only accounts wherever possible) and agree with them where the hub runs. They can see exactly what's connected and who can see what."),
+    ("What if the AI gets something wrong?",
+     "The AI answers only from your defined numbers and shows how it got each answer, so it's easy to check. Agents prepare work, and a person approves anything that goes out. If something looks off, we trace it, fix the definition or the data, and it stays fixed."),
     ("Who looks after it once it's built?",
      "We do, on a monthly plan: monitoring, fixes, backups, and new tools and agents as you need them. Everything is documented, so you're never locked in."),
     ("Do we need a data team?",
      "No. That's the point. We are the data team you don't have to hire, and the tools are built for the people already running the business."),
 ]
+
+
+def services() -> list:
+    """The three services, named the same everywhere (home, What we build, FAQ). All run on the data hub."""
+    return [
+        (v.mock_scorecard(), "Business intelligence", "Numbers everyone trusts",
+         "Your systems connected and every number defined once, so reports build themselves and match everywhere.",
+         ["Scorecards that fill themselves in", "Dashboards you can click into", "Forecasts and alerts"]),
+        (v.mock_tool(), "Custom operational software", "Tools that fit how you work",
+         "Replace the spreadsheets and workarounds that run the business, with software built on the same data.",
+         ["Commission calculators", "Job costing and scheduling", "Approvals and dispatch"]),
+        (v.mock_ask(), "AI & workflow automation", "Routine work, prepared for you",
+         "AI that answers from your defined numbers, and agents that draft the routine work for a person to approve.",
+         ["Questions in plain English", "Meeting briefs and weekly summaries", "Follow-up drafts for approval"]),
+    ]
+
+
+def foundation_bar() -> str:
+    return (f'<div class="foundation-bar">{v.icon("db")}<p><strong>All three run on your data hub:</strong> every system '
+            'connected into one database you own, updated on its own, with each number defined once.</p></div>')
 
 
 def faq_html() -> str:
@@ -149,16 +179,10 @@ def faq_html() -> str:
 
 def home() -> str:
     c = cfg()
-    gallery = [
-        (v.mock_foundation(), "All your data in one place", "Every system connected into one database you own. Each number defined once."),
-        (v.mock_scorecard(), "Reports that build themselves", "The weekly scorecard and monthly review, ready without anyone typing."),
-        (v.mock_dashboard(), "Dashboards you can click into", "From the company total down to every record behind it."),
-        (v.mock_tool(), "Custom software", "Tools built for how you work, replacing the spreadsheets someone rebuilds every week."),
-        (v.mock_alerts(), "Alerts that come to you", "By email, Teams or phone, as soon as something needs attention."),
-        (v.mock_ask(), "AI that knows your business", "Plain-English questions, answered from your own data, with the numbers shown."),
-    ]
-    cards = "".join(f'<div class="show-card"><div class="show-visual">{m}</div><h3>{esc(t)}</h3><p>{esc(d)}</p></div>'
-                    for m, t, d in gallery)
+    cards = "".join(
+        f'<div class="show-card service"><div class="show-visual">{m}</div><p class="eyebrow">{esc(name)}</p><h3>{esc(t)}</h3>'
+        f'<p>{esc(d)}</p><ul class="checks">{"".join(f"<li>{esc(x)}</li>" for x in ex)}</ul></div>'
+        for m, name, t, d, ex in services())
     steps = [("chat", "A conversation", "How you run, where your data lives, what you want."),
              ("doc", "A custom proposal", "A written plan and a fixed quote."),
              ("blocks", "We build it", "Data in one place, reports matched to the cent, then the tools."),
@@ -200,15 +224,16 @@ def home() -> str:
 </div></section>
 
 <section><div class="wrap">
-  {sec_head("What you get", "One foundation, everything on top", "With your data in one place, these become possible. Every build is custom: we put together the pieces that fit how you run.")}
+  {sec_head("What we build", "Three services, one foundation", "Every build is custom: we put together the pieces that fit how you run.")}
   <div class="show-grid">{cards}</div>
+  {foundation_bar()}
   <p class="fine center">Examples use made-up data. <a href="/what-we-build">See everything we build →</a></p>
 </div></section>
 
 <section class="band"><div class="wrap">
   <div class="split">
     <div>
-      <p class="eyebrow">Custom software</p>
+      <p class="eyebrow">Custom operational software</p>
       <h2>Not a prebuilt dashboard</h2>
       <p>Everything we build is made for your company: the screens, the tools and the way they work. Your rules, your
       workflow, your names for things. If it runs on your data, we can build it.</p>
@@ -220,7 +245,7 @@ def home() -> str:
 </div></section>
 
 <section class="agents-band"><div class="wrap">
-  {sec_head("AI agents", "A day with your agents", "Then AI does the routine work. Each agent has one job, works from the same data, and hands the result to the right person.")}
+  {sec_head("AI &amp; workflow automation", "A day with your agents", "Then AI does the routine work. Each agent has one job, works from the same data, and hands the result to the right person.")}
   {v.agent_day()}
   <p class="approve-note">{v.icon("lock")}<span>Agents prepare the work. A person approves anything that goes out.</span></p>
 </div></section>
@@ -301,12 +326,19 @@ def what_we_build() -> str:
     agent_html = "".join(f'<div class="agent-row">{v.icon(i)}<div><h3>{t}</h3><p>{d}</p></div></div>' for i, t, d in agents)
     factors = [("blocks", "Systems we connect"), ("db", "How much data"), ("chart", "What we build on top")]
     factor_html = "".join(f'<li>{v.icon(i)}{t}</li>' for i, t in factors)
+    receive = [("db", "Your data hub", "The agreed systems connected into one database you own, updating on its own."),
+               ("book", "A rulebook for your numbers", "Every number defined in plain English, with the same definition in the code."),
+               ("check", "Your reports, tied out", "The reports you already trust, rebuilt and matched line by line. Every difference traced and explained."),
+               ("chart", "The tools in your proposal", "Reports, custom software or AI, with each person seeing only what they should."),
+               ("doc", "Documentation and handover", "How it works and how to run it, so you're never locked in."),
+               ("shield", "Monitoring and backups", "Nightly backups and a watch on every connection, on the monthly plan.")]
+    receive_html = "".join(f'<div class="why">{v.icon(i)}<h3>{t}</h3><p>{d}</p></div>' for i, t, d in receive)
     body = f"""
 <section class="hero slim with-cta"><div class="wrap">
   <p class="eyebrow">What we build</p>
   <h1>Your data in one place, put to work</h1>
-  <p class="lead">Every build starts with your data hub. On top we build what your company needs: reports, custom
-  software, AI and AI agents, around the systems you already use. Nothing is off the shelf.</p>
+  <p class="lead">Every build starts with your data hub. On it we deliver three services: business intelligence, custom
+  operational software, and AI &amp; workflow automation, around the systems you already use. Nothing is off the shelf.</p>
   {cta_row(secondary=("Request a live demo →", "/contact?interest=demo"))}
 </div></section>
 
@@ -319,43 +351,48 @@ def what_we_build() -> str:
 <section><div class="wrap">
   <div class="split">
     <div>
-      <p class="eyebrow">Layer 1 · The foundation</p>
+      <p class="eyebrow">The foundation</p>
       <h2>Your data hub</h2>
       <p>We connect the systems your company runs on into one database that you own. It updates on its own and keeps history.
       Every number is defined once, in plain English, so it means the same thing everywhere.</p>
-      <p>Before showing you anything new, we reproduce the reports you already use, to the cent. Everything below is built on this.</p>
+      <p>Before showing you anything new, we reproduce the reports you already use, to the cent. All three services below run on this.</p>
     </div>
     {v.mock_foundation()}
   </div>
-  <h3 class="sys-title">We connect almost anything with data in it</h3>
+  <h3 class="sys-title">Systems we connect</h3>
   {v.systems_grid()}
+  <p class="fine center">Access depends on each system: some need a higher plan, an add-on or the vendor's approval, and a few
+  work best through a scheduled export. We check this before we quote.</p>
 </div></section>
 
 <section class="band"><div class="wrap">
-  {sec_head("Layer 2 · Reports and software", "What your team uses every day", "Built on the hub, so every report and tool shows the same numbers.")}
+  {sec_head("Service 1 · Business intelligence", "Numbers everyone trusts", "Reports, dashboards and alerts built on the hub, so every number matches everywhere.")}
   <div class="show-grid">
     <div class="show-card"><div class="show-visual">{v.mock_scorecard()}</div><h3>A scorecard that fills itself in</h3><p>The weekly numbers leadership runs on.</p></div>
     <div class="show-card"><div class="show-visual">{v.mock_dashboard()}</div><h3>Dashboards and drill-downs</h3><p>By location, team or person, down to every record.</p></div>
-    <div class="show-card"><div class="show-visual">{v.mock_tool()}</div><h3>Tools that replace spreadsheets</h3><p>Forecasts, trackers and workbooks, on live data.</p></div>
-  </div>
-  <div class="split custom-split">
-    {v.mock_commission()}
-    <div>
-      <h3 class="split-h">Custom software, built for how you work</h3>
-      <p>This isn't a prebuilt dashboard. We build the software your team needs, on the same data: a commission
-      calculator that follows your plan, a warehouse manager, a job-costing tool, a customer portal. Your rules, your
-      workflow, your names for things. If it runs on your data, we can build it.</p>
-      {v.custom_chips()}
-    </div>
+    <div class="show-card"><div class="show-visual">{v.mock_alerts()}</div><h3>Forecasts and alerts</h3><p>The right person hears as soon as something needs attention.</p></div>
   </div>
   <p class="fine center">Examples use made-up data.</p>
 </div></section>
 
 <section><div class="wrap">
   <div class="split">
-    {v.mock_ask()}
+    {v.mock_commission()}
     <div>
-      <p class="eyebrow">Layer 3 · AI</p>
+      <p class="eyebrow">Service 2 · Custom operational software</p>
+      <h2>Tools that fit how you work</h2>
+      <p>This isn't a prebuilt dashboard. We build the software your team needs, on the same data: a commission
+      calculator that follows your plan, a warehouse manager, a job-costing tool, a customer portal. Your rules, your
+      workflow, your names for things. If it runs on your data, we can build it.</p>
+      {v.custom_chips()}
+    </div>
+  </div>
+</div></section>
+
+<section class="band"><div class="wrap">
+  <div class="split">
+    <div>
+      <p class="eyebrow">Service 3 · AI &amp; workflow automation</p>
       <h2>AI that knows your business</h2>
       <p>Because the data is clean and defined once, AI can answer from it and show its working.</p>
       <ul class="checks">
@@ -364,11 +401,12 @@ def what_we_build() -> str:
         <li><strong>Your other AI tools, connected:</strong> Copilot, ChatGPT or Claude can use the same data, read-only.</li>
       </ul>
     </div>
+    {v.mock_ask()}
   </div>
 </div></section>
 
 <section class="agents-band"><div class="wrap">
-  {sec_head("Layer 4 · AI agents", "Agents that do the work", "AI assistants, each with one job, working from your data every day.")}
+  {sec_head("AI &amp; workflow automation · Agents", "Agents that do the work", "AI assistants, each with one job, working from your data every day.")}
   <div class="split agents-split">
     {v.mock_brief()}
     <div class="agent-list">{agent_html}</div>
@@ -377,13 +415,24 @@ def what_we_build() -> str:
 </div></section>
 
 <section><div class="wrap">
+  {sec_head("What you receive", "What a first build delivers", "Your proposal lists exactly what's included. A typical first build gives you:")}
+  <div class="receive-grid">{receive_html}</div>
+  <div class="scope-cols">
+    <div><h3>{v.icon("check")}Included in the fixed quote</h3><p>Everything listed in your proposal: the systems we connect,
+    the reports we reproduce and tie out, the tools and AI we build, documentation and handover.</p></div>
+    <div><h3>{v.icon("doc")}Quoted separately</h3><p>New systems, new tools, or larger changes beyond the monthly plan. Any
+    fees a software vendor charges for access (a higher plan or an add-on) are yours, and we flag them before you sign.</p></div>
+  </div>
+</div></section>
+
+<section class="band"><div class="wrap">
   <div class="split even">
     <div>
       <p class="eyebrow">Pricing</p>
       <h2>How it's priced</h2>
-      <p>You don't have to start with all four layers. Most companies start with the hub and the reports they already
-      run, then add the rest. Each build is quoted to your company: after our first conversations you get a written
-      proposal with a fixed quote, then a monthly plan keeps it running and adds what's next.</p>
+      <p>You don't have to start with all three services. Most companies start with the hub and the reports they already
+      run, then add custom software and AI. Each build is quoted to your company: after our first conversations you get a
+      written proposal with a fixed quote, then a monthly plan keeps it running and adds what's next.</p>
       <ul class="factors">{factor_html}</ul>
     </div>
     <div>
@@ -406,7 +455,7 @@ def what_we_build() -> str:
   <div class="cta-row center"><a class="btn" href="/contact?interest=call">Book a call</a><a class="btn ghost light" href="{esc(cfg()["demo_url"])}">Request a live demo →</a></div>
 </div></section>"""
     return layout("What we build", body, "/what-we-build",
-                  "All your company's data in one place, with reports, custom software, AI and AI agents built on top. Built for your business.")
+                  "All your company's data in one place, with three services built on it: business intelligence, custom operational software, and AI and workflow automation.")
 
 
 def about() -> str:
@@ -462,7 +511,7 @@ def contact(token: str, values: dict | None = None, errors: dict | None = None) 
     def err(k):
         return f'<span class="field-err" id="err-{k}">{esc(e[k])}</span>' if k in e else ""
 
-    first = next((k for k in ("name", "email", "message") if k in e), None)
+    first = next((k for k in ("name", "email", "company", "message") if k in e), None)
 
     def inv(k):
         return (f' aria-invalid="true" aria-describedby="err-{k}"' + (" autofocus" if k == first else "")) if k in e else ""
@@ -483,12 +532,16 @@ def contact(token: str, values: dict | None = None, errors: dict | None = None) 
     <div class="hp" aria-hidden="true"><label>Leave this empty<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
     <label><span>Your name <span class="req">*</span></span><input name="name" required maxlength="120" autocomplete="name"{inv("name")} value="{esc(v.get("name"))}">{err("name")}</label>
     <label><span>Work email <span class="req">*</span></span><input type="email" name="email" required maxlength="200" autocomplete="email"{inv("email")} value="{esc(v.get("email"))}">{err("email")}</label>
-    <label>Company<input name="company" maxlength="160" autocomplete="organization" value="{esc(v.get("company"))}"></label>
-    <label>Your role<input name="role" maxlength="120" value="{esc(v.get("role"))}" placeholder="e.g. COO"></label>
-    <label>Company size<select name="company_size"><option value="">Choose…</option>{sel([(s, s) for s in SIZES], v.get("company_size"))}</select></label>
+    <label><span>Company <span class="req">*</span></span><input name="company" required maxlength="160" autocomplete="organization"{inv("company")} value="{esc(v.get("company"))}">{err("company")}</label>
     <label>I'm interested in<select name="interest">{sel(INTERESTS, v.get("interest") or "call")}</select></label>
-    <label class="wide">Main systems you use<input name="systems" maxlength="200" value="{esc(v.get("systems"))}" placeholder="e.g. HubSpot, QuickBooks, Procore, a lot of Excel"></label>
-    <label class="wide">Anything you'd like us to know<textarea name="message" rows="5" maxlength="3000"{inv("message")}>{esc(v.get("message"))}</textarea>{err("message")}</label>
+    <label class="wide">What would you like help with?<textarea name="message" rows="4" maxlength="3000"{inv("message")}>{esc(v.get("message"))}</textarea>{err("message")}</label>
+    <details class="wide more"{" open" if any(v.get(k) for k in ("role", "company_size", "systems")) else ""}><summary>Tell us more (optional)</summary>
+      <div class="more-fields">
+        <label>Your role<input name="role" maxlength="120" value="{esc(v.get("role"))}" placeholder="e.g. COO"></label>
+        <label>Company size<select name="company_size"><option value="">Choose…</option>{sel([(s, s) for s in SIZES], v.get("company_size"))}</select></label>
+        <label class="wide">Main systems you use<input name="systems" maxlength="200" value="{esc(v.get("systems"))}" placeholder="e.g. HubSpot, QuickBooks, Procore, a lot of Excel"></label>
+      </div>
+    </details>
     <p class="small muted wide">By sending this you agree to be contacted about your inquiry. See the <a href="/privacy">privacy notice</a>.</p>
     <div class="wide"><button class="btn" type="submit">Send</button></div>
   </form>

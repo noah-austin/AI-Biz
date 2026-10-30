@@ -194,6 +194,8 @@ def validate(form) -> tuple[dict, dict]:
         errors["name"] = "Please add your name."
     if not EMAIL.match(data["email"]):
         errors["email"] = "Please add a valid email address."
+    if len(data["company"]) < 2:
+        errors["company"] = "Please add your company's name."
     if data["company_size"] not in pages.SIZES:
         data["company_size"] = ""
     interests = dict(pages.INTERESTS)
