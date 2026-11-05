@@ -42,3 +42,5 @@ python build.py                                                # capture.html
 # explainer frames at 30 fps in FRAMES/wide and FRAMES/tall (see ../animation/README.md)
 python combined.py FRAMES /tmp/video-work [path to ffmpeg] [--overview]
 ```
+
+The tall poster (`website/static/video/tour-tall.jpg`) is the tour's title card (`title-tall.png` from combined.py's work folder, scaled to 720 wide), so it isn't clipped on phones.

@@ -162,6 +162,15 @@
 | Contact form | Name, email and company required; role, size and systems moved under "Tell us more (optional)" | |
 | Not done (Noah's call) | Paid Data Diagnostic offer, "Discuss a project / See a live demo" buttons, Google non-affiliation line, founder photo, narrower audience | |
 
+## 2026-11-05: website audit (Fable)
+| Topic | Decision | Notes |
+|---|---|---|
+| Main button | "Start a conversation" (was "Book a call", which led to a form, not a calendar) | No booking calendar for now. Hidden in the phone header, where the page's own button and Contact link are enough. |
+| Home page | Cut "Not a prebuilt dashboard" and "A day with your agents" (both live on What we build) | Home is about 1,500 px shorter on desktop, 2,500 px on phones. |
+| Demos | Stay unlisted, by request only | |
+| Wording | "To the cent" became "matched line by line, every difference explained"; "Nothing is off the shelf" became "Nothing is one-size-fits-all"; "Run & Grow" step renamed "Monthly plan"; founding-client line now says "at a founding rate" | Founding rate = the discount for a case study and reference in `concept.md`. |
+| Still open | LinkedIn link and one or two checkable Google Fiber facts on About | Needs Noah's profile link and facts. |
+
 ## Open questions
 - Texas sales tax treatment of the retainer and hosting: ask a CPA.
 - Hosting price for hosted clients (at cost, or a set monthly fee).

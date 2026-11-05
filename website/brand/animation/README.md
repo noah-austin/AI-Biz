@@ -16,7 +16,7 @@ python build.py                                   # writes capture-wide.html and
 for c in wide tall; do
   python frames.py capture-$c.html /tmp/frames-$c fps 30          # needs Playwright
   w=$([ $c = wide ] && echo 1280 || echo 720)   # the site plays these small; both together are about 1.2 MB
-  ffmpeg -y -framerate 30 -i /tmp/frames-$c/f%04d.png -vf scale=$w:-2:flags=lanczos -c:v libx264 -preset veryslow -tune animation -crf 28 -pix_fmt yuv420p -movflags +faststart ../../static/video/explainer-$c.mp4
+  ffmpeg -y -framerate 30 -i /tmp/frames-$c/f%04d.png -vf scale=$w:-2:flags=lanczos -c:v libx264 -preset veryslow -tune animation -crf $([ $c = wide ] && echo 28 || echo 33) -pix_fmt yuv420p -movflags +faststart ../../static/video/explainer-$c.mp4
   ffmpeg -y -i /tmp/frames-$c/f0010.png -q:v 4 ../../static/video/explainer-$c.jpg        # poster: the title card
   ffmpeg -y -i /tmp/frames-$c/f0735.png -q:v 4 ../../static/video/explainer-$c-end.jpg    # reduced-motion still: the end card
 done

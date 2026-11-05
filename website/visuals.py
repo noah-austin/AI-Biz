@@ -134,10 +134,9 @@ def _hub_diagram_tall() -> str:
     return "".join(parts)
 
 
-
 def _window(title: str, body: str, cls: str = "") -> str:
     """A small app-window frame around an example screen."""
-    return (f'<div class="mock {cls}"><div class="mock-bar"><i></i><i></i><i></i><span>{title}</span></div>'
+    return (f'<div class="mock {cls}" aria-hidden="true"><div class="mock-bar"><i></i><i></i><i></i><span>{title}</span></div>'
             f'<div class="mock-body">{body}</div></div>')
 
 
@@ -157,7 +156,7 @@ def before_after() -> str:
     return f"""<div class="ba">
   <div class="ba-col before">
     <p class="ba-tag">Before</p>
-    <div class="ba-stage">
+    <div class="ba-stage" aria-hidden="true">
       {sheet}
       <div class="note n1">Sales says<b>$4.2M</b></div>
       <div class="note n2">Finance says<b>$3.9M</b></div>
@@ -167,21 +166,13 @@ def before_after() -> str:
   <div class="ba-arrow" aria-hidden="true"><span>{icon("refresh")}</span></div>
   <div class="ba-col after">
     <p class="ba-tag">After</p>
-    <div class="ba-stage">
+    <div class="ba-stage" aria-hidden="true">
       <div class="notif">{icon("mail")}<div><strong>Your weekly scorecard is ready</strong><span>Monday 6:45 AM · built from 6 systems</span></div></div>
       <div class="kpis">{tiles}</div>
     </div>
     <ul class="ba-list">{after_list}</ul>
   </div>
 </div>"""
-
-
-def _spark(points: list[float], cls: str = "spark") -> str:
-    lo, hi = min(points), max(points)
-    xs = [i * 60 / (len(points) - 1) for i in range(len(points))]
-    ys = [20 - (p - lo) / ((hi - lo) or 1) * 16 for p in points]
-    d = " ".join(f"{'M' if i == 0 else 'L'}{x:.1f} {y:.1f}" for i, (x, y) in enumerate(zip(xs, ys)))
-    return f'<svg class="{cls}" viewBox="-2 0 64 24" aria-hidden="true"><path d="{d}"/><circle cx="{xs[-1]:.1f}" cy="{ys[-1]:.1f}" r="2.4"/></svg>'
 
 
 def mock_foundation() -> str:
@@ -259,7 +250,7 @@ def mock_alerts() -> str:
              ("chart", "Billing behind pace", "Austin is at 71% of this month's goal", "Mon")]
     cards = "".join(f'<div class="push p{i}">{icon(ic)}<div><strong>{t}</strong><span>{s}</span></div><time>{w}</time></div>'
                     for i, (ic, t, s, w) in enumerate(items))
-    return f'<div class="mock phone-mock"><div class="phone-notch"></div><div class="push-stack">{cards}</div></div>'
+    return f'<div class="mock phone-mock" aria-hidden="true"><div class="phone-notch"></div><div class="push-stack">{cards}</div></div>'
 
 
 def mock_ask() -> str:
@@ -277,26 +268,6 @@ def mock_brief() -> str:
   <li>Cash collected is <b>8% behind pace</b> this month; Permian Logistics is the biggest gap.</li>
   <li>Board meeting Thursday: <b>prep pack drafted</b> and waiting for your review.</li></ol>
 </div>""")
-
-
-def agent_day() -> str:
-    steps = [("6:30 AM", "agent", "Daily brief", "What changed overnight and what needs attention today, for each leader.", ""),
-             ("7:15 AM", "calendar", "Meeting prep", "Before the 10:00 customer call: history, open quotes and recent emails on one page.", ""),
-             ("11:02 AM", "bell", "Follow-up watch", "An invoice just passed 60 days. A friendly reminder is drafted for the account owner.", "approve"),
-             ("Fri 3:00 PM", "doc", "Weekly update", "This week's report written from the numbers, ready to check and send.", "approve")]
-    out = []
-    for t, ic, title, text, flag in steps:
-        btns = ('<div class="agent-btns"><span class="b-ok">Approve</span><span class="b-edit">Edit</span></div>'
-                if flag else '<div class="agent-btns"><span class="b-done">Ready</span></div>')
-        out.append(f'<li><time>{t}</time><div class="agent-card"><div class="agent-ico">{icon(ic)}</div>'
-                   f'<h3>{title}</h3><p>{text}</p>{btns}</div></li>')
-    return f'<ol class="agent-day">{"".join(out)}</ol>'
-
-
-def demo_shot(name: str, alt: str, cls: str = "") -> str:
-    return (f'<figure class="shot {cls}"><div class="shot-bar"><i></i><i></i><i></i><span>demo hub</span></div>'
-            f'<picture><source srcset="/static/img/demo-{name}-dark.webp" media="(prefers-color-scheme: dark)">'
-            f'<img src="/static/img/demo-{name}-light.webp" alt="{alt}" width="1600" height="1000" loading="lazy" decoding="async"></picture></figure>')
 
 
 ALL_SYSTEMS = [("people", "CRM"), ("dollar", "Accounting"), ("factory", "ERP"), ("clipboard", "Project management"),

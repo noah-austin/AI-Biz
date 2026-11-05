@@ -212,3 +212,10 @@ def test_email_link_checkers_arriving_in_a_burst_are_not_counted():
     s = website.stats(2)                                    # today and yesterday, so the test holds just after midnight too
     assert {r["source"]: r["visitors"] for r in s["sources"]} == {"Your link: email": 1} and s["filtered"] == 3
     db.execute("DELETE FROM practice.site_hits")
+
+
+def test_no_double_escaped_text(site):
+    client, _ = site
+    for path in ["/", "/what-we-build", "/about", "/contact", "/privacy", "/demo"]:
+        html = client.get(path).text
+        assert "&amp;amp;" not in html and "&amp;lt;" not in html and "&amp;#" not in html, path

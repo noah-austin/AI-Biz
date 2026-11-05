@@ -48,11 +48,11 @@ def _demo_origins() -> str:
 
 
 HEADERS = {
-    "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'none'; "
+    "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'none'; object-src 'none'; "
                                f"frame-src {_demo_origins()}; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
     "X-Content-Type-Options": "nosniff", "X-Frame-Options": "DENY", "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-    "Strict-Transport-Security": "max-age=31536000",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 }
 _recent: dict[str, deque] = defaultdict(deque)
 _lock = threading.Lock()

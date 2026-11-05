@@ -46,7 +46,7 @@ def layout(title: str, body: str, path: str = "/", description: str = "", noinde
     nav = "".join(f'<a href="{href}"{" aria-current=page" if href == path else ""}>{esc(label)}</a>' for href, label in NAV)
     desc = description or (f"{c['name']} brings a company's data together in one place, then builds the reports, "
                            "custom software and AI agents it makes possible.")
-    page_title = f"{title} | {c['name']}" if title != c["name"] else f"{c['name']} | Your data in one place, put to work"
+    page_title = f"{title} | {c['name']}" if title != c["name"] else f"{c['name']} | Data hub, reporting and custom software for mid-size companies"
     canonical = "" if noindex else f'<link rel="canonical" href="{esc(c["url"])}{esc(path)}">'
     fonts = "".join(f'<link rel="preload" href="/static/fonts/{f}" as="font" type="font/woff2" crossorigin>'
                     for f in ("inter-latin-var.woff2", "playfair-700.woff2"))
@@ -60,7 +60,7 @@ def layout(title: str, body: str, path: str = "/", description: str = "", noinde
 <header class="site-head"><div class="wrap">
   <a class="logo" href="/" aria-label="{esc(c["name"])}, home"><picture><source srcset="/static/brand/lockup-reversed.svg" media="(prefers-color-scheme: dark)"><img src="/static/brand/lockup.svg" alt="{esc(c["name"])}" width="262" height="64"></picture></a>
   <nav aria-label="Main">{nav}</nav>
-  <a class="btn small" href="/contact?interest=call">Book a call</a>
+  <a class="btn small" href="/contact?interest=call">Start a conversation</a>
 </div></header>
 <main id="main">{body}</main>
 <footer class="site-foot"><div class="wrap">
@@ -68,7 +68,7 @@ def layout(title: str, body: str, path: str = "/", description: str = "", noinde
     <div class="foot-brand"><a class="logo" href="/" aria-label="{esc(c["name"])}, home"><picture><source srcset="/static/brand/lockup-reversed.svg" media="(prefers-color-scheme: dark)"><img src="/static/brand/lockup.svg" alt="{esc(c["name"])}" width="262" height="64"></picture></a>
       <p>{esc(c["tagline"])}</p></div>
     <div><p class="foot-h">Company</p><a href="/what-we-build">What we build</a><a href="/about">About</a><a href="{esc(c["demo_url"])}">Request a live demo</a></div>
-    <div><p class="foot-h">Get in touch</p><a href="/contact">Book a call</a><a href="mailto:{esc(c["email"])}">{esc(c["email"])}</a><span>{esc(c["city"])}</span></div>
+    <div><p class="foot-h">Get in touch</p><a href="/contact">Start a conversation</a><a href="mailto:{esc(c["email"])}">{esc(c["email"])}</a><span>{esc(c["city"])}</span></div>
   </div>
   <div class="foot-bottom"><span>© {date.today().year} {esc(c["name"])}</span><a href="/privacy">Privacy</a></div>
 </div></footer>
@@ -99,7 +99,7 @@ def explainer() -> str:
              "then reports, tools, AI and AI agents are built on top.")
     # Two videos rather than <source media>, which iPhone Safari ignores; CSS shows the one that fits the screen.
     videos = "".join(
-        f'<video class="explainer-video {cut}" autoplay muted loop playsinline controls preload="auto" poster="{u(f"video/explainer-{cut}.jpg")}" '
+        f'<video class="explainer-video {cut}" autoplay muted loop playsinline controls preload="metadata" poster="{u(f"video/explainer-{cut}.jpg")}" '
         f'aria-label="{label}"><source src="{u(f"video/explainer-{cut}.mp4")}" type="video/mp4"></video>' for cut in ("wide", "tall"))
     return f"""<div class="explainer">
     {videos}
@@ -117,7 +117,7 @@ def overview_video() -> str:
         f'aria-label="{label}"><source src="{u(f"video/tour-{cut}.mp4")}" type="video/mp4"></video>' for cut in ("wide", "tall")) + "</div>"
 
 
-def cta_row(primary=("Book a call", "/contact?interest=call"), secondary=("What we build →", "/what-we-build")) -> str:
+def cta_row(primary=("Start a conversation", "/contact?interest=call"), secondary=("What we build →", "/what-we-build")) -> str:
     return (f'<div class="cta-row"><a class="btn" href="{primary[1]}">{esc(primary[0])}</a>'
             f'<a class="btn ghost" href="{secondary[1]}">{esc(secondary[0])}</a></div>')
 
@@ -185,8 +185,8 @@ def home() -> str:
         for m, name, t, d, ex in services())
     steps = [("chat", "A conversation", "How you run, where your data lives, what you want."),
              ("doc", "A custom proposal", "A written plan and a fixed quote."),
-             ("blocks", "We build it", "Data in one place, reports matched to the cent, then the tools."),
-             ("refresh", "Run & Grow", "We keep it running and add what's next, every month.")]
+             ("blocks", "We build it", "Data in one place, your reports matched line by line, then the tools."),
+             ("refresh", "Monthly plan", "We keep it running and add what's next, every month.")]
     step_html = "".join(f'<li><span class="step-ico">{v.icon(i)}</span><small>Step {n}</small><h3>{t}</h3><p>{d}</p></li>'
                         for n, (i, t, d) in enumerate(steps, 1))
     why = [("people", "Operators, not a vendor", "Founded by an ex-Google operations leader who built Google Fiber's operations system."),
@@ -230,26 +230,6 @@ def home() -> str:
   <p class="fine center">Examples use made-up data. <a href="/what-we-build">See everything we build →</a></p>
 </div></section>
 
-<section class="band"><div class="wrap">
-  <div class="split">
-    <div>
-      <p class="eyebrow">Custom operational software</p>
-      <h2>Not a prebuilt dashboard</h2>
-      <p>Everything we build is made for your company: the screens, the tools and the way they work. Your rules, your
-      workflow, your names for things. If it runs on your data, we can build it.</p>
-      {v.custom_chips()}
-      <p class="small muted">And it grows with you: new tools get added as you need them.</p>
-    </div>
-    {v.mock_commission()}
-  </div>
-</div></section>
-
-<section class="agents-band"><div class="wrap">
-  {sec_head("AI &amp; workflow automation", "A day with your agents", "Then AI does the routine work. Each agent has one job, works from the same data, and hands the result to the right person.")}
-  {v.agent_day()}
-  <p class="approve-note">{v.icon("lock")}<span>Agents prepare the work. A person approves anything that goes out.</span></p>
-</div></section>
-
 <section><div class="wrap">
   {sec_head("How we work", "Four steps, no surprises", "From a first conversation to a hub that keeps growing with you.")}
   <ol class="flow-steps">{step_html}</ol>
@@ -266,10 +246,10 @@ def home() -> str:
 </div></section>
 
 <section class="offer"><div class="wrap narrow center">
-  <p class="eyebrow">Now taking a small number of founding clients</p>
+  <p class="eyebrow">Now taking a small number of founding clients, at a founding rate</p>
   <h2>Start with a conversation</h2>
   <p class="lead">Tell us how your company runs and where your data lives. If there's a fit, you'll get a custom proposal.</p>
-  <div class="cta-row center"><a class="btn" href="/contact?interest=call">Book a call</a><a class="btn ghost light" href="/what-we-build">What we build →</a></div>
+  <div class="cta-row center"><a class="btn" href="/contact?interest=call">Start a conversation</a><a class="btn ghost light" href="/what-we-build">What we build →</a></div>
 </div></section>"""
     return layout(c["name"], body, "/", extra_head=_org_jsonld())
 
@@ -279,7 +259,7 @@ def demos() -> str:
     c = cfg()
     cards = "".join(
         f'<a class="demo-card" href="/demo/{esc(d["slug"])}">{v.icon(d.get("icon", "chart"))}'
-        f'<p class="eyebrow">{esc(d["industry"])}</p><h3>{esc(d["company"])}</h3><p>{esc(d["blurb"])}</p>'
+        f'<p class="eyebrow">{esc(d["industry"])}</p><h2>{esc(d["company"])}</h2><p>{esc(d["blurb"])}</p>'
         f'<ul>{"".join(f"<li>{esc(s)}</li>" for s in d.get("shows", []))}</ul>'
         f'<span class="demo-go">Open this demo →</span></a>' for d in c.get("demos", []))
     body = f"""<section class="hero slim"><div class="wrap narrow center">
@@ -338,7 +318,7 @@ def what_we_build() -> str:
   <p class="eyebrow">What we build</p>
   <h1>Your data in one place, put to work</h1>
   <p class="lead">Every build starts with your data hub. On it we deliver three services: business intelligence, custom
-  operational software, and AI &amp; workflow automation, around the systems you already use. Nothing is off the shelf.</p>
+  operational software, and AI &amp; workflow automation, around the systems you already use. Nothing is one-size-fits-all.</p>
   {cta_row(secondary=("Request a live demo →", "/contact?interest=demo"))}
 </div></section>
 
@@ -355,7 +335,7 @@ def what_we_build() -> str:
       <h2>Your data hub</h2>
       <p>We connect the systems your company runs on into one database that you own. It updates on its own and keeps history.
       Every number is defined once, in plain English, so it means the same thing everywhere.</p>
-      <p>Before showing you anything new, we reproduce the reports you already use, to the cent. All three services below run on this.</p>
+      <p>Before showing you anything new, we rebuild the reports you already use and match them line by line, with every difference explained. All three services below run on this.</p>
     </div>
     {v.mock_foundation()}
   </div>
@@ -406,7 +386,7 @@ def what_we_build() -> str:
 </div></section>
 
 <section class="agents-band"><div class="wrap">
-  {sec_head("AI &amp; workflow automation · Agents", "Agents that do the work", "AI assistants, each with one job, working from your data every day.")}
+  {sec_head("AI & workflow automation · Agents", "Agents that do the work", "AI assistants, each with one job, working from your data every day.")}
   <div class="split agents-split">
     {v.mock_brief()}
     <div class="agent-list">{agent_html}</div>
@@ -449,10 +429,10 @@ def what_we_build() -> str:
 </div></section>
 
 <section class="offer"><div class="wrap narrow center">
-  <p class="eyebrow">Now taking a small number of founding clients</p>
+  <p class="eyebrow">Now taking a small number of founding clients, at a founding rate</p>
   <h2>Let's talk about your company</h2>
   <p class="lead">A short conversation, then a custom proposal with a fixed quote.</p>
-  <div class="cta-row center"><a class="btn" href="/contact?interest=call">Book a call</a><a class="btn ghost light" href="{esc(cfg()["demo_url"])}">Request a live demo →</a></div>
+  <div class="cta-row center"><a class="btn" href="/contact?interest=call">Start a conversation</a><a class="btn ghost light" href="{esc(cfg()["demo_url"])}">Request a live demo →</a></div>
 </div></section>"""
     return layout("What we build", body, "/what-we-build",
                   "All your company's data in one place, with three services built on it: business intelligence, custom operational software, and AI and workflow automation.")
@@ -461,7 +441,7 @@ def what_we_build() -> str:
 def about() -> str:
     c = cfg()
     principles = [("blocks", "The business first", "We start from how you run the company, not from the technology."),
-                  ("check", "Your numbers first", "We reproduce the reports you already use, to the cent, before building anything new."),
+                  ("check", "Your numbers first", "We rebuild the reports you already use and match them line by line before building anything new."),
                   ("server", "You own everything", "Your data and your documentation, wherever it runs. No lock-in."),
                   ("chat", "Plain English", "You'll always know what changed, how it was checked, and what it costs.")]
     p_html = "".join(f'<div class="why">{v.icon(i)}<h3>{t}</h3><p>{d}</p></div>' for i, t, d in principles)
@@ -491,22 +471,22 @@ def about() -> str:
   <div class="why-grid">{p_html}</div>
 </div></section>
 <section class="offer"><div class="wrap narrow center">
-  <p class="eyebrow">Now taking a small number of founding clients</p>
+  <p class="eyebrow">Now taking a small number of founding clients, at a founding rate</p>
   <h2>Let's talk about your company</h2>
   <p class="lead">A short conversation, then a custom proposal with a fixed quote.</p>
-  <div class="cta-row center"><a class="btn" href="/contact?interest=call">Book a call</a><a class="btn ghost light" href="{esc(c["demo_url"])}">Request a live demo →</a></div>
+  <div class="cta-row center"><a class="btn" href="/contact?interest=call">Start a conversation</a><a class="btn ghost light" href="{esc(c["demo_url"])}">Request a live demo →</a></div>
 </div></section>"""
     return layout("About", body, "/about", f"{c['name']} brings a company's data together in one place and puts it to work. Built by operators, for operators.")
 
 
 SIZES = ["1–19 people", "20–49", "50–199", "200–499", "500–1,000", "Over 1,000"]
-INTERESTS = [("call", "A call about my company"), ("demo", "A walkthrough of the demo"),
+INTERESTS = [("call", "A call about my company"), ("demo", "A live demo"),
              ("partner", "Referral partnership"), ("other", "Something else")]
 
 
 def contact(token: str, values: dict | None = None, errors: dict | None = None) -> str:
     c = cfg()
-    v, e = values or {}, errors or {}
+    vals, e = values or {}, errors or {}
 
     def err(k):
         return f'<span class="field-err" id="err-{k}">{esc(e[k])}</span>' if k in e else ""
@@ -530,16 +510,16 @@ def contact(token: str, values: dict | None = None, errors: dict | None = None) 
     {f'<p class="form-err" role="alert">{esc(e.get("_form") or "Please fix the highlighted fields.")}</p>' if e else ""}
     <input type="hidden" name="token" value="{esc(token)}">
     <div class="hp" aria-hidden="true"><label>Leave this empty<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
-    <label><span>Your name <span class="req">*</span></span><input name="name" required maxlength="120" autocomplete="name"{inv("name")} value="{esc(v.get("name"))}">{err("name")}</label>
-    <label><span>Work email <span class="req">*</span></span><input type="email" name="email" required maxlength="200" autocomplete="email"{inv("email")} value="{esc(v.get("email"))}">{err("email")}</label>
-    <label><span>Company <span class="req">*</span></span><input name="company" required maxlength="160" autocomplete="organization"{inv("company")} value="{esc(v.get("company"))}">{err("company")}</label>
-    <label>I'm interested in<select name="interest">{sel(INTERESTS, v.get("interest") or "call")}</select></label>
-    <label class="wide">What would you like help with?<textarea name="message" rows="4" maxlength="3000"{inv("message")}>{esc(v.get("message"))}</textarea>{err("message")}</label>
-    <details class="wide more"{" open" if any(v.get(k) for k in ("role", "company_size", "systems")) else ""}><summary>Tell us more (optional)</summary>
+    <label><span>Your name <span class="req">*</span></span><input name="name" required maxlength="120" autocomplete="name"{inv("name")} value="{esc(vals.get("name"))}">{err("name")}</label>
+    <label><span>Work email <span class="req">*</span></span><input type="email" name="email" required maxlength="200" autocomplete="email"{inv("email")} value="{esc(vals.get("email"))}">{err("email")}</label>
+    <label><span>Company <span class="req">*</span></span><input name="company" required maxlength="160" autocomplete="organization"{inv("company")} value="{esc(vals.get("company"))}">{err("company")}</label>
+    <label>I'm interested in<select name="interest">{sel(INTERESTS, vals.get("interest") or "call")}</select></label>
+    <label class="wide">What would you like help with?<textarea name="message" rows="4" maxlength="3000"{inv("message")}>{esc(vals.get("message"))}</textarea>{err("message")}</label>
+    <details class="wide more"{" open" if any(vals.get(k) for k in ("role", "company_size", "systems")) else ""}><summary>Tell us more (optional)</summary>
       <div class="more-fields">
-        <label>Your role<input name="role" maxlength="120" value="{esc(v.get("role"))}" placeholder="e.g. COO"></label>
-        <label>Company size<select name="company_size"><option value="">Choose…</option>{sel([(s, s) for s in SIZES], v.get("company_size"))}</select></label>
-        <label class="wide">Main systems you use<input name="systems" maxlength="200" value="{esc(v.get("systems"))}" placeholder="e.g. HubSpot, QuickBooks, Procore, a lot of Excel"></label>
+        <label>Your role<input name="role" maxlength="120" value="{esc(vals.get("role"))}" placeholder="e.g. COO"></label>
+        <label>Company size<select name="company_size"><option value="">Choose…</option>{sel([(s, s) for s in SIZES], vals.get("company_size"))}</select></label>
+        <label class="wide">Main systems you use<input name="systems" maxlength="200" value="{esc(vals.get("systems"))}" placeholder="e.g. HubSpot, QuickBooks, Procore, a lot of Excel"></label>
       </div>
     </details>
     <p class="small muted wide">By sending this you agree to be contacted about your inquiry. See the <a href="/privacy">privacy notice</a>.</p>
@@ -550,7 +530,7 @@ def contact(token: str, values: dict | None = None, errors: dict | None = None) 
     <h2>What happens next</h2>
     <ol><li>We read your note and reply within one business day.</li><li>We have a conversation about how your company runs and where your data lives.</li>
     <li>If there's a fit, we send you a custom proposal.</li></ol>
-    <h2>Want to see it first?</h2><p>Choose "A walkthrough of the demo" in the form and we'll show you a live hub for a company like yours.</p>
+    <h2>Want to see it first?</h2><p>Choose "A live demo" in the form and we'll show you a live hub for a company like yours.</p>
   </aside>
 </div></section>"""
     return layout("Contact", body, "/contact", "Tell us how your company runs and where your data lives. We reply within one business day.")
